@@ -1,6 +1,7 @@
 import { ShoppingCart, Search, Menu, User, Heart, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import CartDrawer from "./CartDrawer";
 
 const Header = () => {
   return (
@@ -12,13 +13,32 @@ const Header = () => {
             <Button variant="ghost" size="icon" className="md:hidden">
               <Menu className="h-5 w-5" />
             </Button>
-            <div className="flex items-center space-x-2">
+            <a href="/" className="flex items-center space-x-2">
               <Package className="h-8 w-8 text-primary" />
               <span className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">
                 DropshipPro
               </span>
-            </div>
+            </a>
           </div>
+
+          {/* Navigation Links - Hidden on mobile */}
+          <nav className="hidden md:flex items-center space-x-8">
+            <a href="/" className="text-foreground hover:text-primary transition-colors">
+              Home
+            </a>
+            <a href="/shop" className="text-foreground hover:text-primary transition-colors">
+              Shop
+            </a>
+            <a href="/categories" className="text-foreground hover:text-primary transition-colors">
+              Categories
+            </a>
+            <a href="/deals" className="text-foreground hover:text-primary transition-colors">
+              Deals
+            </a>
+            <a href="/contact" className="text-foreground hover:text-primary transition-colors">
+              Contact
+            </a>
+          </nav>
 
           {/* Search Bar - Hidden on mobile */}
           <div className="hidden md:flex flex-1 max-w-md mx-8">
@@ -31,8 +51,8 @@ const Header = () => {
             </div>
           </div>
 
-          {/* Navigation */}
-          <nav className="flex items-center space-x-2">
+          {/* User Actions */}
+          <div className="flex items-center space-x-2">
             <Button variant="ghost" size="icon" className="md:hidden">
               <Search className="h-5 w-5" />
             </Button>
@@ -42,16 +62,15 @@ const Header = () => {
                 2
               </span>
             </Button>
-            <Button variant="ghost" size="icon" className="relative">
-              <ShoppingCart className="h-5 w-5" />
-              <span className="absolute -top-1 -right-1 h-4 w-4 bg-primary text-primary-foreground text-xs rounded-full flex items-center justify-center">
-                3
-              </span>
-            </Button>
+            <CartDrawer>
+              <Button variant="ghost" size="icon" className="relative">
+                <ShoppingCart className="h-5 w-5" />
+              </Button>
+            </CartDrawer>
             <Button variant="ghost" size="icon">
               <User className="h-5 w-5" />
             </Button>
-          </nav>
+          </div>
         </div>
 
         {/* Mobile Search */}

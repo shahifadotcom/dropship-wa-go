@@ -31,10 +31,12 @@ const Hero = () => {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-            <Button size="lg" className="bg-white text-primary hover:bg-white/90 shadow-large">
-              Start Free Trial
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
+            <a href="/shop">
+              <Button size="lg" className="bg-white text-primary hover:bg-white/90 shadow-large">
+                Start Shopping
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </a>
             <Button size="lg" variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm">
               Watch Demo
             </Button>
