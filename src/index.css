@@ -5,28 +5,28 @@
 /* E-commerce Dropshipping Platform Design System */
 @layer base {
   :root {
-    /* E-commerce brand colors */
-    --background: 266 67% 18%; /* #30114A */
-    --foreground: 0 0% 100%; /* white */
+    /* Professional E-commerce Colors */
+    --background: 0 0% 100%; /* Clean white */
+    --foreground: 222 84% 4.9%; /* Dark text */
 
-    --card: 266 67% 18%;
-    --card-foreground: 0 0% 100%;
+    --card: 0 0% 100%; /* White cards */
+    --card-foreground: 222 84% 4.9%;
 
-    --popover: 266 67% 18%;
-    --popover-foreground: 0 0% 100%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 84% 4.9%;
 
-    /* Navigation - Cyan blue */
-    --navigation: 186 93% 50%; /* #0DBEF0 */
-    --navigation-foreground: 0 0% 100%;
+    /* Navigation - Professional blue */
+    --navigation: 220 100% 50%; /* #0066FF - Trust blue */
+    --navigation-foreground: 0 0% 100%; /* White text */
 
-    /* Primary - Keep navigation color as primary */
-    --primary: 186 93% 50%;
+    /* Primary - E-commerce blue */
+    --primary: 220 100% 50%; /* #0066FF */
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 186 93% 60%;
+    --primary-glow: 220 100% 60%;
 
-    /* Secondary - Darker variation */
-    --secondary: 266 67% 25%;
-    --secondary-foreground: 0 0% 100%;
+    /* Secondary - Light gray */
+    --secondary: 210 40% 96.1%; /* Light gray */
+    --secondary-foreground: 222 47.4% 11.2%;
 
     /* Success green for commerce */
     --success: 142 76% 36%;
@@ -47,19 +47,19 @@
 
     --border: 214 31.8% 91.4%;
     --input: 214 31.8% 91.4%;
-    --ring: 239 84% 67%;
+    --ring: 220 100% 50%;
 
     --radius: 0.75rem;
 
-    /* E-commerce specific gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(239 84% 67%), hsl(239 84% 75%));
-    --gradient-hero: linear-gradient(135deg, hsl(239 84% 67%) 0%, hsl(262 90% 75%) 100%);
+    /* Professional E-commerce gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(220 100% 50%), hsl(220 100% 60%));
+    --gradient-hero: linear-gradient(135deg, hsl(220 100% 50%) 0%, hsl(210 100% 60%) 100%);
     --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(210 40% 98%) 100%);
 
-    /* Shadows for depth */
-    --shadow-soft: 0 2px 8px -2px hsl(239 84% 67% / 0.1);
-    --shadow-medium: 0 8px 25px -5px hsl(239 84% 67% / 0.15);
-    --shadow-large: 0 20px 40px -10px hsl(239 84% 67% / 0.2);
+    /* Professional shadows */
+    --shadow-soft: 0 2px 8px -2px hsl(220 100% 50% / 0.1);
+    --shadow-medium: 0 8px 25px -5px hsl(220 100% 50% / 0.15);
+    --shadow-large: 0 20px 40px -10px hsl(220 100% 50% / 0.2);
 
     /* Animation variables */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
