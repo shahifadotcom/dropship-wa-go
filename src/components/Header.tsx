@@ -2,7 +2,7 @@ import { ShoppingCart, Search, Menu, User, Heart, Package, LogOut } from "lucide
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import CartDrawer from "./CartDrawer";
@@ -12,13 +12,9 @@ const Header = () => {
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
-    const { error } = await signOut();
-    if (error) {
-      toast.error('Error signing out');
-    } else {
-      toast.success('Signed out successfully');
-      navigate('/');
-    }
+    await signOut();
+    toast.success('Signed out successfully');
+    navigate('/');
   };
 
   return (
