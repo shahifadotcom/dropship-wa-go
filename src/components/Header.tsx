@@ -1,9 +1,26 @@
-import { ShoppingCart, Search, Menu, User, Heart, Package } from "lucide-react";
+import { ShoppingCart, Search, Menu, User, Heart, Package, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import CartDrawer from "./CartDrawer";
 
 const Header = () => {
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    const { error } = await signOut();
+    if (error) {
+      toast.error('Error signing out');
+    } else {
+      toast.success('Signed out successfully');
+      navigate('/');
+    }
+  };
+
   return (
     <header className="sticky top-0 z-50 w-full bg-navigation border-b border-navigation/20">
       <div className="container mx-auto px-4">
@@ -34,9 +51,31 @@ const Header = () => {
 
           {/* User Actions */}
           <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="icon" className="text-navigation-foreground hover:bg-navigation/80">
-              <User className="h-5 w-5" />
-            </Button>
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="text-navigation-foreground hover:bg-navigation/80">
+                    <User className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => navigate('/profile')}>
+                    Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/orders')}>
+                    Orders
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button variant="ghost" size="icon" onClick={() => navigate('/auth')} className="text-navigation-foreground hover:bg-navigation/80">
+                <User className="h-5 w-5" />
+              </Button>
+            )}
             <CartDrawer>
               <Button variant="ghost" size="icon" className="relative text-navigation-foreground hover:bg-navigation/80">
                 <ShoppingCart className="h-5 w-5" />

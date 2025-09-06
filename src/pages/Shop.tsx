@@ -1,12 +1,17 @@
 import { useState, useMemo } from 'react';
-import { products, categories } from '@/lib/data/products';
 import { FilterOptions } from '@/lib/types';
 import CategoryNav from '@/components/CategoryNav';
 import ProductGrid from '@/components/ProductGrid';
 import Header from '@/components/Header';
+import { useProducts } from '@/hooks/useProducts';
+import { useCategories } from '@/hooks/useCategories';
 
 const Shop = () => {
   const [filters, setFilters] = useState<FilterOptions>({});
+  const { products, loading: productsLoading } = useProducts();
+  const { categories, loading: categoriesLoading } = useCategories();
+
+  const loading = productsLoading || categoriesLoading;
 
   const filteredProducts = useMemo(() => {
     let filtered = [...products];
@@ -45,7 +50,7 @@ const Shop = () => {
     }
 
     return filtered;
-  }, [filters]);
+  }, [filters, products]);
 
   const handleFilterChange = (newFilters: FilterOptions) => {
     setFilters(newFilters);
@@ -62,7 +67,7 @@ const Shop = () => {
     if (filters.category) {
       const selectedCategory = categories
         .flatMap(cat => [cat, ...(cat.subcategories || [])])
-        .find(cat => cat.id === filters.category);
+        .find(cat => cat.slug === filters.category);
       return selectedCategory?.name || 'Shop';
     }
     return 'All Products';
@@ -85,13 +90,19 @@ const Shop = () => {
 
           {/* Main Content */}
           <div className="flex-1">
-            <ProductGrid
-              products={filteredProducts}
-              filters={filters}
-              onFilterChange={handleFilterChange}
-              title={getPageTitle()}
-              showFilters={true}
-            />
+            {loading ? (
+              <div className="flex justify-center items-center py-20">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+              </div>
+            ) : (
+              <ProductGrid 
+                products={filteredProducts}
+                filters={filters}
+                onFilterChange={handleFilterChange}
+                title={getPageTitle()}
+                showFilters={true}
+              />
+            )}
           </div>
         </div>
       </div>

@@ -3,15 +3,28 @@ import ImageSlider from "@/components/ImageSlider";
 import ProductGrid from "@/components/ProductGrid";
 import Footer from "@/components/Footer";
 import MobileBottomNav from "@/components/MobileBottomNav";
-import { products } from "@/lib/data/products";
+import { useProducts } from "@/hooks/useProducts";
 
 const Home = () => {
+  const { products, loading } = useProducts();
+
   // Get latest products (first 8)
   const latestProducts = products.slice(0, 8);
   
   // Get featured products for 2-column sections
   const featuredProducts1 = products.slice(8, 10);
   const featuredProducts2 = products.slice(10, 12);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="flex justify-center items-center py-20">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
