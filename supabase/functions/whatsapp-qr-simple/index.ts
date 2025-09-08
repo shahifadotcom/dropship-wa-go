@@ -29,7 +29,6 @@ serve(async (req) => {
         await supabase
           .from('whatsapp_config')
           .upsert({
-            id: 1,
             qr_code: qrCode,
             is_connected: false,
             session_data: null,
@@ -46,7 +45,6 @@ serve(async (req) => {
         await supabase
           .from('whatsapp_config')
           .upsert({
-            id: 1,
             qr_code: null,
             is_connected: true,
             session_data: { connected_at: new Date().toISOString() },
@@ -63,7 +61,7 @@ serve(async (req) => {
         await supabase
           .from('whatsapp_config')
           .delete()
-          .eq('id', 1)
+          .neq('id', '00000000-0000-0000-0000-000000000000') // Delete all records
 
         return new Response(
           JSON.stringify({ success: true }),
@@ -75,8 +73,8 @@ serve(async (req) => {
         const { data } = await supabase
           .from('whatsapp_config')
           .select('*')
-          .eq('id', 1)
-          .single()
+          .limit(1)
+          .maybeSingle()
 
         const isConnected = data?.is_connected || false
         const qrCodeData = data?.qr_code || null
