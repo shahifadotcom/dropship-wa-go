@@ -18,6 +18,9 @@ interface Product {
   stock_quantity: number;
   in_stock: boolean;
   created_at: string;
+  images?: string[];
+  sku?: string;
+  brand?: string;
 }
 
 const Products = () => {
@@ -25,6 +28,7 @@ const Products = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [categories, setCategories] = useState([]);
   const { toast } = useToast();
 
@@ -64,6 +68,40 @@ const Products = () => {
       setCategories(data || []);
     } catch (error: any) {
       console.error('Error fetching categories:', error);
+    }
+  };
+
+  const handleEditProduct = (product: Product) => {
+    setEditingProduct(product);
+    setShowForm(true);
+  };
+
+  const handleDeleteProduct = async (productId: string) => {
+    if (!confirm('Are you sure you want to delete this product?')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', productId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Product deleted successfully."
+      });
+
+      fetchProducts();
+    } catch (error: any) {
+      console.error('Error deleting product:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete product.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -132,10 +170,18 @@ const Products = () => {
                       <p className="text-muted-foreground">{product.description}</p>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleEditProduct(product)}
+                      >
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleDeleteProduct(product.id)}
+                      >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -166,9 +212,16 @@ const Products = () => {
         
         <EnhancedAdminProductForm
           isOpen={showForm}
-          onClose={() => setShowForm(false)}
+          onClose={() => {
+            setShowForm(false);
+            setEditingProduct(null);
+          }}
           categories={categories}
-          onSuccess={fetchProducts}
+          onSuccess={() => {
+            fetchProducts();
+            setEditingProduct(null);
+          }}
+          product={editingProduct}
         />
       </div>
     </AdminLayout>

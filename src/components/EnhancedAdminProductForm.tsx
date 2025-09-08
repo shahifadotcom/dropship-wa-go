@@ -22,9 +22,10 @@ interface ProductFormProps {
   onClose: () => void;
   categories: Category[];
   onSuccess: () => void;
+  product?: any; // For editing existing products
 }
 
-export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSuccess }: ProductFormProps) => {
+export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSuccess, product }: ProductFormProps) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [countries, setCountries] = useState([]);
@@ -77,6 +78,47 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
     }
   }, [isOpen]);
 
+  // Load product data for editing
+  useEffect(() => {
+    if (isOpen && product) {
+      setFormData({
+        name: product.name || '',
+        description: product.description || '',
+        slug: product.slug || '',
+        price: product.price?.toString() || '',
+        original_price: product.original_price?.toString() || '',
+        cost_price: product.cost_price?.toString() || '',
+        shipping_cost: product.shipping_cost?.toString() || '',
+        tax_rate: product.tax_rate?.toString() || '',
+        images: product.images && product.images.length > 0 ? product.images : [''],
+        category_id: product.category_id || '',
+        country_id: product.country_id || '',
+        brand: product.brand || '',
+        tags: product.tags ? product.tags.join(', ') : '',
+        stock_quantity: product.stock_quantity?.toString() || '',
+        sku: product.sku || '',
+        weight: product.weight?.toString() || '',
+        dimensions: {
+          length: product.dimensions?.length?.toString() || '',
+          width: product.dimensions?.width?.toString() || '',
+          height: product.dimensions?.height?.toString() || ''
+        },
+        meta_title: product.meta_title || '',
+        meta_description: product.meta_description || '',
+        social_preview_image: product.social_preview_image || ''
+      });
+    } else if (isOpen && !product) {
+      // Reset form for new product
+      setFormData({
+        name: '', description: '', slug: '', price: '', original_price: '', cost_price: '', 
+        shipping_cost: '', tax_rate: '', images: [''], category_id: '', country_id: '', 
+        brand: '', tags: '', stock_quantity: '', sku: '', weight: '',
+        dimensions: { length: '', width: '', height: '' },
+        meta_title: '', meta_description: '', social_preview_image: ''
+      });
+    }
+  }, [isOpen, product]);
+
   // Auto-generate slug from name
   useEffect(() => {
     if (formData.name && !formData.slug) {
@@ -108,15 +150,17 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
         throw new Error('Please fill in all required fields');
       }
 
-      // Validate slug uniqueness
-      const { data: existingProduct } = await supabase
-        .from('products')
-        .select('id')
-        .eq('slug', formData.slug)
-        .single();
+      // Validate slug uniqueness (only for new products or if slug changed)
+      if (!product || product.slug !== formData.slug) {
+        const { data: existingProduct } = await supabase
+          .from('products')
+          .select('id')
+          .eq('slug', formData.slug)
+          .single();
 
-      if (existingProduct) {
-        throw new Error('Product slug already exists. Please choose a different name or slug.');
+        if (existingProduct && existingProduct.id !== product?.id) {
+          throw new Error('Product slug already exists. Please choose a different name or slug.');
+        }
       }
 
       const productData = {
@@ -149,15 +193,25 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
         review_count: 0
       };
 
-      const { error } = await supabase
-        .from('products')
-        .insert([productData]);
+      let error;
+      if (product) {
+        // Update existing product
+        ({ error } = await supabase
+          .from('products')
+          .update(productData)
+          .eq('id', product.id));
+      } else {
+        // Create new product
+        ({ error } = await supabase
+          .from('products')
+          .insert([productData]));
+      }
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: "Product added successfully with SEO optimization"
+        description: product ? "Product updated successfully" : "Product added successfully with SEO optimization"
       });
 
       onClose();
@@ -187,7 +241,7 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add New Product</DialogTitle>
+          <DialogTitle>{product ? 'Edit Product' : 'Add New Product'}</DialogTitle>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-6">

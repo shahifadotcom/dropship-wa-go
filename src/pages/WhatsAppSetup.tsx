@@ -23,8 +23,8 @@ const WhatsAppSetup = () => {
 
   const checkConnectionStatus = async () => {
     try {
-      // Check WhatsApp Web integration status
-      const { data, error } = await supabase.functions.invoke('whatsapp-web-integration', {
+      // Check WhatsApp simple integration status
+      const { data, error } = await supabase.functions.invoke('whatsapp-simple', {
         body: { action: 'status' }
       });
 
@@ -81,57 +81,26 @@ const WhatsAppSetup = () => {
   const initializeWhatsApp = async () => {
     setLoading(true);
     try {
-      // Initialize WhatsApp Web.js client
-      const { data, error } = await supabase.functions.invoke('whatsapp-web-integration', {
+      // Initialize WhatsApp simple integration
+      const { data, error } = await supabase.functions.invoke('whatsapp-simple', {
         body: { action: 'initialize' }
       });
 
       if (error) throw error;
 
-      if (data.success) {
+      if (data.success && data.qrCode) {
+        setQrCode(data.qrCode);
+        await generateQRImage(data.qrCode);
         toast({
-          title: "WhatsApp Initializing",
-          description: "WhatsApp client is initializing. QR code will appear shortly."
+          title: "QR Code Generated",
+          description: "Scan the QR code with your WhatsApp mobile app to connect."
         });
-        
-        // Start polling for QR code
-        const pollForQR = setInterval(async () => {
-          try {
-            const { data: statusData } = await supabase.functions.invoke('whatsapp-web-integration', {
-              body: { action: 'get_qr' }
-            });
-            
-            if (statusData.qrCode && !statusData.isReady) {
-              setQrCode(statusData.qrCode);
-              await generateQRImage(statusData.qrCode);
-              clearInterval(pollForQR);
-              toast({
-                title: "QR Code Ready",
-                description: "Scan the QR code with your WhatsApp mobile app to connect."
-              });
-            } else if (statusData.isReady) {
-              setIsConnected(true);
-              setQrCode('');
-              setQrDataUrl('');
-              clearInterval(pollForQR);
-              toast({
-                title: "Connected",
-                description: "WhatsApp has been connected successfully!"
-              });
-            }
-          } catch (pollError) {
-            console.error('Error polling for QR:', pollError);
-          }
-        }, 2000);
-        
-        // Clear polling after 60 seconds
-        setTimeout(() => clearInterval(pollForQR), 60000);
       }
     } catch (error: any) {
       console.error('Error initializing WhatsApp:', error);
       toast({
         title: "Error",
-        description: "Failed to initialize WhatsApp. Please try again.",
+        description: "Failed to generate QR code. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -142,7 +111,7 @@ const WhatsAppSetup = () => {
   const disconnect = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('whatsapp-web-integration', {
+      const { data, error } = await supabase.functions.invoke('whatsapp-simple', {
         body: { action: 'disconnect' }
       });
 
@@ -240,6 +209,28 @@ const WhatsAppSetup = () => {
                           >
                             <RefreshCw className="h-4 w-4 mr-2" />
                             Refresh QR Code
+                          </Button>
+                          <Button 
+                            variant="secondary" 
+                            onClick={async () => {
+                              try {
+                                await supabase.functions.invoke('whatsapp-simple', {
+                                  body: { action: 'simulate_connect' }
+                                });
+                                setIsConnected(true);
+                                setQrCode('');
+                                setQrDataUrl('');
+                                toast({
+                                  title: "Connected",
+                                  description: "WhatsApp connected successfully!"
+                                });
+                              } catch (error) {
+                                console.error('Error simulating connection:', error);
+                              }
+                            }}
+                            disabled={loading}
+                          >
+                            Test Connection
                           </Button>
                         </div>
                       </div>

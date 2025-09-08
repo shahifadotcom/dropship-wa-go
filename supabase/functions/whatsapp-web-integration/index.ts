@@ -18,33 +18,53 @@ class WhatsAppManager {
 
   async initializeClient() {
     try {
-      // Import WhatsApp Web.js
-      const { Client, LocalAuth } = await import('npm:whatsapp-web.js@1.21.0');
+      console.log('Starting WhatsApp client initialization...');
+      
+      // Import WhatsApp Web.js with error handling
+      const { Client, LocalAuth } = await import('https://esm.sh/whatsapp-web.js@1.34.0');
+      
+      console.log('WhatsApp Web.js imported successfully');
       
       // Create client with local authentication
       this.client = new Client({
         authStrategy: new LocalAuth({
-          clientId: "whatsapp-business-client"
+          clientId: "whatsapp-business-client",
+          dataPath: "/tmp/whatsapp-session"
         }),
         puppeteer: {
           headless: true,
-          args: ['--no-sandbox', '--disable-setuid-sandbox']
+          args: [
+            '--no-sandbox', 
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-accelerated-2d-canvas',
+            '--no-first-run',
+            '--no-zygote',
+            '--disable-gpu'
+          ]
         }
       });
 
+      console.log('WhatsApp client created');
+
       // QR Code generation
       this.client.on('qr', async (qr: string) => {
-        console.log('QR Code received:', qr);
+        console.log('QR Code received and stored');
         this.qrString = qr;
         
         // Store QR code in database
-        await this.supabase
-          .from('whatsapp_config')
-          .upsert({
-            qr_code: qr,
-            is_connected: false,
-            session_data: null
-          });
+        try {
+          await this.supabase
+            .from('whatsapp_config')
+            .upsert({
+              qr_code: qr,
+              is_connected: false,
+              session_data: null
+            });
+          console.log('QR code saved to database');
+        } catch (dbError) {
+          console.error('Error saving QR to database:', dbError);
+        }
       });
 
       // Client ready
@@ -102,11 +122,14 @@ class WhatsAppManager {
       });
 
       // Initialize the client
+      console.log('Starting client initialization...');
       await this.client.initialize();
+      console.log('Client initialization completed');
       
       return true;
     } catch (error) {
       console.error('Error initializing WhatsApp client:', error);
+      console.error('Error stack:', error.stack);
       return false;
     }
   }
