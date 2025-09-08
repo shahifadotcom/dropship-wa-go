@@ -73,7 +73,7 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
     social_preview_image: ''
   });
 
-  // Load countries and vendors when component mounts
+  // Load countries, vendors, and payment gateways when component mounts
   useEffect(() => {
     const loadData = async () => {
       const countriesList = await CountryService.getAllCountries();
@@ -87,6 +87,16 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
       
       if (!error && vendorData) {
         setVendors(vendorData);
+      }
+
+      // Load payment gateways
+      const { data: gatewayData, error: gatewayError } = await supabase
+        .from('payment_gateways')
+        .select('*')
+        .eq('is_active', true);
+      
+      if (!gatewayError && gatewayData) {
+        setPaymentGateways(gatewayData);
       }
     };
     if (isOpen) {
@@ -109,7 +119,7 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
         images: product.images && product.images.length > 0 ? product.images : [''],
         category_id: product.category_id || '',
         country_id: product.country_id || '',
-        vendor_id: product.vendor_id || '',
+        vendor_id: product.vendor_id || 'none',
         auto_order_enabled: product.auto_order_enabled || false,
         allowed_payment_gateways: product.allowed_payment_gateways || [],
         cash_on_delivery_enabled: product.cash_on_delivery_enabled || false,
@@ -132,7 +142,7 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
       setFormData({
         name: '', description: '', slug: '', price: '', original_price: '', cost_price: '', 
         shipping_cost: '', tax_rate: '', images: [''], category_id: '', country_id: '', 
-        vendor_id: '', auto_order_enabled: false,
+        vendor_id: 'none', auto_order_enabled: false,
         allowed_payment_gateways: [] as string[], cash_on_delivery_enabled: false,
         brand: '', tags: '', stock_quantity: '', sku: '', weight: '',
         dimensions: { length: '', width: '', height: '' },
@@ -204,7 +214,7 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
         weight: formData.weight ? parseFloat(formData.weight) : null,
         allowed_payment_gateways: formData.allowed_payment_gateways,
         cash_on_delivery_enabled: formData.cash_on_delivery_enabled,
-        vendor_id: formData.vendor_id || null,
+        vendor_id: formData.vendor_id && formData.vendor_id !== 'none' ? formData.vendor_id : null,
         auto_order_enabled: formData.auto_order_enabled,
         dimensions: {
           length: formData.dimensions.length ? parseFloat(formData.dimensions.length) : null,
@@ -247,7 +257,7 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
       setFormData({
         name: '', description: '', slug: '', price: '', original_price: '', cost_price: '', 
         shipping_cost: '', tax_rate: '', images: [''], category_id: '', country_id: '', 
-        vendor_id: '', auto_order_enabled: false,
+        vendor_id: 'none', auto_order_enabled: false,
         allowed_payment_gateways: [] as string[], cash_on_delivery_enabled: false,
         brand: '', tags: '', stock_quantity: '', sku: '', weight: '',
         dimensions: { length: '', width: '', height: '' },
@@ -379,7 +389,7 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
                         <SelectValue placeholder="Select vendor for auto ordering" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Manual Order (No Auto Order)</SelectItem>
+                        <SelectItem value="none">Manual Order (No Auto Order)</SelectItem>
                         {vendors.map((vendor) => (
                           <SelectItem key={vendor.id} value={vendor.id}>
                             {vendor.name}
@@ -387,7 +397,7 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
                         ))}
                       </SelectContent>
                     </Select>
-                    {formData.vendor_id && (
+                    {formData.vendor_id && formData.vendor_id !== 'none' && (
                       <div className="mt-2 flex items-center space-x-2">
                         <input
                           type="checkbox"
@@ -401,6 +411,53 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
                         </Label>
                       </div>
                     )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="payment-gateways">Allowed Payment Gateways</Label>
+                    <div className="space-y-2 mt-2">
+                      {paymentGateways.map((gateway) => (
+                        <div key={gateway.id} className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id={`gateway-${gateway.id}`}
+                            checked={formData.allowed_payment_gateways.includes(gateway.name)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setFormData({
+                                  ...formData,
+                                  allowed_payment_gateways: [...formData.allowed_payment_gateways, gateway.name]
+                                });
+                              } else {
+                                setFormData({
+                                  ...formData,
+                                  allowed_payment_gateways: formData.allowed_payment_gateways.filter(g => g !== gateway.name)
+                                });
+                              }
+                            }}
+                            className="rounded border-gray-300"
+                          />
+                          <Label htmlFor={`gateway-${gateway.id}`} className="text-sm">
+                            {gateway.display_name}
+                          </Label>
+                        </div>
+                      ))}
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="cash_on_delivery_enabled"
+                          checked={formData.cash_on_delivery_enabled}
+                          onChange={(e) => setFormData({ ...formData, cash_on_delivery_enabled: e.target.checked })}
+                          className="rounded border-gray-300"
+                        />
+                        <Label htmlFor="cash_on_delivery_enabled" className="text-sm">
+                          Enable Cash on Delivery (100 BDT advance required)
+                        </Label>
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Select which payment methods are available for this product. If none selected, all gateways will be available.
+                    </p>
                   </div>
 
                   <div>
