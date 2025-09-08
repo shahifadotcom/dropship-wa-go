@@ -13,7 +13,8 @@ import {
   Search,
   Globe,
   Bot,
-  Building2
+  Building2,
+  Palette
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -37,6 +38,7 @@ const AdminSidebar = () => {
     { icon: Truck, label: "Shipping", href: "/admin/shipping" },
     { icon: Globe, label: "Google Services", href: "/admin/google-services" },
     { icon: Search, label: "SEO & Search", href: "/admin/seo" },
+    { icon: Palette, label: "Theme", href: "/admin/theme" },
     { icon: MessageSquare, label: "WhatsApp", href: "/admin/whatsapp" },
     { icon: FileText, label: "Reports", href: "/admin/reports" },
     { icon: Settings, label: "Settings", href: "/admin/settings" }

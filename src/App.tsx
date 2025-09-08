@@ -13,7 +13,7 @@ import Checkout from "./pages/Checkout";
 import OrderSuccess from "./pages/OrderSuccess";
 import Dashboard from "./pages/admin/Dashboard";
 import Products from "./pages/admin/Products";
-import Orders from "./pages/admin/Orders";
+import AdminOrders from "./pages/admin/Orders";
 import Categories from "./pages/admin/Categories";
 import Settings from "./pages/admin/Settings";
 import Customers from "./pages/admin/Customers";
@@ -31,6 +31,9 @@ import WhatsAppSetup from "./pages/WhatsAppSetup";
 import AndroidApp from "./pages/AndroidApp";
 import NotFound from "./pages/NotFound";
 import ErrorLogger from "./components/ErrorLogger";
+import Profile from "./pages/Profile";
+import Orders from "./pages/Orders";
+import Theme from "./pages/admin/Theme";
 
 const queryClient = new QueryClient();
 
@@ -54,7 +57,7 @@ const App = () => (
               {/* Admin Routes */}
               <Route path="/admin" element={<Dashboard />} />
               <Route path="/admin/products" element={<Products />} />
-              <Route path="/admin/orders" element={<Orders />} />
+              <Route path="/admin/orders" element={<AdminOrders />} />
               <Route path="/admin/categories" element={<Categories />} />
               <Route path="/admin/customers" element={<Customers />} />
               <Route path="/admin/analytics" element={<Analytics />} />
@@ -67,9 +70,12 @@ const App = () => (
               <Route path="/admin/order-automation" element={<OrderAutomation />} />
               <Route path="/admin/google-services" element={<GoogleServices />} />
               <Route path="/admin/seo" element={<SEO />} />
+              <Route path="/admin/theme" element={<Theme />} />
               <Route path="/admin/whatsapp" element={<WhatsAppSetup />} />
               
               <Route path="/dashboard" element={<UserDashboard />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/orders" element={<Orders />} />
               <Route path="/whatsapp-setup" element={<WhatsAppSetup />} />
               <Route path="/android-app" element={<AndroidApp />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
