@@ -22,6 +22,7 @@ import Shipping from "./pages/admin/Shipping";
 import Reports from "./pages/admin/Reports";
 import UserDashboard from "./pages/Dashboard";
 import WhatsAppSetup from "./pages/WhatsAppSetup";
+import AndroidApp from "./pages/AndroidApp";
 import NotFound from "./pages/NotFound";
 import ErrorLogger from "./components/ErrorLogger";
 
@@ -58,6 +59,7 @@ const App = () => (
               
               <Route path="/dashboard" element={<UserDashboard />} />
               <Route path="/whatsapp-setup" element={<WhatsAppSetup />} />
+              <Route path="/android-app" element={<AndroidApp />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
