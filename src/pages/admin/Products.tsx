@@ -15,7 +15,7 @@ interface Product {
   price: number;
   category_id: string;
   stock_quantity: number;
-  is_active: boolean;
+  in_stock: boolean;
   created_at: string;
 }
 
@@ -108,8 +108,8 @@ const Products = () => {
                     <div>
                       <CardTitle className="flex items-center gap-2">
                         {product.name}
-                        <Badge variant={product.is_active ? "default" : "secondary"}>
-                          {product.is_active ? 'Active' : 'Inactive'}
+                        <Badge variant={product.in_stock ? "default" : "secondary"}>
+                          {product.in_stock ? 'In Stock' : 'Out of Stock'}
                         </Badge>
                       </CardTitle>
                       <p className="text-muted-foreground">{product.description}</p>

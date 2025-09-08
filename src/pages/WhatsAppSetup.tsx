@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { QrCode, Smartphone, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
 import AdminLayout from '@/layouts/AdminLayout';
+import QRCode from 'qrcode';
 
 const WhatsAppSetup = () => {
   const [isConnected, setIsConnected] = useState(false);
@@ -43,18 +44,33 @@ const WhatsAppSetup = () => {
 
   const generateQRImage = async (qrString: string) => {
     try {
-      // Use QR code library to generate image
-      const qrDataUrl = `data:image/svg+xml;base64,${btoa(`
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300">
-          <rect width="300" height="300" fill="white"/>
-          <text x="150" y="150" text-anchor="middle" font-family="Arial" font-size="12" fill="black">
-            QR Code: ${qrString.substring(0, 20)}...
-          </text>
-        </svg>
-      `)}`;
+      const qrDataUrl = await QRCode.toDataURL(qrString, {
+        width: 256,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      });
       setQrDataUrl(qrDataUrl);
     } catch (error) {
       console.error('Error generating QR code image:', error);
+      // Fallback to simple text-based QR representation
+      const fallbackQR = `data:image/svg+xml;base64,${btoa(`
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300">
+          <rect width="300" height="300" fill="white"/>
+          <text x="150" y="120" text-anchor="middle" font-family="Arial" font-size="14" fill="black">
+            QR Code Generated
+          </text>
+          <text x="150" y="150" text-anchor="middle" font-family="Arial" font-size="10" fill="gray">
+            ${qrString}
+          </text>
+          <text x="150" y="180" text-anchor="middle" font-family="Arial" font-size="10" fill="gray">
+            Scan with WhatsApp
+          </text>
+        </svg>
+      `)}`;
+      setQrDataUrl(fallbackQR);
     }
   };
 

@@ -9,8 +9,8 @@ import AdminLayout from '@/layouts/AdminLayout';
 
 interface Order {
   id: string;
-  customer_phone: string;
-  total_amount: number;
+  customer_email: string;
+  total: number;
   status: string;
   created_at: string;
 }
@@ -58,7 +58,7 @@ const Orders = () => {
   };
 
   const filteredOrders = orders.filter(order =>
-    order.customer_phone.includes(searchTerm) || order.id.includes(searchTerm)
+    order.customer_email.includes(searchTerm) || order.id.includes(searchTerm)
   );
 
   if (loading) {
@@ -88,7 +88,7 @@ const Orders = () => {
           <div className="relative">
             <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search orders by phone or ID..."
+              placeholder="Search orders by email or ID..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -116,10 +116,10 @@ const Orders = () => {
                           {order.status}
                         </Badge>
                       </CardTitle>
-                      <p className="text-muted-foreground">Phone: {order.customer_phone}</p>
+                      <p className="text-muted-foreground">Email: {order.customer_email}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold">${order.total_amount}</p>
+                      <p className="font-semibold">${order.total}</p>
                       <p className="text-sm text-muted-foreground">
                         {new Date(order.created_at).toLocaleDateString()}
                       </p>

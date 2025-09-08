@@ -1,20 +1,15 @@
 import { useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 
 interface ErrorLog {
-  id?: string;
   error_message: string;
   error_stack?: string;
   url: string;
   user_agent: string;
   timestamp: string;
-  user_id?: string;
 }
 
 class ErrorLoggerService {
   private static instance: ErrorLoggerService;
-  private errorQueue: ErrorLog[] = [];
-  private isProcessing = false;
 
   private constructor() {
     this.setupGlobalErrorHandlers();
@@ -50,7 +45,7 @@ class ErrorLoggerService {
       });
     });
 
-    // Handle React errors (if needed)
+    // Handle React errors
     const originalConsoleError = console.error;
     console.error = (...args) => {
       const errorMessage = args.join(' ');
@@ -66,59 +61,18 @@ class ErrorLoggerService {
     };
   }
 
-  async logError(errorLog: Omit<ErrorLog, 'id'>) {
-    this.errorQueue.push(errorLog);
+  private logError(errorLog: ErrorLog) {
+    // For now, just log to console with structured format
+    console.error('🚨 Application Error:', {
+      message: errorLog.error_message,
+      stack: errorLog.error_stack,
+      url: errorLog.url,
+      timestamp: errorLog.timestamp,
+      userAgent: errorLog.user_agent
+    });
     
-    if (!this.isProcessing) {
-      await this.processErrorQueue();
-    }
-  }
-
-  private async processErrorQueue() {
-    if (this.errorQueue.length === 0) return;
-    
-    this.isProcessing = true;
-
-    try {
-      const errors = [...this.errorQueue];
-      this.errorQueue = [];
-
-      // Create the error_logs table if it doesn't exist
-      await this.ensureErrorLogsTable();
-
-      // Insert errors into the database
-      const { error } = await supabase
-        .from('error_logs')
-        .insert(errors);
-
-      if (error) {
-        console.warn('Failed to log errors to database:', error);
-        // Put errors back in queue for retry
-        this.errorQueue.unshift(...errors);
-      }
-    } catch (error) {
-      console.warn('Error processing error queue:', error);
-    } finally {
-      this.isProcessing = false;
-      
-      // Process any new errors that came in while we were processing
-      if (this.errorQueue.length > 0) {
-        setTimeout(() => this.processErrorQueue(), 5000);
-      }
-    }
-  }
-
-  private async ensureErrorLogsTable() {
-    try {
-      // Try to create the table if it doesn't exist
-      const { error } = await supabase.rpc('create_error_logs_table_if_not_exists');
-      
-      if (error && !error.message.includes('already exists')) {
-        console.warn('Could not ensure error_logs table exists:', error);
-      }
-    } catch (error) {
-      console.warn('Could not ensure error_logs table exists:', error);
-    }
+    // TODO: In the future, send to database when types are available
+    // this.sendToDatabase(errorLog);
   }
 
   // Method to manually log custom errors
