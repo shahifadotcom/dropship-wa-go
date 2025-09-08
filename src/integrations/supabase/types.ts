@@ -887,6 +887,60 @@ export type Database = {
         }
         Relationships: []
       }
+      store_settings: {
+        Row: {
+          contact_address: string | null
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string
+          currency: string | null
+          email_notifications: boolean | null
+          id: string
+          inventory_alerts: boolean | null
+          maintenance_mode: boolean | null
+          site_title: string | null
+          store_description: string | null
+          store_name: string | null
+          store_tagline: string | null
+          updated_at: string
+          whatsapp_notifications: boolean | null
+        }
+        Insert: {
+          contact_address?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          currency?: string | null
+          email_notifications?: boolean | null
+          id?: string
+          inventory_alerts?: boolean | null
+          maintenance_mode?: boolean | null
+          site_title?: string | null
+          store_description?: string | null
+          store_name?: string | null
+          store_tagline?: string | null
+          updated_at?: string
+          whatsapp_notifications?: boolean | null
+        }
+        Update: {
+          contact_address?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          currency?: string | null
+          email_notifications?: boolean | null
+          id?: string
+          inventory_alerts?: boolean | null
+          maintenance_mode?: boolean | null
+          site_title?: string | null
+          store_description?: string | null
+          store_name?: string | null
+          store_tagline?: string | null
+          updated_at?: string
+          whatsapp_notifications?: boolean | null
+        }
+        Relationships: []
+      }
       transaction_verifications: {
         Row: {
           amount: number
