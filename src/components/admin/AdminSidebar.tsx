@@ -10,7 +10,8 @@ import {
   Tags,
   Truck,
   CreditCard,
-  Wallet
+  Search,
+  Globe
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -29,6 +30,8 @@ const AdminSidebar = () => {
     { icon: Tags, label: "Categories", href: "/admin/categories" },
     { icon: CreditCard, label: "Payment Gateways", href: "/admin/payment-gateways" },
     { icon: Truck, label: "Shipping", href: "/admin/shipping" },
+    { icon: Globe, label: "Google Services", href: "/admin/google-services" },
+    { icon: Search, label: "SEO & Search", href: "/admin/seo" },
     { icon: MessageSquare, label: "WhatsApp", href: "/whatsapp-setup" },
     { icon: FileText, label: "Reports", href: "/admin/reports" },
     { icon: Settings, label: "Settings", href: "/admin/settings" }

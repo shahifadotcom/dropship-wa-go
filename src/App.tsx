@@ -21,6 +21,8 @@ import Analytics from "./pages/admin/Analytics";
 import Shipping from "./pages/admin/Shipping";
 import Reports from "./pages/admin/Reports";
 import PaymentGateways from "./pages/admin/PaymentGateways";
+import GoogleServices from "./pages/admin/GoogleServices";
+import SEO from "./pages/admin/SEO";
 import UserDashboard from "./pages/Dashboard";
 import WhatsAppSetup from "./pages/WhatsAppSetup";
 import AndroidApp from "./pages/AndroidApp";
@@ -57,6 +59,8 @@ const App = () => (
               <Route path="/admin/reports" element={<Reports />} />
               <Route path="/admin/settings" element={<Settings />} />
               <Route path="/admin/payment-gateways" element={<PaymentGateways />} />
+              <Route path="/admin/google-services" element={<GoogleServices />} />
+              <Route path="/admin/seo" element={<SEO />} />
               <Route path="/admin/whatsapp" element={<WhatsAppSetup />} />
               
               <Route path="/dashboard" element={<UserDashboard />} />
