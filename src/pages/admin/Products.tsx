@@ -7,7 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Plus, Search, Edit, Trash2 } from 'lucide-react';
 import AdminLayout from '@/layouts/AdminLayout';
-import { AdminProductForm } from '@/components/AdminProductForm';
+import { EnhancedAdminProductForm } from '@/components/EnhancedAdminProductForm';
 
 interface Product {
   id: string;
@@ -164,7 +164,7 @@ const Products = () => {
           )}
         </div>
         
-        <AdminProductForm
+        <EnhancedAdminProductForm
           isOpen={showForm}
           onClose={() => setShowForm(false)}
           categories={categories}

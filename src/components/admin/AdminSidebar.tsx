@@ -8,7 +8,8 @@ import {
   FileText,
   MessageSquare,
   Tags,
-  Truck
+  Truck,
+  CreditCard
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -25,6 +26,7 @@ const AdminSidebar = () => {
     { icon: Users, label: "Customers", href: "/admin/customers" },
     { icon: BarChart3, label: "Analytics", href: "/admin/analytics" },
     { icon: Tags, label: "Categories", href: "/admin/categories" },
+    { icon: CreditCard, label: "Payment Gateways", href: "/admin/payment-gateways" },
     { icon: Truck, label: "Shipping", href: "/admin/shipping" },
     { icon: MessageSquare, label: "WhatsApp", href: "/whatsapp-setup" },
     { icon: FileText, label: "Reports", href: "/admin/reports" },

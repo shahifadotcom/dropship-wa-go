@@ -500,62 +500,89 @@ export type Database = {
         Row: {
           brand: string | null
           category_id: string | null
+          cost_price: number | null
           country_id: string | null
           created_at: string | null
           description: string
+          dimensions: Json | null
           id: string
           images: string[] | null
           in_stock: boolean | null
+          meta_description: string | null
+          meta_title: string | null
           name: string
           original_price: number | null
           price: number
           rating: number | null
           review_count: number | null
+          shipping_cost: number | null
           sku: string
+          slug: string | null
+          social_preview_image: string | null
           stock_quantity: number | null
           subcategory_id: string | null
           tags: string[] | null
+          tax_rate: number | null
           updated_at: string | null
+          weight: number | null
         }
         Insert: {
           brand?: string | null
           category_id?: string | null
+          cost_price?: number | null
           country_id?: string | null
           created_at?: string | null
           description: string
+          dimensions?: Json | null
           id?: string
           images?: string[] | null
           in_stock?: boolean | null
+          meta_description?: string | null
+          meta_title?: string | null
           name: string
           original_price?: number | null
           price: number
           rating?: number | null
           review_count?: number | null
+          shipping_cost?: number | null
           sku: string
+          slug?: string | null
+          social_preview_image?: string | null
           stock_quantity?: number | null
           subcategory_id?: string | null
           tags?: string[] | null
+          tax_rate?: number | null
           updated_at?: string | null
+          weight?: number | null
         }
         Update: {
           brand?: string | null
           category_id?: string | null
+          cost_price?: number | null
           country_id?: string | null
           created_at?: string | null
           description?: string
+          dimensions?: Json | null
           id?: string
           images?: string[] | null
           in_stock?: boolean | null
+          meta_description?: string | null
+          meta_title?: string | null
           name?: string
           original_price?: number | null
           price?: number
           rating?: number | null
           review_count?: number | null
+          shipping_cost?: number | null
           sku?: string
+          slug?: string | null
+          social_preview_image?: string | null
           stock_quantity?: number | null
           subcategory_id?: string | null
           tags?: string[] | null
+          tax_rate?: number | null
           updated_at?: string | null
+          weight?: number | null
         }
         Relationships: [
           {
