@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import ProductCard from './ProductCard';
+import ProductDetailModal from './ProductDetailModal';
 import { Product, FilterOptions } from '@/lib/types';
 
 interface ProductGridProps {
@@ -23,6 +24,13 @@ const ProductGrid = ({
 }: ProductGridProps) => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+
+  const handleProductClick = (product: Product) => {
+    setSelectedProduct(product);
+    setIsProductModalOpen(true);
+  };
 
   const handleSortChange = (value: string) => {
     onFilterChange?.({ 
@@ -191,10 +199,21 @@ const ProductGrid = ({
             <ProductCard
               key={product.id}
               product={product}
+              onQuickView={handleProductClick}
             />
           ))}
         </div>
       )}
+
+      {/* Product Detail Modal */}
+      <ProductDetailModal
+        product={selectedProduct}
+        isOpen={isProductModalOpen}
+        onClose={() => {
+          setIsProductModalOpen(false);
+          setSelectedProduct(null);
+        }}
+      />
     </div>
   );
 };

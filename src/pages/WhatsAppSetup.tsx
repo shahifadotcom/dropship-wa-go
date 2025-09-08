@@ -23,17 +23,38 @@ const WhatsAppSetup = () => {
 
   const checkConnectionStatus = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke('whatsapp-web-integration', {
+      // First check database for connection status
+      const { data: configData, error: configError } = await supabase
+        .from('whatsapp_config')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (configData) {
+        setIsConnected(configData.is_connected || false);
+        if (configData.qr_code && !configData.is_connected) {
+          setQrCode(configData.qr_code);
+          await generateQRImage(configData.qr_code);
+        } else if (configData.is_connected) {
+          setQrCode('');
+          setQrDataUrl('');
+        }
+        return;
+      }
+
+      // Fallback to edge function
+      const { data, error } = await supabase.functions.invoke('whatsapp-setup', {
         body: { action: 'status' }
       });
 
       if (error) throw error;
       
-      setIsConnected(data.isReady || false);
-      if (data.qrCode && !data.isReady) {
-        setQrCode(data.qrCode);
-        await generateQRImage(data.qrCode);
-      } else if (data.isReady) {
+      setIsConnected(data.is_connected || false);
+      if (data.qr_code && !data.is_connected) {
+        setQrCode(data.qr_code);
+        await generateQRImage(data.qr_code);
+      } else if (data.is_connected) {
         setQrCode('');
         setQrDataUrl('');
       }
@@ -77,28 +98,25 @@ const WhatsAppSetup = () => {
   const initializeWhatsApp = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('whatsapp-web-integration', {
-        body: { action: 'initialize' }
+      const { data, error } = await supabase.functions.invoke('whatsapp-setup', {
+        body: { action: 'generate_qr' }
       });
 
       if (error) throw error;
 
-      if (data.success) {
+      if (data.qr_code) {
+        setQrCode(data.qr_code);
+        await generateQRImage(data.qr_code);
         toast({
-          title: "WhatsApp Initializing",
-          description: "Please wait for QR code to be generated..."
+          title: "QR Code Generated",
+          description: "Scan the QR code with your WhatsApp mobile app to connect."
         });
-        
-        // Start checking for QR code
-        setTimeout(() => {
-          checkConnectionStatus();
-        }, 2000);
       }
     } catch (error: any) {
       console.error('Error initializing WhatsApp:', error);
       toast({
         title: "Error",
-        description: "Failed to initialize WhatsApp. Please try again.",
+        description: "Failed to generate QR code. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -109,7 +127,7 @@ const WhatsAppSetup = () => {
   const disconnect = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('whatsapp-web-integration', {
+      const { data, error } = await supabase.functions.invoke('whatsapp-setup', {
         body: { action: 'disconnect' }
       });
 

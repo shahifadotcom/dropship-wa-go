@@ -18,6 +18,11 @@ const ProductCard = ({ product, onQuickView }: ProductCardProps) => {
   const { addToCart } = useCart();
   const { toast } = useToast();
 
+  const handleProductClick = () => {
+    // Navigate to product detail page or trigger quick view
+    onQuickView?.(product);
+  };
+
   const discount = product.originalPrice 
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0;
@@ -59,7 +64,10 @@ const ProductCard = ({ product, onQuickView }: ProductCardProps) => {
   };
 
   return (
-    <Card className="group relative overflow-hidden bg-gradient-card border-0 shadow-soft hover:shadow-medium transition-all duration-300 hover:-translate-y-1">
+    <Card 
+      className="group relative overflow-hidden bg-gradient-card border-0 shadow-soft hover:shadow-medium transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+      onClick={handleProductClick}
+    >
       <div className="relative">
         {/* Product Image */}
         <div className="aspect-square overflow-hidden bg-muted">
@@ -137,9 +145,9 @@ const ProductCard = ({ product, onQuickView }: ProductCardProps) => {
                 window.location.href = '/checkout';
               }}
               disabled={!product.inStock}
-              variant="secondary"
+              variant="outline"
               size="sm"
-              className="px-3"
+              className="px-3 bg-white/20 text-white border-white/20 hover:bg-white/30"
             >
               Buy Now
             </Button>
