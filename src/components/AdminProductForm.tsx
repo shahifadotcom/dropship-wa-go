@@ -62,7 +62,7 @@ export const AdminProductForm = ({ isOpen, onClose, categories, onSuccess }: Pro
         original_price: formData.original_price ? parseFloat(formData.original_price) : null,
         images: formData.images.filter(img => img.trim() !== ''),
         category_id: formData.category_id || null,
-        country_id: formData.country_id || null,
+        country_id: formData.country_id && formData.country_id !== 'all-countries' ? formData.country_id : null,
         brand: formData.brand || null,
         stock_quantity: parseInt(formData.stock_quantity) || 0,
         sku: formData.sku,
@@ -194,7 +194,7 @@ export const AdminProductForm = ({ isOpen, onClose, categories, onSuccess }: Pro
                   <SelectValue placeholder="Select country (optional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Countries</SelectItem>
+                  <SelectItem value="all-countries">All Countries</SelectItem>
                   {countries.map((country) => (
                     <SelectItem key={country.id} value={country.id}>
                       {country.name} ({country.currency})
