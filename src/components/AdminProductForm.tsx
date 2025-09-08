@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { CountryService } from '@/services/countryService';
 
 interface Category {
   id: string;
@@ -23,6 +24,7 @@ interface ProductFormProps {
 export const AdminProductForm = ({ isOpen, onClose, categories, onSuccess }: ProductFormProps) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [countries, setCountries] = useState([]);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -30,11 +32,23 @@ export const AdminProductForm = ({ isOpen, onClose, categories, onSuccess }: Pro
     original_price: '',
     images: [''],
     category_id: '',
+    country_id: '',
     brand: '',
     stock_quantity: '',
     sku: '',
     tags: ''
   });
+
+  // Load countries when component mounts
+  useEffect(() => {
+    const loadCountries = async () => {
+      const countriesList = await CountryService.getAllCountries();
+      setCountries(countriesList);
+    };
+    if (isOpen) {
+      loadCountries();
+    }
+  }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,6 +62,7 @@ export const AdminProductForm = ({ isOpen, onClose, categories, onSuccess }: Pro
         original_price: formData.original_price ? parseFloat(formData.original_price) : null,
         images: formData.images.filter(img => img.trim() !== ''),
         category_id: formData.category_id || null,
+        country_id: formData.country_id || null,
         brand: formData.brand || null,
         stock_quantity: parseInt(formData.stock_quantity) || 0,
         sku: formData.sku,
@@ -74,7 +89,7 @@ export const AdminProductForm = ({ isOpen, onClose, categories, onSuccess }: Pro
       // Reset form
       setFormData({
         name: '', description: '', price: '', original_price: '',
-        images: [''], category_id: '', brand: '', stock_quantity: '', sku: '', tags: ''
+        images: [''], category_id: '', country_id: '', brand: '', stock_quantity: '', sku: '', tags: ''
       });
     } catch (error: any) {
       console.error('Error adding product:', error);
@@ -155,20 +170,39 @@ export const AdminProductForm = ({ isOpen, onClose, categories, onSuccess }: Pro
             />
           </div>
           
-          <div>
-            <Label htmlFor="category">Category</Label>
-            <Select value={formData.category_id} onValueChange={(value) => setFormData({ ...formData, category_id: value })}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select category" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="category">Category</Label>
+              <Select value={formData.category_id} onValueChange={(value) => setFormData({ ...formData, category_id: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <Label htmlFor="country">Target Country</Label>
+              <Select value={formData.country_id} onValueChange={(value) => setFormData({ ...formData, country_id: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select country (optional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">All Countries</SelectItem>
+                  {countries.map((country) => (
+                    <SelectItem key={country.id} value={country.id}>
+                      {country.name} ({country.currency})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           
           <div className="grid grid-cols-2 gap-4">

@@ -120,6 +120,36 @@ export type Database = {
           },
         ]
       }
+      countries: {
+        Row: {
+          code: string
+          created_at: string | null
+          currency: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       error_logs: {
         Row: {
           created_at: string | null
@@ -152,6 +182,38 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      ip_ranges: {
+        Row: {
+          country_id: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          ip_prefix: string
+        }
+        Insert: {
+          country_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          ip_prefix: string
+        }
+        Update: {
+          country_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          ip_prefix?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ip_ranges_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notification_logs: {
         Row: {
@@ -349,6 +411,50 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_gateways: {
+        Row: {
+          country_id: string | null
+          created_at: string | null
+          display_name: string
+          id: string
+          instructions: string | null
+          is_active: boolean | null
+          name: string
+          updated_at: string | null
+          wallet_number: string
+        }
+        Insert: {
+          country_id?: string | null
+          created_at?: string | null
+          display_name: string
+          id?: string
+          instructions?: string | null
+          is_active?: boolean | null
+          name: string
+          updated_at?: string | null
+          wallet_number: string
+        }
+        Update: {
+          country_id?: string | null
+          created_at?: string | null
+          display_name?: string
+          id?: string
+          instructions?: string | null
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string | null
+          wallet_number?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_gateways_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_variants: {
         Row: {
           created_at: string | null
@@ -394,6 +500,7 @@ export type Database = {
         Row: {
           brand: string | null
           category_id: string | null
+          country_id: string | null
           created_at: string | null
           description: string
           id: string
@@ -413,6 +520,7 @@ export type Database = {
         Insert: {
           brand?: string | null
           category_id?: string | null
+          country_id?: string | null
           created_at?: string | null
           description: string
           id?: string
@@ -432,6 +540,7 @@ export type Database = {
         Update: {
           brand?: string | null
           category_id?: string | null
+          country_id?: string | null
           created_at?: string | null
           description?: string
           id?: string
@@ -454,6 +563,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
             referencedColumns: ["id"]
           },
           {
@@ -494,6 +610,47 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      transaction_verifications: {
+        Row: {
+          amount: number
+          created_at: string | null
+          id: string
+          order_id: string | null
+          payment_gateway: string
+          status: string | null
+          transaction_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          id?: string
+          order_id?: string | null
+          payment_gateway: string
+          status?: string | null
+          transaction_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          id?: string
+          order_id?: string | null
+          payment_gateway?: string
+          status?: string | null
+          transaction_id?: string
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transaction_verifications_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       whatsapp_config: {
         Row: {
