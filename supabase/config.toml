@@ -10,6 +10,21 @@ max_rows = 1000
 [functions.create-order]
 verify_jwt = false
 
+[functions.send-otp]
+verify_jwt = false
+
+[functions.verify-otp-and-create-order]
+verify_jwt = false
+
+[functions.send-whatsapp-message]
+verify_jwt = false
+
+[functions.send-order-notification]
+verify_jwt = false
+
+[functions.whatsapp-setup]
+verify_jwt = false
+
 [db]
 enabled = true
 port = 54322

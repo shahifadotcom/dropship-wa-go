@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
+import { OTPVerificationModal } from '@/components/OTPVerificationModal';
 
 interface CheckoutFormData {
   country: string;
@@ -35,6 +36,7 @@ const Checkout = () => {
   });
   
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showOTPModal, setShowOTPModal] = useState(false);
 
   const subtotal = cart.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const tax = subtotal * 0.08; // 8% tax
@@ -73,11 +75,34 @@ const Checkout = () => {
       return;
     }
 
-    // TODO: Phase 3 - Show OTP verification popup here
-    toast({
-      title: "Ready for OTP verification",
-      description: "OTP verification will be implemented in Phase 3",
-    });
+    setIsProcessing(true);
+
+    try {
+      // Send OTP to WhatsApp number
+      const { error } = await supabase.functions.invoke('send-otp', {
+        body: { phoneNumber: formData.whatsappNumber }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "OTP Sent",
+        description: "Please check your WhatsApp for the verification code."
+      });
+
+      setShowOTPModal(true);
+    } catch (error: any) {
+      console.error('Error sending OTP:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send OTP. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   if (cart.items.length === 0) {
@@ -264,6 +289,27 @@ const Checkout = () => {
             </Card>
           </div>
         </div>
+
+        {/* OTP Verification Modal */}
+        <OTPVerificationModal
+          isOpen={showOTPModal}
+          onClose={() => setShowOTPModal(false)}
+          phoneNumber={formData.whatsappNumber}
+          onVerificationSuccess={(userId) => {
+            clearCart();
+            setShowOTPModal(false);
+            navigate('/dashboard');
+          }}
+          orderData={{
+            ...formData,
+            items: cart.items,
+            subtotal,
+            tax,
+            shipping,
+            total,
+            email: user?.email || ''
+          }}
+        />
       </div>
     </div>
   );

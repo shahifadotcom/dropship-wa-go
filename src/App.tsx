@@ -12,6 +12,8 @@ import Auth from "./pages/Auth";
 import Checkout from "./pages/Checkout";
 import OrderSuccess from "./pages/OrderSuccess";
 import Dashboard from "./pages/admin/Dashboard";
+import UserDashboard from "./pages/Dashboard";
+import WhatsAppSetup from "./pages/WhatsAppSetup";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +34,8 @@ const App = () => (
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/order-success/:orderId" element={<OrderSuccess />} />
               <Route path="/admin" element={<Dashboard />} />
+              <Route path="/dashboard" element={<UserDashboard />} />
+              <Route path="/whatsapp-setup" element={<WhatsAppSetup />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

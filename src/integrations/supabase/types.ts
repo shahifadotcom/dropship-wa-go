@@ -120,6 +120,65 @@ export type Database = {
           },
         ]
       }
+      notification_logs: {
+        Row: {
+          id: string
+          message: string
+          order_id: string | null
+          phone_number: string
+          sent_at: string
+          status: string | null
+        }
+        Insert: {
+          id?: string
+          message: string
+          order_id?: string | null
+          phone_number: string
+          sent_at?: string
+          status?: string | null
+        }
+        Update: {
+          id?: string
+          message?: string
+          order_id?: string | null
+          phone_number?: string
+          sent_at?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_logs_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_templates: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          template: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          template: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          template?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           created_at: string | null
@@ -229,6 +288,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      otp_verifications: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          is_verified: boolean | null
+          otp_code: string
+          phone_number: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          is_verified?: boolean | null
+          otp_code: string
+          phone_number: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          is_verified?: boolean | null
+          otp_code?: string
+          phone_number?: string
+        }
+        Relationships: []
       }
       product_variants: {
         Row: {
@@ -373,6 +459,33 @@ export type Database = {
           last_name?: string | null
           phone?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      whatsapp_config: {
+        Row: {
+          created_at: string
+          id: string
+          is_connected: boolean | null
+          qr_code: string | null
+          session_data: Json | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_connected?: boolean | null
+          qr_code?: string | null
+          session_data?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_connected?: boolean | null
+          qr_code?: string | null
+          session_data?: Json | null
+          updated_at?: string
         }
         Relationships: []
       }
