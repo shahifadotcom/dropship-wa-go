@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { QrCode, Smartphone, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
+import AdminLayout from '@/layouts/AdminLayout';
 
 const WhatsAppSetup = () => {
   const [isConnected, setIsConnected] = useState(false);
@@ -119,8 +120,8 @@ const WhatsAppSetup = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
+    <AdminLayout>
+      <div className="p-6">
         <div className="max-w-2xl mx-auto">
           <div className="mb-8">
             <h1 className="text-3xl font-bold">WhatsApp Setup</h1>
@@ -262,7 +263,7 @@ const WhatsAppSetup = () => {
           </Card>
         </div>
       </div>
-    </div>
+    </AdminLayout>
   );
 };
 
