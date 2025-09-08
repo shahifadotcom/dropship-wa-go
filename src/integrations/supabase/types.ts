@@ -183,6 +183,51 @@ export type Database = {
         }
         Relationships: []
       }
+      google_services_config: {
+        Row: {
+          access_token: string | null
+          auth_scopes: string[] | null
+          client_id: string | null
+          client_secret: string | null
+          created_at: string | null
+          id: string
+          is_enabled: boolean | null
+          last_sync: string | null
+          merchant_center_id: string | null
+          refresh_token: string | null
+          service_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          access_token?: string | null
+          auth_scopes?: string[] | null
+          client_id?: string | null
+          client_secret?: string | null
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          last_sync?: string | null
+          merchant_center_id?: string | null
+          refresh_token?: string | null
+          service_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          access_token?: string | null
+          auth_scopes?: string[] | null
+          client_id?: string | null
+          client_secret?: string | null
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          last_sync?: string | null
+          merchant_center_id?: string | null
+          refresh_token?: string | null
+          service_name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       ip_ranges: {
         Row: {
           country_id: string | null
@@ -635,6 +680,57 @@ export type Database = {
           last_name?: string | null
           phone?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      seo_settings: {
+        Row: {
+          bing_webmaster_verified: boolean | null
+          canonical_url: string | null
+          created_at: string | null
+          google_analytics_id: string | null
+          google_search_console_verified: boolean | null
+          id: string
+          robots_txt: string | null
+          site_description: string | null
+          site_keywords: string[] | null
+          site_title: string | null
+          sitemap_enabled: boolean | null
+          sitemap_last_generated: string | null
+          updated_at: string | null
+          yandex_webmaster_verified: boolean | null
+        }
+        Insert: {
+          bing_webmaster_verified?: boolean | null
+          canonical_url?: string | null
+          created_at?: string | null
+          google_analytics_id?: string | null
+          google_search_console_verified?: boolean | null
+          id?: string
+          robots_txt?: string | null
+          site_description?: string | null
+          site_keywords?: string[] | null
+          site_title?: string | null
+          sitemap_enabled?: boolean | null
+          sitemap_last_generated?: string | null
+          updated_at?: string | null
+          yandex_webmaster_verified?: boolean | null
+        }
+        Update: {
+          bing_webmaster_verified?: boolean | null
+          canonical_url?: string | null
+          created_at?: string | null
+          google_analytics_id?: string | null
+          google_search_console_verified?: boolean | null
+          id?: string
+          robots_txt?: string | null
+          site_description?: string | null
+          site_keywords?: string[] | null
+          site_title?: string | null
+          sitemap_enabled?: boolean | null
+          sitemap_last_generated?: string | null
+          updated_at?: string | null
+          yandex_webmaster_verified?: boolean | null
         }
         Relationships: []
       }
