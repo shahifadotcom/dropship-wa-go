@@ -500,6 +500,54 @@ export type Database = {
           },
         ]
       }
+      price_sync_logs: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          new_price: number | null
+          old_price: number | null
+          product_id: string | null
+          sync_status: string | null
+          vendor_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          new_price?: number | null
+          old_price?: number | null
+          product_id?: string | null
+          sync_status?: string | null
+          vendor_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          new_price?: number | null
+          old_price?: number | null
+          product_id?: string | null
+          sync_status?: string | null
+          vendor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "price_sync_logs_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "price_sync_logs_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_variants: {
         Row: {
           created_at: string | null
@@ -543,6 +591,7 @@ export type Database = {
       }
       products: {
         Row: {
+          auto_order_enabled: boolean | null
           brand: string | null
           category_id: string | null
           cost_price: number | null
@@ -569,9 +618,11 @@ export type Database = {
           tags: string[] | null
           tax_rate: number | null
           updated_at: string | null
+          vendor_id: string | null
           weight: number | null
         }
         Insert: {
+          auto_order_enabled?: boolean | null
           brand?: string | null
           category_id?: string | null
           cost_price?: number | null
@@ -598,9 +649,11 @@ export type Database = {
           tags?: string[] | null
           tax_rate?: number | null
           updated_at?: string | null
+          vendor_id?: string | null
           weight?: number | null
         }
         Update: {
+          auto_order_enabled?: boolean | null
           brand?: string | null
           category_id?: string | null
           cost_price?: number | null
@@ -627,6 +680,7 @@ export type Database = {
           tags?: string[] | null
           tax_rate?: number | null
           updated_at?: string | null
+          vendor_id?: string | null
           weight?: number | null
         }
         Relationships: [
@@ -649,6 +703,13 @@ export type Database = {
             columns: ["subcategory_id"]
             isOneToOne: false
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
             referencedColumns: ["id"]
           },
         ]
@@ -680,6 +741,51 @@ export type Database = {
           last_name?: string | null
           phone?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      saved_payment_methods: {
+        Row: {
+          card_brand: string
+          card_last_four: string
+          created_at: string
+          encrypted_card_data: string
+          expiry_month: number
+          expiry_year: number
+          id: string
+          is_active: boolean | null
+          is_default: boolean | null
+          payment_method_name: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          card_brand: string
+          card_last_four: string
+          created_at?: string
+          encrypted_card_data: string
+          expiry_month: number
+          expiry_year: number
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          payment_method_name: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          card_brand?: string
+          card_last_four?: string
+          created_at?: string
+          encrypted_card_data?: string
+          expiry_month?: number
+          expiry_year?: number
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          payment_method_name?: string
+          updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -796,6 +902,205 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      vendor_orders: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          order_id: string | null
+          payment_method_id: string | null
+          payment_status: string | null
+          shipping_method: string | null
+          status: string | null
+          total_amount: number | null
+          tracking_number: string | null
+          tracking_url: string | null
+          updated_at: string
+          vendor_id: string | null
+          vendor_order_id: string | null
+          vendor_order_number: string | null
+          vendor_response: Json | null
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          order_id?: string | null
+          payment_method_id?: string | null
+          payment_status?: string | null
+          shipping_method?: string | null
+          status?: string | null
+          total_amount?: number | null
+          tracking_number?: string | null
+          tracking_url?: string | null
+          updated_at?: string
+          vendor_id?: string | null
+          vendor_order_id?: string | null
+          vendor_order_number?: string | null
+          vendor_response?: Json | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          order_id?: string | null
+          payment_method_id?: string | null
+          payment_status?: string | null
+          shipping_method?: string | null
+          status?: string | null
+          total_amount?: number | null
+          tracking_number?: string | null
+          tracking_url?: string | null
+          updated_at?: string
+          vendor_id?: string | null
+          vendor_order_id?: string | null
+          vendor_order_number?: string | null
+          vendor_response?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_orders_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_orders_payment_method_id_fkey"
+            columns: ["payment_method_id"]
+            isOneToOne: false
+            referencedRelation: "saved_payment_methods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_orders_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendor_products: {
+        Row: {
+          created_at: string
+          id: string
+          is_available: boolean | null
+          last_price_update: string | null
+          processing_days: number | null
+          product_id: string | null
+          shipping_cost: number | null
+          updated_at: string
+          vendor_id: string | null
+          vendor_price: number | null
+          vendor_product_id: string
+          vendor_sku: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_available?: boolean | null
+          last_price_update?: string | null
+          processing_days?: number | null
+          product_id?: string | null
+          shipping_cost?: number | null
+          updated_at?: string
+          vendor_id?: string | null
+          vendor_price?: number | null
+          vendor_product_id: string
+          vendor_sku?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_available?: boolean | null
+          last_price_update?: string | null
+          processing_days?: number | null
+          product_id?: string | null
+          shipping_cost?: number | null
+          updated_at?: string
+          vendor_id?: string | null
+          vendor_price?: number | null
+          vendor_product_id?: string
+          vendor_sku?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_products_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendors: {
+        Row: {
+          access_token: string | null
+          api_endpoint: string
+          api_key: string | null
+          api_type: string
+          auto_order_enabled: boolean | null
+          client_id: string | null
+          client_secret: string | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          last_sync_at: string | null
+          name: string
+          price_sync_enabled: boolean | null
+          refresh_token: string | null
+          settings: Json | null
+          updated_at: string
+          webhook_url: string | null
+        }
+        Insert: {
+          access_token?: string | null
+          api_endpoint: string
+          api_key?: string | null
+          api_type: string
+          auto_order_enabled?: boolean | null
+          client_id?: string | null
+          client_secret?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          last_sync_at?: string | null
+          name: string
+          price_sync_enabled?: boolean | null
+          refresh_token?: string | null
+          settings?: Json | null
+          updated_at?: string
+          webhook_url?: string | null
+        }
+        Update: {
+          access_token?: string | null
+          api_endpoint?: string
+          api_key?: string | null
+          api_type?: string
+          auto_order_enabled?: boolean | null
+          client_id?: string | null
+          client_secret?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          last_sync_at?: string | null
+          name?: string
+          price_sync_enabled?: boolean | null
+          refresh_token?: string | null
+          settings?: Json | null
+          updated_at?: string
+          webhook_url?: string | null
         }
         Relationships: []
       }

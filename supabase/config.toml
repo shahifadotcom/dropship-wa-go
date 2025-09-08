@@ -34,6 +34,12 @@ verify_jwt = false
 [functions.whatsapp-simple]
 verify_jwt = false
 
+[functions.vendor-order-automation]
+verify_jwt = true
+
+[functions.sync-vendor-prices]
+verify_jwt = true
+
 [db]
 enabled = true
 port = 54322
