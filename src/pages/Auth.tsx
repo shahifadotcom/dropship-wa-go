@@ -63,6 +63,8 @@ export default function Auth() {
         setPassword('');
         setFirstName('');
         setLastName('');
+        // Navigate to home after successful registration
+        setTimeout(() => navigate('/'), 1500);
       }
     } catch (error) {
       toast.error('An unexpected error occurred');
