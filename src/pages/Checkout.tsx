@@ -10,10 +10,12 @@ import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, ArrowLeft } from 'lucide-react';
+import { Loader2, ArrowLeft, CheckCircle } from 'lucide-react';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import { OTPVerificationModal } from '@/components/OTPVerificationModal';
+import { PaymentSelector } from '@/components/payment/PaymentSelector';
+import { useCountryDetection } from '@/hooks/useCountryDetection';
 
 interface CheckoutFormData {
   country: string;
@@ -27,21 +29,44 @@ const Checkout = () => {
   const { cart, clearCart } = useCart();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { effectiveCountry, currency } = useCountryDetection();
   
   const [formData, setFormData] = useState<CheckoutFormData>({
-    country: 'Bangladesh',
-    fullName: '',
+    country: effectiveCountry?.name || 'Bangladesh',
+    fullName: user?.user_metadata?.full_name || '',
     fullAddress: '',
     whatsappNumber: ''
   });
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [showOTPModal, setShowOTPModal] = useState(false);
+  const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
+  const [showPaymentSection, setShowPaymentSection] = useState(false);
 
   const subtotal = cart.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const tax = subtotal * 0.08; // 8% tax
-  const shipping = subtotal > 100 ? 0 : 15; // Free shipping over $100
+  const tax = subtotal * 0.08;
+  const shipping = subtotal > 100 ? 0 : 15;
   const total = subtotal + tax + shipping;
+
+  const handleOrderSuccess = (orderId: string) => {
+    setCreatedOrderId(orderId);
+    setShowOTPModal(false);
+    setShowPaymentSection(true);
+    
+    toast({
+      title: "Order Created Successfully!",
+      description: "Please complete payment to confirm your order.",
+    });
+  };
+
+  const handlePaymentSubmitted = () => {
+    clearCart();
+    if (createdOrderId) {
+      navigate(`/order-success/${createdOrderId}`);
+    } else {
+      navigate('/dashboard');
+    }
+  };
 
   const handleInputChange = (field: keyof CheckoutFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -78,14 +103,11 @@ const Checkout = () => {
     setIsProcessing(true);
 
     try {
-      // Send OTP to WhatsApp number
       const { error } = await supabase.functions.invoke('send-otp', {
         body: { phoneNumber: formData.whatsappNumber }
       });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       toast({
         title: "OTP Sent",
@@ -112,9 +134,7 @@ const Checkout = () => {
           <div className="text-center py-12">
             <h1 className="text-2xl font-bold mb-4">Your cart is empty</h1>
             <p className="text-muted-foreground mb-6">Add some products to your cart to proceed with checkout.</p>
-            <Button onClick={() => navigate('/shop')}>
-              Continue Shopping
-            </Button>
+            <Button onClick={() => navigate('/shop')}>Continue Shopping</Button>
           </div>
         </div>
       </div>
@@ -125,22 +145,54 @@ const Checkout = () => {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         <div className="mb-6">
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/shop')}
-            className="mb-4"
-          >
+          <Button variant="ghost" onClick={() => navigate('/shop')} className="mb-4">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Shop
           </Button>
-          <h1 className="text-3xl font-bold">Checkout</h1>
+          <h1 className="text-3xl font-bold">
+            {showPaymentSection ? 'Complete Payment' : 'Checkout'}
+          </h1>
+          {effectiveCountry && (
+            <p className="text-muted-foreground">
+              Shopping from {effectiveCountry.name} • Currency: {currency}
+            </p>
+          )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Checkout Form */}
+        {showPaymentSection ? (
+          <div className="max-w-2xl mx-auto space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  Order Created Successfully
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground mb-4">
+                  Your order has been created. Please complete the payment to confirm your order.
+                </p>
+                <div className="bg-muted p-4 rounded-lg">
+                  <div className="flex justify-between items-center">
+                    <span className="font-semibold">Order Total:</span>
+                    <span className="font-bold text-lg">{currency}{total.toFixed(2)}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {createdOrderId && (
+              <PaymentSelector
+                orderId={createdOrderId}
+                orderAmount={total}
+                onPaymentSubmitted={handlePaymentSubmitted}
+              />
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Delivery Address */}
               <Card>
                 <CardHeader>
                   <CardTitle>Delivery Address</CardTitle>
@@ -216,14 +268,12 @@ const Checkout = () => {
             </form>
           </div>
 
-          {/* Order Summary */}
           <div>
             <Card className="sticky top-8">
               <CardHeader>
                 <CardTitle>Order Summary</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Cart Items */}
                 <div className="space-y-3">
                   {cart.items.map((item) => (
                     <div key={`${item.productId}-${item.variant?.id || 'default'}`} className="flex gap-3">
@@ -248,7 +298,6 @@ const Checkout = () => {
 
                 <Separator />
 
-                {/* Price Breakdown */}
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span>Subtotal</span>
@@ -289,17 +338,13 @@ const Checkout = () => {
             </Card>
           </div>
         </div>
+        )}
 
-        {/* OTP Verification Modal */}
         <OTPVerificationModal
           isOpen={showOTPModal}
           onClose={() => setShowOTPModal(false)}
           phoneNumber={formData.whatsappNumber}
-          onVerificationSuccess={(userId) => {
-            clearCart();
-            setShowOTPModal(false);
-            navigate('/dashboard');
-          }}
+          onVerificationSuccess={handleOrderSuccess}
           orderData={{
             ...formData,
             items: cart.items,

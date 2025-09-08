@@ -107,25 +107,43 @@ export class CountryService {
     try {
       let query = supabase
         .from('products')
-        .select(`
-          *,
-          category:categories(name),
-          country:countries(name, code, currency)
-        `)
+        .select('*')
         .eq('in_stock', true);
 
       if (countryId) {
         query = query.eq('country_id', countryId);
       } else {
         // If no country specified, show products without country restriction
-        // or products for a default country
         query = query.is('country_id', null);
       }
 
       const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      
+      // Map database fields to Product interface
+      const mappedProducts = (data || []).map(item => ({
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        price: Number(item.price),
+        originalPrice: item.original_price ? Number(item.original_price) : undefined,
+        images: item.images || [],
+        category: '',
+        subcategory: '',
+        brand: item.brand || '',
+        inStock: item.in_stock,
+        stockQuantity: item.stock_quantity || 0,
+        sku: item.sku,
+        tags: item.tags || [],
+        variants: [],
+        rating: Number(item.rating) || 0,
+        reviewCount: item.review_count || 0,
+        createdAt: new Date(item.created_at),
+        updatedAt: new Date(item.updated_at)
+      }));
+      
+      return mappedProducts;
     } catch (error) {
       console.error('Error fetching products by country:', error);
       return [];

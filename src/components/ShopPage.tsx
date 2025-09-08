@@ -5,9 +5,11 @@ import ProductGrid from '@/components/ProductGrid';
 import { FilterOptions } from '@/lib/types';
 import { useProducts } from '@/hooks/useProducts';
 import { useCategories } from '@/hooks/useCategories';
+import { useCountryDetection } from '@/hooks/useCountryDetection';
 
 export default function ShopPage() {
-  const { products, loading: productsLoading } = useProducts();
+  const { effectiveCountry } = useCountryDetection();
+  const { products, loading: productsLoading } = useProducts(undefined, effectiveCountry?.id);
   const { categories, loading: categoriesLoading } = useCategories();
   
   const [filters, setFilters] = useState<FilterOptions>({

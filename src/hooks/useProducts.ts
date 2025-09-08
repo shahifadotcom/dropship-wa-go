@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Product } from '@/lib/types';
-import { fetchProducts, fetchProductsByCategory } from '@/lib/services/database';
+import { CountryService } from '@/services/countryService';
 
-export const useProducts = (categorySlug?: string) => {
+export const useProducts = (categorySlug?: string, countryId?: string) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -11,9 +11,7 @@ export const useProducts = (categorySlug?: string) => {
     const loadProducts = async () => {
       try {
         setLoading(true);
-        const data = categorySlug 
-          ? await fetchProductsByCategory(categorySlug)
-          : await fetchProducts();
+        const data = await CountryService.getProductsByCountry(countryId);
         setProducts(data);
       } catch (err) {
         setError('Failed to load products');
@@ -24,14 +22,12 @@ export const useProducts = (categorySlug?: string) => {
     };
 
     loadProducts();
-  }, [categorySlug]);
+  }, [categorySlug, countryId]);
 
   const loadProducts = async () => {
     try {
       setLoading(true);
-      const data = categorySlug 
-        ? await fetchProductsByCategory(categorySlug)
-        : await fetchProducts();
+      const data = await CountryService.getProductsByCountry(countryId);
       setProducts(data);
     } catch (err) {
       setError('Failed to load products');
