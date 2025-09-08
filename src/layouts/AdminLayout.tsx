@@ -10,20 +10,8 @@ interface AdminLayoutProps {
 }
 
 const AdminLayout = ({ children }: AdminLayoutProps) => {
-  const { user, loading, signIn } = useAuth();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
-
-  // Quick admin access - in production, use proper authentication
-  const handleQuickAdminLogin = async () => {
-    // For development/demo purposes, create a temporary admin session
-    // In production, redirect to proper login page
-    try {
-      await signIn('admin@example.com', 'admin123');
-    } catch (error) {
-      console.error('Admin login failed:', error);
-      navigate('/auth');
-    }
-  };
 
   if (loading) {
     return (
@@ -40,15 +28,10 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
           <CardContent className="p-6">
             <div className="text-center space-y-4">
               <h2 className="text-2xl font-bold">Admin Access Required</h2>
-              <p className="text-muted-foreground">You need to be authenticated to access the admin panel.</p>
-              <div className="space-y-2">
-                <Button onClick={handleQuickAdminLogin} className="w-full">
-                  Quick Admin Access
-                </Button>
-                <Button variant="outline" onClick={() => navigate('/auth')} className="w-full">
-                  Go to Login Page
-                </Button>
-              </div>
+              <p className="text-muted-foreground">You need to be authenticated to access the admin panel. Please create an account or sign in first.</p>
+              <Button onClick={() => navigate('/auth')} className="w-full">
+                Go to Login/Register
+              </Button>
             </div>
           </CardContent>
         </Card>
