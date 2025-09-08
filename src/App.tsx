@@ -9,6 +9,8 @@ import Index from "./pages/Index";
 import Home from "./pages/Home";
 import ShopPage from "./components/ShopPage";
 import Auth from "./pages/Auth";
+import Checkout from "./pages/Checkout";
+import OrderSuccess from "./pages/OrderSuccess";
 import Dashboard from "./pages/admin/Dashboard";
 import NotFound from "./pages/NotFound";
 
@@ -27,6 +29,8 @@ const App = () => (
               <Route path="/home" element={<Home />} />
               <Route path="/shop" element={<ShopPage />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/checkout" element={<Checkout />} />
+              <Route path="/order-success/:orderId" element={<OrderSuccess />} />
               <Route path="/admin" element={<Dashboard />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

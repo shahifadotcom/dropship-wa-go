@@ -221,7 +221,25 @@ const ProductDetail = ({ product }: ProductDetailProps) => {
             </Button>
           </div>
 
-          <Button variant="secondary" size="lg" className="w-full">
+          <Button 
+            variant="secondary" 
+            size="lg" 
+            className="w-full"
+            onClick={() => {
+              if (!product.inStock || currentStock < 1) {
+                toast({
+                  title: "Out of Stock",
+                  description: "This product is currently out of stock.",
+                  variant: "destructive"
+                });
+                return;
+              }
+              // Add to cart and redirect to checkout
+              addToCart(product, quantity, selectedVariant);
+              window.location.href = '/checkout';
+            }}
+            disabled={!product.inStock || currentStock < 1}
+          >
             Buy Now
           </Button>
         </div>

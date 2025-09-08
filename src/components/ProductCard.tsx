@@ -109,17 +109,41 @@ const ProductCard = ({ product, onQuickView }: ProductCardProps) => {
           </Button>
         </div>
 
-        {/* Quick Add to Cart */}
+        {/* Quick Actions */}
         <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <Button
-            onClick={handleAddToCart}
-            disabled={!product.inStock}
-            className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
-            size="sm"
-          >
-            <ShoppingCart className="h-4 w-4 mr-2" />
-            {product.inStock ? 'Add to Cart' : 'Out of Stock'}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={handleAddToCart}
+              disabled={!product.inStock}
+              className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
+              size="sm"
+            >
+              <ShoppingCart className="h-4 w-4 mr-2" />
+              Add to Cart
+            </Button>
+            <Button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (!product.inStock) {
+                  toast({
+                    title: "Out of Stock",
+                    description: "This product is currently out of stock.",
+                    variant: "destructive"
+                  });
+                  return;
+                }
+                addToCart(product);
+                window.location.href = '/checkout';
+              }}
+              disabled={!product.inStock}
+              variant="secondary"
+              size="sm"
+              className="px-3"
+            >
+              Buy Now
+            </Button>
+          </div>
         </div>
       </div>
 
