@@ -40,6 +40,9 @@ verify_jwt = true
 [functions.sync-vendor-prices]
 verify_jwt = true
 
+[functions.binance-payment-verify]
+verify_jwt = false
+
 [db]
 enabled = true
 port = 54322

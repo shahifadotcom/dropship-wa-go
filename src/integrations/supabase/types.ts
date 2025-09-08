@@ -76,6 +76,47 @@ export type Database = {
           },
         ]
       }
+      advance_payments: {
+        Row: {
+          amount: number
+          created_at: string | null
+          id: string
+          order_id: string | null
+          payment_method: string
+          payment_status: string | null
+          transaction_id: string | null
+          verified_at: string | null
+        }
+        Insert: {
+          amount?: number
+          created_at?: string | null
+          id?: string
+          order_id?: string | null
+          payment_method?: string
+          payment_status?: string | null
+          transaction_id?: string | null
+          verified_at?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          id?: string
+          order_id?: string | null
+          payment_method?: string
+          payment_status?: string | null
+          transaction_id?: string | null
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "advance_payments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           created_at: string | null
@@ -591,8 +632,10 @@ export type Database = {
       }
       products: {
         Row: {
+          allowed_payment_gateways: string[] | null
           auto_order_enabled: boolean | null
           brand: string | null
+          cash_on_delivery_enabled: boolean | null
           category_id: string | null
           cost_price: number | null
           country_id: string | null
@@ -622,8 +665,10 @@ export type Database = {
           weight: number | null
         }
         Insert: {
+          allowed_payment_gateways?: string[] | null
           auto_order_enabled?: boolean | null
           brand?: string | null
+          cash_on_delivery_enabled?: boolean | null
           category_id?: string | null
           cost_price?: number | null
           country_id?: string | null
@@ -653,8 +698,10 @@ export type Database = {
           weight?: number | null
         }
         Update: {
+          allowed_payment_gateways?: string[] | null
           auto_order_enabled?: boolean | null
           brand?: string | null
+          cash_on_delivery_enabled?: boolean | null
           category_id?: string | null
           cost_price?: number | null
           country_id?: string | null

@@ -13,14 +13,17 @@ import { useToast } from '@/hooks/use-toast';
 interface PaymentSelectorProps {
   orderId: string;
   orderAmount: number;
+  productId?: string;
   onPaymentSubmitted?: () => void;
 }
 
-export const PaymentSelector = ({ orderId, orderAmount, onPaymentSubmitted }: PaymentSelectorProps) => {
+export const PaymentSelector = ({ orderId, orderAmount, productId, onPaymentSubmitted }: PaymentSelectorProps) => {
   const [paymentGateways, setPaymentGateways] = useState<PaymentGateway[]>([]);
   const [selectedGateway, setSelectedGateway] = useState<PaymentGateway | null>(null);
   const [transactionId, setTransactionId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showAdvancePayment, setShowAdvancePayment] = useState(false);
+  const [isVerifyingBinance, setIsVerifyingBinance] = useState(false);
   const { effectiveCountry } = useCountryDetection();
   const { toast } = useToast();
 
@@ -28,16 +31,20 @@ export const PaymentSelector = ({ orderId, orderAmount, onPaymentSubmitted }: Pa
     const loadPaymentGateways = async () => {
       if (!effectiveCountry?.id) {
         // Fallback to Bangladesh payment gateways
-        const gateways = await PaymentService.getBangladeshPaymentGateways();
+        const gateways = productId 
+          ? await PaymentService.getProductPaymentGateways(productId, 'bangladesh-default')
+          : await PaymentService.getBangladeshPaymentGateways();
         setPaymentGateways(gateways);
       } else {
-        const gateways = await PaymentService.getPaymentGateways(effectiveCountry.id);
+        const gateways = productId 
+          ? await PaymentService.getProductPaymentGateways(productId, effectiveCountry.id)
+          : await PaymentService.getPaymentGateways(effectiveCountry.id);
         setPaymentGateways(gateways);
       }
     };
 
     loadPaymentGateways();
-  }, [effectiveCountry]);
+  }, [effectiveCountry, productId]);
 
   const handleSubmitPayment = async () => {
     if (!selectedGateway || !transactionId.trim()) {
@@ -51,6 +58,42 @@ export const PaymentSelector = ({ orderId, orderAmount, onPaymentSubmitted }: Pa
 
     setIsSubmitting(true);
     try {
+      // Handle COD advance payment
+      if (selectedGateway.name === 'cod') {
+        const advancePaymentId = await PaymentService.createAdvancePayment(orderId, 100, 'binance_pay');
+        if (advancePaymentId) {
+          setShowAdvancePayment(true);
+          toast({
+            title: "COD Selected",
+            description: "Please pay 100 BDT advance to confirm your delivery.",
+          });
+        }
+        return;
+      }
+
+      // Handle Binance auto-verification
+      if (selectedGateway.name === 'binance_pay') {
+        setIsVerifyingBinance(true);
+        const verified = await PaymentService.verifyBinancePayment(transactionId, orderId, orderAmount);
+        
+        if (verified) {
+          toast({
+            title: "Payment Verified",
+            description: "Your Binance payment has been automatically verified!",
+          });
+          onPaymentSubmitted?.();
+          return;
+        } else {
+          toast({
+            title: "Verification Failed",
+            description: "Binance payment verification failed. Please check your transaction ID.",
+            variant: "destructive"
+          });
+          return;
+        }
+      }
+
+      // Handle other payment methods
       const success = await PaymentService.submitTransaction(
         orderId,
         selectedGateway.name,
@@ -76,6 +119,46 @@ export const PaymentSelector = ({ orderId, orderAmount, onPaymentSubmitted }: Pa
       });
     } finally {
       setIsSubmitting(false);
+      setIsVerifyingBinance(false);
+    }
+  };
+
+  const handleAdvancePayment = async () => {
+    if (!transactionId.trim()) {
+      toast({
+        title: "Missing Transaction ID",
+        description: "Please enter your Binance Pay transaction ID",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsVerifyingBinance(true);
+    try {
+      const verified = await PaymentService.verifyBinancePayment(transactionId, orderId, 100);
+      
+      if (verified) {
+        toast({
+          title: "Advance Payment Verified",
+          description: "Your order is confirmed! You'll pay the remaining amount on delivery.",
+        });
+        setShowAdvancePayment(false);
+        onPaymentSubmitted?.();
+      } else {
+        toast({
+          title: "Verification Failed",
+          description: "Payment verification failed. Please check your transaction ID.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Verification Error",
+        description: "Failed to verify payment. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsVerifyingBinance(false);
     }
   };
 
@@ -138,13 +221,18 @@ export const PaymentSelector = ({ orderId, orderAmount, onPaymentSubmitted }: Pa
           </div>
         </div>
 
-        {selectedGateway && (
+        {selectedGateway && !showAdvancePayment && (
           <div className="space-y-4">
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                Send <strong>৳{orderAmount}</strong> to <strong>{selectedGateway.wallet_number}</strong> 
-                using {selectedGateway.display_name}, then enter your transaction ID below.
+                {selectedGateway.name === 'cod' ? (
+                  <>Pay <strong>100 BDT advance</strong> using Binance Pay to confirm delivery. Remaining <strong>৳{orderAmount - 100}</strong> will be collected on delivery.</>
+                ) : selectedGateway.name === 'binance_pay' ? (
+                  <>Send <strong>৳{orderAmount}</strong> using Binance Pay, then enter your transaction ID below for automatic verification.</>
+                ) : (
+                  <>Send <strong>৳{orderAmount}</strong> to <strong>{selectedGateway.wallet_number}</strong> using {selectedGateway.display_name}, then enter your transaction ID below.</>
+                )}
               </AlertDescription>
             </Alert>
 
@@ -152,21 +240,71 @@ export const PaymentSelector = ({ orderId, orderAmount, onPaymentSubmitted }: Pa
               <Label htmlFor="transactionId">Transaction ID</Label>
               <Input
                 id="transactionId"
-                placeholder="Enter your transaction ID"
+                placeholder={selectedGateway.name === 'binance_pay' ? "Enter Binance Pay transaction ID" : "Enter your transaction ID"}
                 value={transactionId}
                 onChange={(e) => setTransactionId(e.target.value)}
               />
               <p className="text-xs text-muted-foreground">
-                You will receive this ID via SMS after completing the payment
+                {selectedGateway.name === 'binance_pay' 
+                  ? "Payment will be automatically verified within 5 minutes"
+                  : "You will receive this ID via SMS after completing the payment"
+                }
               </p>
             </div>
 
             <Button 
               onClick={handleSubmitPayment}
-              disabled={isSubmitting || !transactionId.trim()}
+              disabled={isSubmitting || isVerifyingBinance || !transactionId.trim()}
               className="w-full"
             >
-              {isSubmitting ? 'Submitting...' : 'Verify Payment'}
+              {isVerifyingBinance ? 'Verifying...' : isSubmitting ? 'Submitting...' : 
+               selectedGateway.name === 'binance_pay' ? 'Auto Verify Payment' : 
+               selectedGateway.name === 'cod' ? 'Select COD' : 'Verify Payment'}
+            </Button>
+          </div>
+        )}
+
+        {showAdvancePayment && (
+          <div className="space-y-4">
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Pay <strong>100 BDT advance</strong> using Binance Pay to confirm your Cash on Delivery order.
+                Remaining <strong>৳{orderAmount - 100}</strong> will be collected when your order is delivered.
+              </AlertDescription>
+            </Alert>
+
+            <div className="space-y-2">
+              <Label htmlFor="advanceTransactionId">Binance Pay Transaction ID</Label>
+              <Input
+                id="advanceTransactionId"
+                placeholder="Enter Binance Pay transaction ID for 100 BDT"
+                value={transactionId}
+                onChange={(e) => setTransactionId(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Pay exactly 100 BDT using Binance Pay and enter the transaction ID
+              </p>
+            </div>
+
+            <Button 
+              onClick={handleAdvancePayment}
+              disabled={isVerifyingBinance || !transactionId.trim()}
+              className="w-full"
+            >
+              {isVerifyingBinance ? 'Verifying Advance Payment...' : 'Verify Advance Payment'}
+            </Button>
+
+            <Button 
+              variant="outline"
+              onClick={() => {
+                setShowAdvancePayment(false);
+                setSelectedGateway(null);
+                setTransactionId('');
+              }}
+              className="w-full"
+            >
+              Cancel COD Order
             </Button>
           </div>
         )}

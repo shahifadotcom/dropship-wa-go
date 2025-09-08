@@ -30,6 +30,7 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
   const [loading, setLoading] = useState(false);
   const [countries, setCountries] = useState([]);
   const [vendors, setVendors] = useState([]);
+  const [paymentGateways, setPaymentGateways] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     // Basic Info
     name: '',
@@ -51,6 +52,8 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
     country_id: '',
     vendor_id: '',
     auto_order_enabled: false,
+    allowed_payment_gateways: [] as string[],
+    cash_on_delivery_enabled: false,
     brand: '',
     tags: '',
     
@@ -108,6 +111,8 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
         country_id: product.country_id || '',
         vendor_id: product.vendor_id || '',
         auto_order_enabled: product.auto_order_enabled || false,
+        allowed_payment_gateways: product.allowed_payment_gateways || [],
+        cash_on_delivery_enabled: product.cash_on_delivery_enabled || false,
         brand: product.brand || '',
         tags: product.tags ? product.tags.join(', ') : '',
         stock_quantity: product.stock_quantity?.toString() || '',
@@ -128,6 +133,7 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
         name: '', description: '', slug: '', price: '', original_price: '', cost_price: '', 
         shipping_cost: '', tax_rate: '', images: [''], category_id: '', country_id: '', 
         vendor_id: '', auto_order_enabled: false,
+        allowed_payment_gateways: [] as string[], cash_on_delivery_enabled: false,
         brand: '', tags: '', stock_quantity: '', sku: '', weight: '',
         dimensions: { length: '', width: '', height: '' },
         meta_title: '', meta_description: '', social_preview_image: ''
@@ -196,6 +202,10 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
         sku: formData.sku,
         tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()) : [],
         weight: formData.weight ? parseFloat(formData.weight) : null,
+        allowed_payment_gateways: formData.allowed_payment_gateways,
+        cash_on_delivery_enabled: formData.cash_on_delivery_enabled,
+        vendor_id: formData.vendor_id || null,
+        auto_order_enabled: formData.auto_order_enabled,
         dimensions: {
           length: formData.dimensions.length ? parseFloat(formData.dimensions.length) : null,
           width: formData.dimensions.width ? parseFloat(formData.dimensions.width) : null,
@@ -238,6 +248,7 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
         name: '', description: '', slug: '', price: '', original_price: '', cost_price: '', 
         shipping_cost: '', tax_rate: '', images: [''], category_id: '', country_id: '', 
         vendor_id: '', auto_order_enabled: false,
+        allowed_payment_gateways: [] as string[], cash_on_delivery_enabled: false,
         brand: '', tags: '', stock_quantity: '', sku: '', weight: '',
         dimensions: { length: '', width: '', height: '' },
         meta_title: '', meta_description: '', social_preview_image: ''

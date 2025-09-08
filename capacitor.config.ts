@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'dropship-wa-go',
   webDir: 'dist',
   server: {
-    url: 'https://f56ea3cd-bd45-4fa5-a243-47efbd454051.lovableproject.com?forceHideBadge=true',
+    url: 'http://161.97.169.64:3000',
     cleartext: true
   },
   plugins: {

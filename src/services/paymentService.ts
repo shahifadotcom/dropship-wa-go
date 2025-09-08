@@ -10,6 +10,17 @@ export interface PaymentGateway {
   is_active: boolean;
 }
 
+export interface AdvancePayment {
+  id: string;
+  order_id: string;
+  amount: number;
+  payment_status: 'pending' | 'paid' | 'failed';
+  payment_method: string;
+  transaction_id?: string;
+  verified_at?: string;
+  created_at: string;
+}
+
 export interface TransactionVerification {
   id: string;
   order_id: string;
@@ -38,6 +49,87 @@ export class PaymentService {
     } catch (error) {
       console.error('Error fetching payment gateways:', error);
       return [];
+    }
+  }
+
+  // Get payment gateways for a specific product
+  static async getProductPaymentGateways(productId: string, countryId: string): Promise<PaymentGateway[]> {
+    try {
+      // First get the product's allowed payment gateways
+      const { data: product, error: productError } = await supabase
+        .from('products')
+        .select('allowed_payment_gateways, cash_on_delivery_enabled')
+        .eq('id', productId)
+        .single();
+
+      if (productError) throw productError;
+
+      // Get all available gateways for the country
+      const allGateways = await this.getPaymentGateways(countryId);
+
+      // Filter based on product settings
+      let filteredGateways = allGateways;
+
+      if (product.allowed_payment_gateways && product.allowed_payment_gateways.length > 0) {
+        filteredGateways = allGateways.filter(gateway => 
+          product.allowed_payment_gateways.includes(gateway.name)
+        );
+      }
+
+      // Add or remove COD based on product setting
+      if (!product.cash_on_delivery_enabled) {
+        filteredGateways = filteredGateways.filter(gateway => gateway.name !== 'cod');
+      }
+
+      return filteredGateways;
+    } catch (error) {
+      console.error('Error fetching product payment gateways:', error);
+      return [];
+    }
+  }
+
+  // Create advance payment for COD orders
+  static async createAdvancePayment(
+    orderId: string,
+    amount: number = 100,
+    paymentMethod: string = 'binance_pay'
+  ): Promise<string | null> {
+    try {
+      const { data, error } = await supabase
+        .from('advance_payments')
+        .insert({
+          order_id: orderId,
+          amount: amount,
+          payment_method: paymentMethod,
+          payment_status: 'pending'
+        })
+        .select('id')
+        .single();
+
+      if (error) throw error;
+      return data.id;
+    } catch (error) {
+      console.error('Error creating advance payment:', error);
+      return null;
+    }
+  }
+
+  // Verify Binance payment
+  static async verifyBinancePayment(
+    transactionId: string,
+    orderId: string,
+    amount: number
+  ): Promise<boolean> {
+    try {
+      const { data, error } = await supabase.functions.invoke('binance-payment-verify', {
+        body: { transactionId, orderId, amount }
+      });
+
+      if (error) throw error;
+      return data.success;
+    } catch (error) {
+      console.error('Error verifying Binance payment:', error);
+      return false;
     }
   }
 
