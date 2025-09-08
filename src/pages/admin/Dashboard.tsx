@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Plus, Package, Users, ShoppingCart, Edit, Trash2, QrCode } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { AdminProductForm } from '@/components/AdminProductForm';
+import AdminLayout from '@/layouts/AdminLayout';
 
 interface Product {
   id: string;
@@ -154,7 +155,7 @@ const AdminDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <AdminLayout>
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">Admin Dashboard</h1>
@@ -290,7 +291,7 @@ const AdminDashboard = () => {
           onSuccess={fetchData}
         />
       </div>
-    </div>
+    </AdminLayout>
   );
 };
 

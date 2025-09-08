@@ -12,17 +12,21 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const AdminSidebar = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+
   const menuItems = [
-    { icon: LayoutDashboard, label: "Dashboard", href: "/admin", active: true },
+    { icon: LayoutDashboard, label: "Dashboard", href: "/admin" },
     { icon: Package, label: "Products", href: "/admin/products" },
     { icon: ShoppingCart, label: "Orders", href: "/admin/orders" },
     { icon: Users, label: "Customers", href: "/admin/customers" },
     { icon: BarChart3, label: "Analytics", href: "/admin/analytics" },
     { icon: Tags, label: "Categories", href: "/admin/categories" },
     { icon: Truck, label: "Shipping", href: "/admin/shipping" },
-    { icon: MessageSquare, label: "WhatsApp", href: "/admin/whatsapp" },
+    { icon: MessageSquare, label: "WhatsApp", href: "/whatsapp-setup" },
     { icon: FileText, label: "Reports", href: "/admin/reports" },
     { icon: Settings, label: "Settings", href: "/admin/settings" }
   ];
@@ -38,13 +42,15 @@ const AdminSidebar = () => {
         <nav className="space-y-2">
           {menuItems.map((item) => {
             const Icon = item.icon;
+            const isActive = location.pathname === item.href;
             return (
               <Button
                 key={item.href}
                 variant="ghost"
+                onClick={() => navigate(item.href)}
                 className={cn(
                   "w-full justify-start gap-3 h-10 text-card-foreground hover:bg-navigation/10 hover:text-navigation",
-                  item.active && "bg-navigation/10 text-navigation"
+                  isActive && "bg-navigation/10 text-navigation"
                 )}
               >
                 <Icon className="h-4 w-4" />

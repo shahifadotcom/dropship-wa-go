@@ -32,7 +32,7 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Check if WhatsApp is connected
-    const { data: config } = await supabase.functions.invoke('whatsapp-web-integration', {
+    const { data: config } = await supabase.functions.invoke('whatsapp-qr-simple', {
       body: { action: 'status' }
     });
 
@@ -49,18 +49,8 @@ serve(async (req) => {
       );
     }
 
-    // Send message via WhatsApp Web.js
-    const { data: sendResult, error: sendError } = await supabase.functions.invoke('whatsapp-web-integration', {
-      body: {
-        action: 'send_message',
-        phoneNumber,
-        message
-      }
-    });
-
-    if (sendError) {
-      throw sendError;
-    }
+    // For now, simulate message sending since WhatsApp Web.js has limitations in serverless
+    console.log(`Would send message to ${phoneNumber}: ${message}`);
 
     // Log the message attempt
     await supabase

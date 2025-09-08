@@ -21,7 +21,7 @@ const WhatsAppSetup = () => {
 
   const checkConnectionStatus = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke('whatsapp-web-integration', {
+      const { data, error } = await supabase.functions.invoke('whatsapp-qr-simple', {
         body: { action: 'status' }
       });
 
@@ -60,8 +60,8 @@ const WhatsAppSetup = () => {
   const initializeWhatsApp = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('whatsapp-web-integration', {
-        body: { action: 'initialize' }
+      const { data, error } = await supabase.functions.invoke('whatsapp-qr-simple', {
+        body: { action: 'generate_qr' }
       });
 
       if (error) throw error;
@@ -92,7 +92,7 @@ const WhatsAppSetup = () => {
   const disconnect = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('whatsapp-web-integration', {
+      const { data, error } = await supabase.functions.invoke('whatsapp-qr-simple', {
         body: { action: 'disconnect' }
       });
 

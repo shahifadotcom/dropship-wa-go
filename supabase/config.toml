@@ -25,7 +25,7 @@ verify_jwt = false
 [functions.whatsapp-setup]
 verify_jwt = false
 
-[functions.whatsapp-web-integration]
+[functions.whatsapp-qr-simple]
 verify_jwt = false
 
 [db]
