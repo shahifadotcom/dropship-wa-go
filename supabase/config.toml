@@ -25,6 +25,9 @@ verify_jwt = false
 [functions.whatsapp-setup]
 verify_jwt = false
 
+[functions.whatsapp-web-integration]
+verify_jwt = false
+
 [db]
 enabled = true
 port = 54322

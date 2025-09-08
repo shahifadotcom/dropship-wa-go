@@ -32,20 +32,16 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Check if WhatsApp is connected
-    const { data: config } = await supabase
-      .from('whatsapp_config')
-      .select('is_connected')
-      .eq('is_connected', true)
-      .maybeSingle();
+    const { data: config } = await supabase.functions.invoke('whatsapp-web-integration', {
+      body: { action: 'status' }
+    });
 
-    if (!config) {
+    if (!config?.isReady) {
       console.log('WhatsApp not connected. Message queued:', message);
-      // In production, you would integrate with WhatsApp Web.js here
-      // For now, we'll just log and return success
       return new Response(
         JSON.stringify({ 
-          success: true,
-          message: 'Message queued (WhatsApp not connected)'
+          success: false,
+          message: 'WhatsApp not connected'
         }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -53,17 +49,18 @@ serve(async (req) => {
       );
     }
 
-    // Format phone number (ensure it starts with country code)
-    let formattedNumber = phoneNumber.replace(/\D/g, '');
-    if (!formattedNumber.startsWith('880') && !formattedNumber.startsWith('1')) {
-      // Default to Bangladesh if no country code
-      formattedNumber = '880' + formattedNumber;
-    }
-    formattedNumber += '@c.us';
+    // Send message via WhatsApp Web.js
+    const { data: sendResult, error: sendError } = await supabase.functions.invoke('whatsapp-web-integration', {
+      body: {
+        action: 'send_message',
+        phoneNumber,
+        message
+      }
+    });
 
-    // In a real implementation, you would use WhatsApp Web.js client here
-    // For now, we'll simulate message sending
-    console.log(`Sending WhatsApp message to ${formattedNumber}: ${message}`);
+    if (sendError) {
+      throw sendError;
+    }
 
     // Log the message attempt
     await supabase

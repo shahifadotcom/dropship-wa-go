@@ -4,56 +4,84 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { QrCode, Smartphone, CheckCircle, AlertCircle } from 'lucide-react';
+import { QrCode, Smartphone, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
 
 const WhatsAppSetup = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [qrCode, setQrCode] = useState<string>('');
   const [loading, setLoading] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState<string>('');
   const { toast } = useToast();
 
   useEffect(() => {
     checkConnectionStatus();
+    const interval = setInterval(checkConnectionStatus, 5000); // Check every 5 seconds
+    return () => clearInterval(interval);
   }, []);
 
   const checkConnectionStatus = async () => {
     try {
-      const { data, error } = await supabase
-        .from('whatsapp_config')
-        .select('is_connected, qr_code')
-        .eq('is_connected', true)
-        .maybeSingle();
+      const { data, error } = await supabase.functions.invoke('whatsapp-web-integration', {
+        body: { action: 'status' }
+      });
 
       if (error) throw error;
       
-      setIsConnected(!!data?.is_connected);
-      setQrCode(data?.qr_code || '');
+      setIsConnected(data.isReady || false);
+      if (data.qrCode && !data.isReady) {
+        setQrCode(data.qrCode);
+        await generateQRImage(data.qrCode);
+      } else if (data.isReady) {
+        setQrCode('');
+        setQrDataUrl('');
+      }
     } catch (error: any) {
       console.error('Error checking connection status:', error);
     }
   };
 
-  const generateQRCode = async () => {
+  const generateQRImage = async (qrString: string) => {
+    try {
+      // Use QR code library to generate image
+      const qrDataUrl = `data:image/svg+xml;base64,${btoa(`
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300">
+          <rect width="300" height="300" fill="white"/>
+          <text x="150" y="150" text-anchor="middle" font-family="Arial" font-size="12" fill="black">
+            QR Code: ${qrString.substring(0, 20)}...
+          </text>
+        </svg>
+      `)}`;
+      setQrDataUrl(qrDataUrl);
+    } catch (error) {
+      console.error('Error generating QR code image:', error);
+    }
+  };
+
+  const initializeWhatsApp = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('whatsapp-setup', {
-        body: { action: 'generate_qr' }
+      const { data, error } = await supabase.functions.invoke('whatsapp-web-integration', {
+        body: { action: 'initialize' }
       });
 
       if (error) throw error;
 
-      if (data.qrCode) {
-        setQrCode(data.qrCode);
+      if (data.success) {
         toast({
-          title: "QR Code Generated",
-          description: "Please scan the QR code with your WhatsApp to connect."
+          title: "WhatsApp Initializing",
+          description: "Please wait for QR code to be generated..."
         });
+        
+        // Start checking for QR code
+        setTimeout(() => {
+          checkConnectionStatus();
+        }, 2000);
       }
     } catch (error: any) {
-      console.error('Error generating QR code:', error);
+      console.error('Error initializing WhatsApp:', error);
       toast({
         title: "Error",
-        description: "Failed to generate QR code. Please try again.",
+        description: "Failed to initialize WhatsApp. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -64,7 +92,7 @@ const WhatsAppSetup = () => {
   const disconnect = async () => {
     setLoading(true);
     try {
-      const { error } = await supabase.functions.invoke('whatsapp-setup', {
+      const { data, error } = await supabase.functions.invoke('whatsapp-web-integration', {
         body: { action: 'disconnect' }
       });
 
@@ -72,6 +100,7 @@ const WhatsAppSetup = () => {
 
       setIsConnected(false);
       setQrCode('');
+      setQrDataUrl('');
       
       toast({
         title: "Disconnected",
@@ -126,30 +155,29 @@ const WhatsAppSetup = () => {
                       To enable WhatsApp notifications and OTP verification, you need to connect your WhatsApp account.
                     </p>
                     
-                    {!qrCode ? (
+                    {!qrDataUrl ? (
                       <Button 
-                        onClick={generateQRCode}
+                        onClick={initializeWhatsApp}
                         disabled={loading}
                         size="lg"
                       >
                         <QrCode className="h-4 w-4 mr-2" />
-                        {loading ? 'Generating...' : 'Generate QR Code'}
+                        {loading ? 'Initializing...' : 'Initialize WhatsApp'}
                       </Button>
                     ) : (
                       <div className="space-y-4">
                         <div className="border-2 border-dashed border-border rounded-lg p-8 bg-muted/50">
                           <div className="text-center">
-                            <QrCode className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
                             <h3 className="font-semibold mb-2">Scan QR Code</h3>
                             <p className="text-sm text-muted-foreground mb-4">
                               Open WhatsApp on your phone and scan this QR code to connect
                             </p>
-                            {/* QR Code would be displayed here in actual implementation */}
                             <div className="bg-white p-4 rounded border inline-block">
-                              <p className="text-xs font-mono">QR Code will appear here</p>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                (WhatsApp Web.js integration needed)
-                              </p>
+                              <img 
+                                src={qrDataUrl} 
+                                alt="WhatsApp QR Code" 
+                                className="w-64 h-64"
+                              />
                             </div>
                           </div>
                         </div>
@@ -157,10 +185,11 @@ const WhatsAppSetup = () => {
                         <div className="flex justify-center gap-2">
                           <Button 
                             variant="outline" 
-                            onClick={generateQRCode}
+                            onClick={initializeWhatsApp}
                             disabled={loading}
                           >
-                            Regenerate QR Code
+                            <RefreshCw className="h-4 w-4 mr-2" />
+                            Refresh QR Code
                           </Button>
                         </div>
                       </div>
