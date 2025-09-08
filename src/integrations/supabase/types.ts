@@ -120,6 +120,39 @@ export type Database = {
           },
         ]
       }
+      error_logs: {
+        Row: {
+          created_at: string | null
+          error_message: string
+          error_stack: string | null
+          id: string
+          timestamp: string
+          url: string
+          user_agent: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          error_message: string
+          error_stack?: string | null
+          id?: string
+          timestamp: string
+          url: string
+          user_agent: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          error_message?: string
+          error_stack?: string | null
+          id?: string
+          timestamp?: string
+          url?: string
+          user_agent?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       notification_logs: {
         Row: {
           id: string
@@ -494,7 +527,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_error_logs_table_if_not_exists: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
