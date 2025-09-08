@@ -29,6 +29,7 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [countries, setCountries] = useState([]);
+  const [vendors, setVendors] = useState([]);
   const [formData, setFormData] = useState({
     // Basic Info
     name: '',
@@ -48,6 +49,8 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
     // Classification
     category_id: '',
     country_id: '',
+    vendor_id: '',
+    auto_order_enabled: false,
     brand: '',
     tags: '',
     
@@ -67,14 +70,24 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
     social_preview_image: ''
   });
 
-  // Load countries when component mounts
+  // Load countries and vendors when component mounts
   useEffect(() => {
-    const loadCountries = async () => {
+    const loadData = async () => {
       const countriesList = await CountryService.getAllCountries();
       setCountries(countriesList);
+      
+      // Load vendors
+      const { data: vendorData, error } = await supabase
+        .from('vendors')
+        .select('id, name, is_active')
+        .eq('is_active', true);
+      
+      if (!error && vendorData) {
+        setVendors(vendorData);
+      }
     };
     if (isOpen) {
-      loadCountries();
+      loadData();
     }
   }, [isOpen]);
 
@@ -93,6 +106,8 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
         images: product.images && product.images.length > 0 ? product.images : [''],
         category_id: product.category_id || '',
         country_id: product.country_id || '',
+        vendor_id: product.vendor_id || '',
+        auto_order_enabled: product.auto_order_enabled || false,
         brand: product.brand || '',
         tags: product.tags ? product.tags.join(', ') : '',
         stock_quantity: product.stock_quantity?.toString() || '',
@@ -112,6 +127,7 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
       setFormData({
         name: '', description: '', slug: '', price: '', original_price: '', cost_price: '', 
         shipping_cost: '', tax_rate: '', images: [''], category_id: '', country_id: '', 
+        vendor_id: '', auto_order_enabled: false,
         brand: '', tags: '', stock_quantity: '', sku: '', weight: '',
         dimensions: { length: '', width: '', height: '' },
         meta_title: '', meta_description: '', social_preview_image: ''
@@ -221,6 +237,7 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
       setFormData({
         name: '', description: '', slug: '', price: '', original_price: '', cost_price: '', 
         shipping_cost: '', tax_rate: '', images: [''], category_id: '', country_id: '', 
+        vendor_id: '', auto_order_enabled: false,
         brand: '', tags: '', stock_quantity: '', sku: '', weight: '',
         dimensions: { length: '', width: '', height: '' },
         meta_title: '', meta_description: '', social_preview_image: ''
@@ -342,6 +359,37 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
                         ))}
                       </SelectContent>
                     </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="vendor">Vendor (Optional - For Auto Order)</Label>
+                    <Select value={formData.vendor_id} onValueChange={(value) => setFormData({ ...formData, vendor_id: value })}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select vendor for auto ordering" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">Manual Order (No Auto Order)</SelectItem>
+                        {vendors.map((vendor) => (
+                          <SelectItem key={vendor.id} value={vendor.id}>
+                            {vendor.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {formData.vendor_id && (
+                      <div className="mt-2 flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="auto_order_enabled"
+                          checked={formData.auto_order_enabled}
+                          onChange={(e) => setFormData({ ...formData, auto_order_enabled: e.target.checked })}
+                          className="rounded border-gray-300"
+                        />
+                        <Label htmlFor="auto_order_enabled" className="text-sm">
+                          Enable automatic order placement for this product
+                        </Label>
+                      </div>
+                    )}
                   </div>
 
                   <div>

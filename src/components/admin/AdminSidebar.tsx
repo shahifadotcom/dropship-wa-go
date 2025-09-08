@@ -11,7 +11,9 @@ import {
   Truck,
   CreditCard,
   Search,
-  Globe
+  Globe,
+  Bot,
+  Building2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -28,11 +30,14 @@ const AdminSidebar = () => {
     { icon: Users, label: "Customers", href: "/admin/customers" },
     { icon: BarChart3, label: "Analytics", href: "/admin/analytics" },
     { icon: Tags, label: "Categories", href: "/admin/categories" },
+    { icon: Building2, label: "Vendors", href: "/admin/vendors" },
+    { icon: Bot, label: "Order Automation", href: "/admin/order-automation" },
+    { icon: CreditCard, label: "Payment Methods", href: "/admin/payment-methods" },
     { icon: CreditCard, label: "Payment Gateways", href: "/admin/payment-gateways" },
     { icon: Truck, label: "Shipping", href: "/admin/shipping" },
     { icon: Globe, label: "Google Services", href: "/admin/google-services" },
     { icon: Search, label: "SEO & Search", href: "/admin/seo" },
-    { icon: MessageSquare, label: "WhatsApp", href: "/whatsapp-setup" },
+    { icon: MessageSquare, label: "WhatsApp", href: "/admin/whatsapp" },
     { icon: FileText, label: "Reports", href: "/admin/reports" },
     { icon: Settings, label: "Settings", href: "/admin/settings" }
   ];

@@ -23,6 +23,9 @@ import Reports from "./pages/admin/Reports";
 import PaymentGateways from "./pages/admin/PaymentGateways";
 import GoogleServices from "./pages/admin/GoogleServices";
 import SEO from "./pages/admin/SEO";
+import Vendors from "./pages/admin/Vendors";
+import PaymentMethods from "./pages/admin/PaymentMethods";
+import OrderAutomation from "./pages/admin/OrderAutomation";
 import UserDashboard from "./pages/Dashboard";
 import WhatsAppSetup from "./pages/WhatsAppSetup";
 import AndroidApp from "./pages/AndroidApp";
@@ -41,7 +44,7 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
-              <Route path="/" element={<Home />} />
+              <Route path="/" element={<ShopPage />} />
               <Route path="/home" element={<Home />} />
               <Route path="/shop" element={<ShopPage />} />
               <Route path="/auth" element={<Auth />} />
@@ -59,6 +62,9 @@ const App = () => (
               <Route path="/admin/reports" element={<Reports />} />
               <Route path="/admin/settings" element={<Settings />} />
               <Route path="/admin/payment-gateways" element={<PaymentGateways />} />
+              <Route path="/admin/vendors" element={<Vendors />} />
+              <Route path="/admin/payment-methods" element={<PaymentMethods />} />
+              <Route path="/admin/order-automation" element={<OrderAutomation />} />
               <Route path="/admin/google-services" element={<GoogleServices />} />
               <Route path="/admin/seo" element={<SEO />} />
               <Route path="/admin/whatsapp" element={<WhatsAppSetup />} />
