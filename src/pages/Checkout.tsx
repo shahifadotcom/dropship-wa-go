@@ -4,31 +4,21 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, ArrowLeft } from 'lucide-react';
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
 
 interface CheckoutFormData {
-  email: string;
-  firstName: string;
-  lastName: string;
-  phone: string;
-  address1: string;
-  address2: string;
-  city: string;
-  province: string;
   country: string;
-  postalCode: string;
-  sameAsShipping: boolean;
-  billingAddress1: string;
-  billingAddress2: string;
-  billingCity: string;
-  billingProvince: string;
-  billingCountry: string;
-  billingPostalCode: string;
+  fullName: string;
+  fullAddress: string;
+  whatsappNumber: string;
 }
 
 const Checkout = () => {
@@ -38,23 +28,10 @@ const Checkout = () => {
   const { toast } = useToast();
   
   const [formData, setFormData] = useState<CheckoutFormData>({
-    email: user?.email || '',
-    firstName: '',
-    lastName: '',
-    phone: '',
-    address1: '',
-    address2: '',
-    city: '',
-    province: '',
-    country: 'United States',
-    postalCode: '',
-    sameAsShipping: true,
-    billingAddress1: '',
-    billingAddress2: '',
-    billingCity: '',
-    billingProvince: '',
-    billingCountry: 'United States',
-    billingPostalCode: ''
+    country: 'Bangladesh',
+    fullName: '',
+    fullAddress: '',
+    whatsappNumber: ''
   });
   
   const [isProcessing, setIsProcessing] = useState(false);
@@ -64,9 +41,16 @@ const Checkout = () => {
   const shipping = subtotal > 100 ? 0 : 15; // Free shipping over $100
   const total = subtotal + tax + shipping;
 
-  const handleInputChange = (field: keyof CheckoutFormData, value: string | boolean) => {
+  const handleInputChange = (field: keyof CheckoutFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
+
+  const countries = [
+    { code: 'BD', name: 'Bangladesh', dialCode: '+880' },
+    { code: 'US', name: 'United States', dialCode: '+1' },
+    { code: 'AU', name: 'Australia', dialCode: '+61' },
+    { code: 'CA', name: 'Canada', dialCode: '+1' }
+  ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,73 +64,20 @@ const Checkout = () => {
       return;
     }
 
-    setIsProcessing(true);
-
-    try {
-      // Create order data
-      const orderData = {
-        customerEmail: formData.email,
-        items: cart.items.map(item => ({
-          productId: item.productId,
-          product: item.product,
-          quantity: item.quantity,
-          price: item.price,
-          variant: item.variant
-        })),
-        subtotal,
-        tax,
-        shipping,
-        total,
-        billingAddress: {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          address1: formData.sameAsShipping ? formData.address1 : formData.billingAddress1,
-          address2: formData.sameAsShipping ? formData.address2 : formData.billingAddress2,
-          city: formData.sameAsShipping ? formData.city : formData.billingCity,
-          province: formData.sameAsShipping ? formData.province : formData.billingProvince,
-          country: formData.sameAsShipping ? formData.country : formData.billingCountry,
-          postalCode: formData.sameAsShipping ? formData.postalCode : formData.billingPostalCode,
-          phone: formData.phone
-        },
-        shippingAddress: {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          address1: formData.address1,
-          address2: formData.address2,
-          city: formData.city,
-          province: formData.province,
-          country: formData.country,
-          postalCode: formData.postalCode,
-          phone: formData.phone
-        }
-      };
-
-      // Call the create-order edge function
-      const { data, error } = await supabase.functions.invoke('create-order', {
-        body: orderData
-      });
-
-      if (error) throw error;
-
-      // Clear cart and redirect to success page
-      clearCart();
+    if (!formData.fullName || !formData.fullAddress || !formData.whatsappNumber) {
       toast({
-        title: "Order placed successfully!",
-        description: `Order ${data.orderNumber} has been created.`
-      });
-      
-      navigate(`/order-success/${data.orderId}`);
-
-    } catch (error) {
-      console.error('Order creation failed:', error);
-      toast({
-        title: "Order failed",
-        description: "There was an error processing your order. Please try again.",
+        title: "Missing required fields",
+        description: "Please fill in all required fields.",
         variant: "destructive"
       });
-    } finally {
-      setIsProcessing(false);
+      return;
     }
+
+    // TODO: Phase 3 - Show OTP verification popup here
+    toast({
+      title: "Ready for OTP verification",
+      description: "OTP verification will be implemented in Phase 3",
+    });
   };
 
   if (cart.items.length === 0) {
@@ -184,199 +115,77 @@ const Checkout = () => {
           {/* Checkout Form */}
           <div className="lg:col-span-2">
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Contact Information */}
+              {/* Delivery Address */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Contact Information</CardTitle>
+                  <CardTitle>Delivery Address</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <Label htmlFor="email">Email Address</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => handleInputChange('email', e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="firstName">First Name</Label>
-                      <Input
-                        id="firstName"
-                        value={formData.firstName}
-                        onChange={(e) => handleInputChange('firstName', e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="lastName">Last Name</Label>
-                      <Input
-                        id="lastName"
-                        value={formData.lastName}
-                        onChange={(e) => handleInputChange('lastName', e.target.value)}
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <Label htmlFor="phone">Phone Number</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      value={formData.phone}
-                      onChange={(e) => handleInputChange('phone', e.target.value)}
-                      required
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Shipping Address */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Shipping Address</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label htmlFor="address1">Address Line 1</Label>
-                    <Input
-                      id="address1"
-                      value={formData.address1}
-                      onChange={(e) => handleInputChange('address1', e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="address2">Address Line 2 (Optional)</Label>
-                    <Input
-                      id="address2"
-                      value={formData.address2}
-                      onChange={(e) => handleInputChange('address2', e.target.value)}
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="city">City</Label>
-                      <Input
-                        id="city"
-                        value={formData.city}
-                        onChange={(e) => handleInputChange('city', e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="province">State/Province</Label>
-                      <Input
-                        id="province"
-                        value={formData.province}
-                        onChange={(e) => handleInputChange('province', e.target.value)}
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="country">Country</Label>
-                      <Input
-                        id="country"
-                        value={formData.country}
-                        onChange={(e) => handleInputChange('country', e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="postalCode">Postal Code</Label>
-                      <Input
-                        id="postalCode"
-                        value={formData.postalCode}
-                        onChange={(e) => handleInputChange('postalCode', e.target.value)}
-                        required
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Billing Address */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Billing Address</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="sameAsShipping"
-                      checked={formData.sameAsShipping}
-                      onChange={(e) => handleInputChange('sameAsShipping', e.target.checked)}
-                      className="rounded"
-                    />
-                    <Label htmlFor="sameAsShipping">Same as shipping address</Label>
+                    <Label htmlFor="country">Country <span className="text-red-500">*</span></Label>
+                    <Select value={formData.country} onValueChange={(value) => handleInputChange('country', value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select country" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background border border-border">
+                        {countries.map((country) => (
+                          <SelectItem key={country.code} value={country.name}>
+                            <div className="flex items-center gap-2">
+                              <span className="text-lg">
+                                {country.code === 'BD' && '🇧🇩'}
+                                {country.code === 'US' && '🇺🇸'}
+                                {country.code === 'AU' && '🇦🇺'}
+                                {country.code === 'CA' && '🇨🇦'}
+                              </span>
+                              {country.name}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   
-                  {!formData.sameAsShipping && (
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="billingAddress1">Address Line 1</Label>
-                        <Input
-                          id="billingAddress1"
-                          value={formData.billingAddress1}
-                          onChange={(e) => handleInputChange('billingAddress1', e.target.value)}
-                          required={!formData.sameAsShipping}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="billingAddress2">Address Line 2 (Optional)</Label>
-                        <Input
-                          id="billingAddress2"
-                          value={formData.billingAddress2}
-                          onChange={(e) => handleInputChange('billingAddress2', e.target.value)}
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="billingCity">City</Label>
-                          <Input
-                            id="billingCity"
-                            value={formData.billingCity}
-                            onChange={(e) => handleInputChange('billingCity', e.target.value)}
-                            required={!formData.sameAsShipping}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="billingProvince">State/Province</Label>
-                          <Input
-                            id="billingProvince"
-                            value={formData.billingProvince}
-                            onChange={(e) => handleInputChange('billingProvince', e.target.value)}
-                            required={!formData.sameAsShipping}
-                          />
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="billingCountry">Country</Label>
-                          <Input
-                            id="billingCountry"
-                            value={formData.billingCountry}
-                            onChange={(e) => handleInputChange('billingCountry', e.target.value)}
-                            required={!formData.sameAsShipping}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="billingPostalCode">Postal Code</Label>
-                          <Input
-                            id="billingPostalCode"
-                            value={formData.billingPostalCode}
-                            onChange={(e) => handleInputChange('billingPostalCode', e.target.value)}
-                            required={!formData.sameAsShipping}
-                          />
-                        </div>
-                      </div>
+                  <div>
+                    <Label htmlFor="fullName">Full Name <span className="text-red-500">*</span></Label>
+                    <Input
+                      id="fullName"
+                      value={formData.fullName}
+                      onChange={(e) => handleInputChange('fullName', e.target.value)}
+                      required
+                      placeholder="Enter your full name"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="fullAddress">Full Address <span className="text-red-500">*</span></Label>
+                    <Input
+                      id="fullAddress"
+                      value={formData.fullAddress}
+                      onChange={(e) => handleInputChange('fullAddress', e.target.value)}
+                      required
+                      placeholder="Enter your complete address"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="whatsappNumber">WhatsApp Number <span className="text-red-500">*</span></Label>
+                    <div className="mt-1">
+                      <PhoneInput
+                        international
+                        countryCallingCodeEditable={false}
+                        defaultCountry={
+                          formData.country === 'Bangladesh' ? 'BD' :
+                          formData.country === 'United States' ? 'US' :
+                          formData.country === 'Australia' ? 'AU' :
+                          formData.country === 'Canada' ? 'CA' : 'BD'
+                        }
+                        value={formData.whatsappNumber}
+                        onChange={(value) => handleInputChange('whatsappNumber', value || '')}
+                        className="[&_.PhoneInputInput]:flex [&_.PhoneInputInput]:h-10 [&_.PhoneInputInput]:w-full [&_.PhoneInputInput]:rounded-md [&_.PhoneInputInput]:border [&_.PhoneInputInput]:border-input [&_.PhoneInputInput]:bg-background [&_.PhoneInputInput]:px-3 [&_.PhoneInputInput]:py-2 [&_.PhoneInputInput]:text-sm"
+                        placeholder="Enter WhatsApp number"
+                      />
                     </div>
-                  )}
+                  </div>
                 </CardContent>
               </Card>
             </form>
