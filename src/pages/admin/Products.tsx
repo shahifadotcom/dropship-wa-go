@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Plus, Search, Edit, Trash2 } from 'lucide-react';
 import AdminLayout from '@/layouts/AdminLayout';
+import { AdminProductForm } from '@/components/AdminProductForm';
 
 interface Product {
   id: string;
@@ -23,10 +24,13 @@ const Products = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showForm, setShowForm] = useState(false);
+  const [categories, setCategories] = useState([]);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchProducts();
+    fetchCategories();
   }, []);
 
   const fetchProducts = async () => {
@@ -47,6 +51,19 @@ const Products = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*');
+      
+      if (error) throw error;
+      setCategories(data || []);
+    } catch (error: any) {
+      console.error('Error fetching categories:', error);
     }
   };
 
@@ -75,7 +92,7 @@ const Products = () => {
             <h1 className="text-3xl font-bold">Products</h1>
             <p className="text-muted-foreground">Manage your product inventory</p>
           </div>
-          <Button>
+          <Button onClick={() => setShowForm(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Add Product
           </Button>
@@ -146,6 +163,13 @@ const Products = () => {
             ))
           )}
         </div>
+        
+        <AdminProductForm
+          isOpen={showForm}
+          onClose={() => setShowForm(false)}
+          categories={categories}
+          onSuccess={fetchProducts}
+        />
       </div>
     </AdminLayout>
   );

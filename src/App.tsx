@@ -16,6 +16,10 @@ import Products from "./pages/admin/Products";
 import Orders from "./pages/admin/Orders";
 import Categories from "./pages/admin/Categories";
 import Settings from "./pages/admin/Settings";
+import Customers from "./pages/admin/Customers";
+import Analytics from "./pages/admin/Analytics";
+import Shipping from "./pages/admin/Shipping";
+import Reports from "./pages/admin/Reports";
 import UserDashboard from "./pages/Dashboard";
 import WhatsAppSetup from "./pages/WhatsAppSetup";
 import NotFound from "./pages/NotFound";
@@ -45,6 +49,10 @@ const App = () => (
               <Route path="/admin/products" element={<Products />} />
               <Route path="/admin/orders" element={<Orders />} />
               <Route path="/admin/categories" element={<Categories />} />
+              <Route path="/admin/customers" element={<Customers />} />
+              <Route path="/admin/analytics" element={<Analytics />} />
+              <Route path="/admin/shipping" element={<Shipping />} />
+              <Route path="/admin/reports" element={<Reports />} />
               <Route path="/admin/settings" element={<Settings />} />
               <Route path="/admin/whatsapp" element={<WhatsAppSetup />} />
               
