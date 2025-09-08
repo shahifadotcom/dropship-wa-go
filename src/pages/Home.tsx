@@ -1,12 +1,23 @@
+import { useState } from 'react';
 import Header from "@/components/Header";
 import ImageSlider from "@/components/ImageSlider";
 import ProductGrid from "@/components/ProductGrid";
+import ProductCard from "@/components/ProductCard";
+import ProductDetailModal from "@/components/ProductDetailModal";
 import Footer from "@/components/Footer";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import { useProducts } from "@/hooks/useProducts";
+import { Product } from "@/lib/types";
 
 const Home = () => {
   const { products, loading } = useProducts();
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+
+  const handleProductClick = (product: Product) => {
+    setSelectedProduct(product);
+    setIsProductModalOpen(true);
+  };
 
   // Get latest products (first 8)
   const latestProducts = products.slice(0, 8);
@@ -75,20 +86,16 @@ const Home = () => {
               </div>
             </div>
 
-            {/* 4-column latest products */}
+            {/* 4-column latest products using ProductCard */}
             <div className="mb-8">
               <h2 className="text-2xl font-bold text-foreground mb-6">Latest Products</h2>
-              <div className="grid grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {latestProducts.map((product) => (
-                  <div key={product.id} className="bg-card rounded-lg p-4 border border-navigation/20">
-                    <img 
-                      src={product.images[0]} 
-                      alt={product.name}
-                      className="w-full h-32 object-cover rounded-lg mb-3"
-                    />
-                    <h3 className="font-medium text-sm text-card-foreground mb-2">{product.name}</h3>
-                    <p className="text-primary font-bold text-sm">${product.price}</p>
-                  </div>
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    onQuickView={handleProductClick}
+                  />
                 ))}
               </div>
             </div>
@@ -118,6 +125,16 @@ const Home = () => {
           </div>
         </div>
       </main>
+
+      {/* Product Detail Modal */}
+      <ProductDetailModal
+        product={selectedProduct}
+        isOpen={isProductModalOpen}
+        onClose={() => {
+          setIsProductModalOpen(false);
+          setSelectedProduct(null);
+        }}
+      />
 
       <Footer />
       <MobileBottomNav />

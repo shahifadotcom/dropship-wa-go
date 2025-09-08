@@ -20,6 +20,7 @@ const ProductCard = ({ product, onQuickView }: ProductCardProps) => {
 
   const handleProductClick = () => {
     // Navigate to product detail page or trigger quick view
+    console.log('Product clicked:', product.name);
     onQuickView?.(product);
   };
 
@@ -117,13 +118,13 @@ const ProductCard = ({ product, onQuickView }: ProductCardProps) => {
           </Button>
         </div>
 
-        {/* Quick Actions */}
-        <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        {/* Quick Actions - Always visible on mobile, hover on desktop */}
+        <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
           <div className="flex gap-2">
             <Button
               onClick={handleAddToCart}
               disabled={!product.inStock}
-              className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
+              className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg"
               size="sm"
             >
               <ShoppingCart className="h-4 w-4 mr-2" />
@@ -147,7 +148,7 @@ const ProductCard = ({ product, onQuickView }: ProductCardProps) => {
               disabled={!product.inStock}
               variant="outline"
               size="sm"
-              className="px-3 bg-white/20 text-white border-white/20 hover:bg-white/30"
+              className="px-3 bg-white text-black border-white hover:bg-white/90 shadow-lg font-medium"
             >
               Buy Now
             </Button>
