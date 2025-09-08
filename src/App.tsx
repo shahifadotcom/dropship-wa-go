@@ -20,6 +20,7 @@ import Customers from "./pages/admin/Customers";
 import Analytics from "./pages/admin/Analytics";
 import Shipping from "./pages/admin/Shipping";
 import Reports from "./pages/admin/Reports";
+import PaymentGateways from "./pages/admin/PaymentGateways";
 import UserDashboard from "./pages/Dashboard";
 import WhatsAppSetup from "./pages/WhatsAppSetup";
 import AndroidApp from "./pages/AndroidApp";
@@ -55,6 +56,7 @@ const App = () => (
               <Route path="/admin/shipping" element={<Shipping />} />
               <Route path="/admin/reports" element={<Reports />} />
               <Route path="/admin/settings" element={<Settings />} />
+              <Route path="/admin/payment-gateways" element={<PaymentGateways />} />
               <Route path="/admin/whatsapp" element={<WhatsAppSetup />} />
               
               <Route path="/dashboard" element={<UserDashboard />} />
