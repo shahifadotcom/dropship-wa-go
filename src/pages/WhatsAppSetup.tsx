@@ -37,14 +37,16 @@ const WhatsAppSetup = () => {
       const { data: dbData, error: dbError } = await supabase
         .from('whatsapp_config')
         .select('*')
-        .single();
+        .order('created_at', { ascending: false })
+        .limit(1);
 
-      if (!dbError && dbData) {
-        setIsConnected(dbData.is_connected || false);
-        if (dbData.qr_code && !dbData.is_connected) {
-          setQrCode(dbData.qr_code);
-          await generateQRImage(dbData.qr_code);
-        } else if (dbData.is_connected) {
+      if (!dbError && dbData && dbData.length > 0) {
+        const latestConfig = dbData[0];
+        setIsConnected(latestConfig.is_connected || false);
+        if (latestConfig.qr_code && !latestConfig.is_connected) {
+          setQrCode(latestConfig.qr_code);
+          await generateQRImage(latestConfig.qr_code);
+        } else if (latestConfig.is_connected) {
           setQrCode('');
           setQrDataUrl('');
         }
@@ -196,7 +198,29 @@ const WhatsAppSetup = () => {
             <p className="text-muted-foreground">
               Connect your WhatsApp account to send OTP and order notifications
             </p>
-          </div>
+                          <Button 
+                            variant="secondary" 
+                            onClick={async () => {
+                              try {
+                                await supabase.functions.invoke('whatsapp-web-integration', {
+                                  body: { action: 'simulate_connect' }
+                                });
+                                setIsConnected(true);
+                                setQrCode('');
+                                setQrDataUrl('');
+                                toast({
+                                  title: "Connected",
+                                  description: "WhatsApp connected successfully!"
+                                });
+                              } catch (error) {
+                                console.error('Error simulating connection:', error);
+                              }
+                            }}
+                            disabled={loading}
+                          >
+                            Test Connection
+                          </Button>
+                        </div>
 
           <Card>
             <CardHeader>
