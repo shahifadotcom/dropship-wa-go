@@ -34,6 +34,9 @@ import ErrorLogger from "./components/ErrorLogger";
 import Profile from "./pages/Profile";
 import Orders from "./pages/Orders";
 import Theme from "./pages/admin/Theme";
+import IPRanges from "./pages/admin/IPRanges";
+import Countries from "./pages/admin/Countries";
+import Notifications from "./pages/admin/Notifications";
 
 const queryClient = new QueryClient();
 
@@ -71,6 +74,9 @@ const App = () => (
               <Route path="/admin/google-services" element={<GoogleServices />} />
               <Route path="/admin/seo" element={<SEO />} />
               <Route path="/admin/theme" element={<Theme />} />
+              <Route path="/admin/countries" element={<Countries />} />
+              <Route path="/admin/ip-ranges" element={<IPRanges />} />
+              <Route path="/admin/notifications" element={<Notifications />} />
               <Route path="/admin/whatsapp" element={<WhatsAppSetup />} />
               
               <Route path="/dashboard" element={<UserDashboard />} />

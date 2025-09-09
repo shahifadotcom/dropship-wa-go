@@ -14,7 +14,10 @@ import {
   Globe,
   Bot,
   Building2,
-  Palette
+  Palette,
+  Flag,
+  Bell,
+  MapPin
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -31,6 +34,8 @@ const AdminSidebar = () => {
     { icon: Users, label: "Customers", href: "/admin/customers" },
     { icon: BarChart3, label: "Analytics", href: "/admin/analytics" },
     { icon: Tags, label: "Categories", href: "/admin/categories" },
+    { icon: Flag, label: "Countries", href: "/admin/countries" },
+    { icon: MapPin, label: "IP Ranges", href: "/admin/ip-ranges" },
     { icon: Building2, label: "Vendors", href: "/admin/vendors" },
     { icon: Bot, label: "Order Automation", href: "/admin/order-automation" },
     { icon: CreditCard, label: "Payment Methods", href: "/admin/payment-methods" },
@@ -40,6 +45,7 @@ const AdminSidebar = () => {
     { icon: Search, label: "SEO & Search", href: "/admin/seo" },
     { icon: Palette, label: "Theme", href: "/admin/theme" },
     { icon: MessageSquare, label: "WhatsApp", href: "/admin/whatsapp" },
+    { icon: Bell, label: "Notifications", href: "/admin/notifications" },
     { icon: FileText, label: "Reports", href: "/admin/reports" },
     { icon: Settings, label: "Settings", href: "/admin/settings" }
   ];
