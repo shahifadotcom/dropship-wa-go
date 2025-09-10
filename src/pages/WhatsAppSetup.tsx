@@ -99,60 +99,96 @@ const WhatsAppSetup = () => {
 
   const initializeWhatsApp = async () => {
     setLoading(true);
+    setQrCode('');
+    setQrDataUrl('');
+    
     try {
+      console.log('Initializing WhatsApp Web client...');
+      
       // Initialize real WhatsApp Web integration
       const { data, error } = await supabase.functions.invoke('whatsapp-web-integration', {
         body: { action: 'initialize' }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error from function:', error);
+        throw error;
+      }
+
+      console.log('Initialize response:', data);
 
       if (data.success) {
         toast({
           title: "WhatsApp Initializing",
-          description: "Please wait for the QR code to appear. This may take 10-30 seconds."
+          description: "Starting WhatsApp Web client. QR code will appear shortly..."
         });
         
-        // Start checking for QR code
+        // Start checking for QR code more aggressively
+        let pollCount = 0;
+        const maxPolls = 120; // 4 minutes with 2-second intervals
+        
         const checkQR = setInterval(async () => {
           try {
+            pollCount++;
+            console.log(`Polling for QR code... attempt ${pollCount}`);
+            
             const { data: statusData } = await supabase.functions.invoke('whatsapp-web-integration', {
               body: { action: 'get_qr' }
             });
             
-            if (statusData && statusData.qrCode) {
+            console.log('QR Status response:', statusData);
+            
+            if (statusData && statusData.qrCode && statusData.qrCode !== qrCode) {
+              console.log('New QR code received, generating image...');
               setQrCode(statusData.qrCode);
               await generateQRImage(statusData.qrCode);
               clearInterval(checkQR);
               toast({
-                title: "QR Code Generated",
+                title: "QR Code Ready!",
                 description: "Scan the QR code with your WhatsApp mobile app to connect."
               });
             }
             
             if (statusData && statusData.isReady) {
+              console.log('WhatsApp is ready!');
               setIsConnected(true);
               setQrCode('');
               setQrDataUrl('');
               clearInterval(checkQR);
               toast({
-                title: "Connected",
+                title: "Connected!",
                 description: "WhatsApp connected successfully!"
               });
+              checkConnectionStatus();
+            }
+            
+            // Stop polling after max attempts
+            if (pollCount >= maxPolls) {
+              clearInterval(checkQR);
+              if (!qrCode && !isConnected) {
+                toast({
+                  title: "Timeout",
+                  description: "QR code generation timed out. Please try again.",
+                  variant: "destructive"
+                });
+              }
             }
           } catch (err) {
             console.error('Error checking QR:', err);
+            if (pollCount >= maxPolls) {
+              clearInterval(checkQR);
+            }
           }
         }, 2000);
         
-        // Clear interval after 60 seconds to prevent infinite checking
-        setTimeout(() => clearInterval(checkQR), 60000);
+      } else {
+        throw new Error(data.message || 'Failed to initialize WhatsApp');
       }
     } catch (error: any) {
       console.error('Error initializing WhatsApp:', error);
       toast({
         title: "Error",
-        description: "Failed to initialize WhatsApp. Please try again.",
+        description: error.message || "Failed to initialize WhatsApp. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -255,7 +291,7 @@ const WhatsAppSetup = () => {
                         size="lg"
                       >
                         <QrCode className="h-4 w-4 mr-2" />
-                        {loading ? 'Initializing...' : 'Initialize WhatsApp'}
+                        {loading ? 'Starting WhatsApp...' : 'Initialize WhatsApp'}
                       </Button>
                     ) : (
                       <div className="space-y-4">

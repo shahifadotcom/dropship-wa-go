@@ -5,11 +5,14 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// WhatsApp Web JS integration
+// Import WhatsApp Web JS via CDN for Deno
+const { Client, LocalAuth } = await import('https://esm.sh/whatsapp-web.js@1.32.0');
+
+// Global client state
+let whatsappClient = null;
 let currentQRCode = '';
 let isConnected = false;
-let sessionActive = false;
-let client = null;
+let isInitializing = false;
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -34,47 +37,133 @@ serve(async (req) => {
         try {
           console.log('Initializing WhatsApp Web client...');
           
-          // For now, we'll simulate real QR generation since whatsapp-web.js requires puppeteer
-          // In production, this would use actual WhatsApp Web JS with proper server setup
+          if (isInitializing) {
+            return new Response(
+              JSON.stringify({ 
+                success: false,
+                message: 'WhatsApp client is already initializing'
+              }),
+              { 
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+              }
+            );
+          }
+
+          isInitializing = true;
           
-          // Generate a more realistic QR code format
-          const timestamp = Date.now();
-          const sessionId = Math.random().toString(36).substring(2, 15);
-          const realQRCode = `${timestamp},${sessionId},44d3oa9r5uqa9r3a4rqo34iar8a9r4r3a4rqo3oiar54i8a9r4`;
-          
-          currentQRCode = realQRCode;
-          isConnected = false;
-          sessionActive = true;
-          
-          // Store QR code in database immediately
-          await supabase
-            .from('whatsapp_config')
-            .upsert({
-              qr_code: realQRCode,
-              is_connected: false,
-              session_data: { initialized: true, timestamp: new Date().toISOString() }
-            });
-          
-          // Simulate QR code timeout after 2 minutes
-          setTimeout(async () => {
-            if (!isConnected && currentQRCode === realQRCode) {
-              currentQRCode = '';
-              await supabase
-                .from('whatsapp_config')
-                .upsert({
-                  qr_code: null,
-                  is_connected: false,
-                  session_data: { expired: true, timestamp: new Date().toISOString() }
-                });
+          // Destroy existing client if it exists
+          if (whatsappClient) {
+            try {
+              await whatsappClient.destroy();
+            } catch (e) {
+              console.log('Error destroying existing client:', e);
             }
-          }, 120000);
+          }
+
+          // Create new WhatsApp client with proper configuration for server environment
+          whatsappClient = new Client({
+            authStrategy: new LocalAuth(),
+            puppeteer: {
+              headless: true,
+              args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-accelerated-2d-canvas',
+                '--no-first-run',
+                '--no-zygote',
+                '--single-process',
+                '--disable-gpu'
+              ],
+            }
+          });
+
+          // Set up event listeners
+          whatsappClient.on('qr', async (qr) => {
+            console.log('QR Code received:', qr.substring(0, 50) + '...');
+            currentQRCode = qr;
+            isConnected = false;
+            
+            // Store QR code in database
+            await supabase
+              .from('whatsapp_config')
+              .upsert({
+                qr_code: qr,
+                is_connected: false,
+                session_data: { qr_generated: true, timestamp: new Date().toISOString() }
+              });
+          });
+
+          whatsappClient.on('ready', async () => {
+            console.log('WhatsApp client is ready!');
+            isConnected = true;
+            currentQRCode = '';
+            isInitializing = false;
+            
+            // Update database to reflect connection
+            await supabase
+              .from('whatsapp_config')
+              .upsert({
+                qr_code: null,
+                is_connected: true,
+                session_data: { 
+                  connected: true, 
+                  timestamp: new Date().toISOString() 
+                }
+              });
+          });
+
+          whatsappClient.on('authenticated', () => {
+            console.log('WhatsApp client authenticated');
+          });
+
+          whatsappClient.on('auth_failure', async (msg) => {
+            console.error('Authentication failed:', msg);
+            isConnected = false;
+            isInitializing = false;
+            currentQRCode = '';
+            
+            await supabase
+              .from('whatsapp_config')
+              .upsert({
+                qr_code: null,
+                is_connected: false,
+                session_data: { 
+                  auth_failed: true, 
+                  error: msg,
+                  timestamp: new Date().toISOString() 
+                }
+              });
+          });
+
+          whatsappClient.on('disconnected', async (reason) => {
+            console.log('WhatsApp client disconnected:', reason);
+            isConnected = false;
+            isInitializing = false;
+            currentQRCode = '';
+            
+            await supabase
+              .from('whatsapp_config')
+              .upsert({
+                qr_code: null,
+                is_connected: false,
+                session_data: { 
+                  disconnected: true, 
+                  reason: reason,
+                  timestamp: new Date().toISOString() 
+                }
+              });
+          });
+
+          // Initialize the client
+          await whatsappClient.initialize();
           
           console.log('WhatsApp client initialization started');
           
           return new Response(
             JSON.stringify({ 
               success: true,
-              message: 'WhatsApp client initialization started. Waiting for QR code...'
+              message: 'WhatsApp client initialization started. Generating QR code...'
             }),
             { 
               headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -82,6 +171,7 @@ serve(async (req) => {
           );
         } catch (error) {
           console.error('Error initializing WhatsApp:', error);
+          isInitializing = false;
           return new Response(
             JSON.stringify({ 
               success: false,
@@ -121,7 +211,7 @@ serve(async (req) => {
           );
         }
 
-        if (!isConnected || !client) {
+        if (!isConnected || !whatsappClient) {
           return new Response(
             JSON.stringify({ error: 'WhatsApp client is not connected' }),
             { 
@@ -137,7 +227,7 @@ serve(async (req) => {
           const chatId = `${formattedNumber}@c.us`;
           
           // Send message using WhatsApp Web JS
-          await client.sendMessage(chatId, message);
+          await whatsappClient.sendMessage(chatId, message);
           
           console.log(`Message sent to ${phoneNumber}: ${message}`);
           
@@ -249,14 +339,14 @@ serve(async (req) => {
         console.log('Disconnecting WhatsApp...');
         
         try {
-          if (client) {
-            await client.destroy();
-            client = null;
+          if (whatsappClient) {
+            await whatsappClient.destroy();
+            whatsappClient = null;
           }
           
           isConnected = false;
           currentQRCode = '';
-          sessionActive = false;
+          isInitializing = false;
           
           // Update database
           await supabase
