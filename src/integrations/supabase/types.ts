@@ -303,27 +303,36 @@ export type Database = {
       }
       notification_logs: {
         Row: {
+          created_at: string | null
+          error_message: string | null
           id: string
           message: string
           order_id: string | null
           phone_number: string
           sent_at: string
+          session_data: Json | null
           status: string | null
         }
         Insert: {
+          created_at?: string | null
+          error_message?: string | null
           id?: string
           message: string
           order_id?: string | null
           phone_number: string
           sent_at?: string
+          session_data?: Json | null
           status?: string | null
         }
         Update: {
+          created_at?: string | null
+          error_message?: string | null
           id?: string
           message?: string
           order_id?: string | null
           phone_number?: string
           sent_at?: string
+          session_data?: Json | null
           status?: string | null
         }
         Relationships: [
