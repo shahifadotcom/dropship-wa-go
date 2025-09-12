@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import ImageSlider from "@/components/ImageSlider";
 import ProductGrid from "@/components/ProductGrid";
@@ -7,12 +8,21 @@ import ProductDetailModal from "@/components/ProductDetailModal";
 import Footer from "@/components/Footer";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import { useProducts } from "@/hooks/useProducts";
+import { useStoreSettings } from "@/hooks/useStoreSettings";
 import { Product } from "@/lib/types";
 
 const Home = () => {
   const { products, loading } = useProducts();
+  const { settings } = useStoreSettings();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+
+  // Update document title when settings load
+  useEffect(() => {
+    if (settings?.site_title) {
+      document.title = settings.site_title;
+    }
+  }, [settings?.site_title]);
 
   const handleProductClick = (product: Product) => {
     setSelectedProduct(product);
@@ -42,22 +52,29 @@ const Home = () => {
       <Header />
       
       <main className="pb-20 md:pb-0">
-        {/* Desktop Layout */}
+        {/* Desktop and Tablet Layout */}
         <div className="hidden md:block">
           <div className="container mx-auto px-4 py-8">
-            {/* First 2-column products */}
+            {/* First 2-column products - Responsive */}
             <div className="mb-8">
               <h2 className="text-2xl font-bold text-foreground mb-6">Featured Products</h2>
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {featuredProducts1.map((product) => (
-                  <div key={product.id} className="bg-card rounded-lg p-4 border border-navigation/20">
+                  <div key={product.id} className="bg-card rounded-lg p-4 border border-navigation/20 hover:shadow-lg transition-shadow">
                     <img 
                       src={product.images[0]} 
                       alt={product.name}
-                      className="w-full h-48 object-cover rounded-lg mb-4"
+                      className="w-full h-48 md:h-64 object-cover rounded-lg mb-4"
                     />
-                    <h3 className="font-semibold text-card-foreground mb-2">{product.name}</h3>
-                    <p className="text-primary font-bold">${product.price}</p>
+                    <h3 className="font-semibold text-card-foreground mb-2 line-clamp-2">{product.name}</h3>
+                    <p className="text-primary font-bold text-lg">${product.price}</p>
+                    <Button 
+                      onClick={() => handleProductClick(product)} 
+                      className="w-full mt-3"
+                      variant="outline"
+                    >
+                      Quick View
+                    </Button>
                   </div>
                 ))}
               </div>
@@ -68,28 +85,35 @@ const Home = () => {
               <ImageSlider />
             </div>
 
-            {/* Second 2-column products */}
+            {/* Second 2-column products - Responsive */}
             <div className="mb-8">
               <h2 className="text-2xl font-bold text-foreground mb-6">Top Deals</h2>
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {featuredProducts2.map((product) => (
-                  <div key={product.id} className="bg-card rounded-lg p-4 border border-navigation/20">
+                  <div key={product.id} className="bg-card rounded-lg p-4 border border-navigation/20 hover:shadow-lg transition-shadow">
                     <img 
                       src={product.images[0]} 
                       alt={product.name}
-                      className="w-full h-48 object-cover rounded-lg mb-4"
+                      className="w-full h-48 md:h-64 object-cover rounded-lg mb-4"
                     />
-                    <h3 className="font-semibold text-card-foreground mb-2">{product.name}</h3>
-                    <p className="text-primary font-bold">${product.price}</p>
+                    <h3 className="font-semibold text-card-foreground mb-2 line-clamp-2">{product.name}</h3>
+                    <p className="text-primary font-bold text-lg">${product.price}</p>
+                    <Button 
+                      onClick={() => handleProductClick(product)} 
+                      className="w-full mt-3"
+                      variant="outline"
+                    >
+                      Quick View
+                    </Button>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* 4-column latest products using ProductCard */}
+            {/* Responsive grid for latest products */}
             <div className="mb-8">
               <h2 className="text-2xl font-bold text-foreground mb-6">Latest Products</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
                 {latestProducts.map((product) => (
                   <ProductCard
                     key={product.id}
@@ -102,23 +126,62 @@ const Home = () => {
           </div>
         </div>
 
-        {/* Mobile Layout */}
+        {/* Mobile Layout - Optimized */}
         <div className="md:hidden">
-          <div className="px-4 py-4">
-            {/* 2x4 grid with horizontal scroll */}
-            <h2 className="text-xl font-bold text-foreground mb-4">Latest Products</h2>
-            <div className="overflow-x-auto">
-              <div className="grid grid-rows-2 grid-flow-col gap-4 w-max">
-                {products.slice(0, 16).map((product, index) => (
-                  <div key={product.id} className="w-40 bg-card rounded-lg p-3 border border-navigation/20">
+          <div className="px-4 py-4 space-y-6">
+            {/* Mobile Featured Products */}
+            <div>
+              <h2 className="text-xl font-bold text-foreground mb-4">Featured</h2>
+              <div className="grid grid-cols-2 gap-3">
+                {featuredProducts1.slice(0, 2).map((product) => (
+                  <div key={product.id} className="bg-card rounded-lg p-3 border border-navigation/20">
                     <img 
                       src={product.images[0]} 
                       alt={product.name}
-                      className="w-full h-24 object-cover rounded-lg mb-2"
+                      className="w-full h-32 object-cover rounded-lg mb-2"
                     />
-                    <h3 className="font-medium text-xs text-card-foreground mb-1 line-clamp-2">{product.name}</h3>
+                    <h3 className="font-medium text-sm text-card-foreground mb-1 line-clamp-2">{product.name}</h3>
                     <p className="text-primary font-bold text-sm">${product.price}</p>
                   </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Mobile Image Slider */}
+            <div>
+              <ImageSlider />
+            </div>
+
+            {/* Mobile Latest Products - Horizontal Scroll */}
+            <div>
+              <h2 className="text-xl font-bold text-foreground mb-4">Latest Products</h2>
+              <div className="overflow-x-auto">
+                <div className="flex gap-3 pb-4">
+                  {products.slice(0, 12).map((product) => (
+                    <div key={product.id} className="flex-shrink-0 w-40 bg-card rounded-lg p-3 border border-navigation/20">
+                      <img 
+                        src={product.images[0]} 
+                        alt={product.name}
+                        className="w-full h-32 object-cover rounded-lg mb-2"
+                      />
+                      <h3 className="font-medium text-xs text-card-foreground mb-1 line-clamp-2">{product.name}</h3>
+                      <p className="text-primary font-bold text-sm">${product.price}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Mobile Grid Products */}
+            <div>
+              <h2 className="text-xl font-bold text-foreground mb-4">All Products</h2>
+              <div className="grid grid-cols-2 gap-3">
+                {products.slice(12, 20).map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    onQuickView={handleProductClick}
+                  />
                 ))}
               </div>
             </div>

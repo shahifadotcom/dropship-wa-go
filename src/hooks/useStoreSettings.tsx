@@ -6,7 +6,7 @@ export interface StoreSettings {
   store_name: string;
   store_tagline: string;
   store_description: string;
-  store_logo: string;
+  store_logo?: string;
   contact_email: string;
   contact_phone: string;
   contact_address: string;

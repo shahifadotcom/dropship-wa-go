@@ -16,7 +16,7 @@ interface StoreSettings {
   store_name: string;
   store_tagline: string;
   store_description: string;
-  store_logo: string;
+  store_logo?: string;
   contact_email: string;
   contact_phone: string;
   contact_address: string;
@@ -32,6 +32,7 @@ const Settings = () => {
   const [settings, setSettings] = useState<StoreSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [logoUploading, setLogoUploading] = useState(false);
 
   useEffect(() => {
     fetchSettings();
@@ -90,6 +91,38 @@ const Settings = () => {
       store_tagline: settings.store_tagline,
       store_description: settings.store_description,
     });
+  };
+
+  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !settings) return;
+
+    setLogoUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `store-logo-${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('product-images')
+        .upload(fileName, file);
+
+      if (uploadError) {
+        toast.error('Failed to upload logo');
+        return;
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('product-images')
+        .getPublicUrl(fileName);
+
+      await updateSettings({ store_logo: publicUrl });
+      toast.success('Logo uploaded successfully');
+    } catch (error) {
+      console.error('Error uploading logo:', error);
+      toast.error('Failed to upload logo');
+    } finally {
+      setLogoUploading(false);
+    }
   };
 
   const handleContactInfoSave = () => {
@@ -156,6 +189,36 @@ const Settings = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Logo Upload Section */}
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Store Logo</Label>
+                  <div className="flex items-center gap-4">
+                    {settings.store_logo && (
+                      <img 
+                        src={settings.store_logo} 
+                        alt="Store Logo" 
+                        className="w-16 h-16 object-contain rounded-lg border border-border"
+                      />
+                    )}
+                    <div className="flex-1">
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleLogoUpload}
+                        disabled={logoUploading}
+                        className="cursor-pointer"
+                      />
+                      {logoUploading && (
+                        <p className="text-sm text-muted-foreground mt-1">Uploading...</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <Separator />
+              
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="store-name">Store Name</Label>

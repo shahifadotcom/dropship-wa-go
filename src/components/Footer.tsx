@@ -1,7 +1,9 @@
 import { Package, Twitter, Github, Linkedin, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useStoreSettings } from "@/hooks/useStoreSettings";
 
 const Footer = () => {
+  const { settings } = useStoreSettings();
   const footerSections = [
     {
       title: "Platform",
@@ -53,15 +55,21 @@ const Footer = () => {
           {/* Brand section */}
           <div className="lg:col-span-2">
             <div className="flex items-center space-x-2 mb-4">
-              <Package className="h-8 w-8 text-primary" />
+              {settings?.store_logo ? (
+                <img 
+                  src={settings.store_logo} 
+                  alt={settings.store_name || 'Store Logo'} 
+                  className="h-8 w-8 object-contain"
+                />
+              ) : (
+                <Package className="h-8 w-8 text-primary" />
+              )}
               <span className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                DropshipPro
+                {settings?.store_name || 'DropshipPro'}
               </span>
             </div>
             <p className="text-muted-foreground mb-6 max-w-md">
-              The complete e-commerce platform that empowers merchants to build, 
-              scale, and optimize their dropshipping businesses with AI-powered tools 
-              and global integrations.
+              {settings?.store_description || 'The complete e-commerce platform that empowers merchants to build, scale, and optimize their dropshipping businesses with AI-powered tools and global integrations.'}
             </p>
             <div className="flex space-x-4">
               <Button variant="ghost" size="icon" className="hover:text-primary">
@@ -102,7 +110,7 @@ const Footer = () => {
         {/* Bottom section */}
         <div className="border-t pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-muted-foreground text-sm mb-4 md:mb-0">
-            © 2024 DropshipPro. All rights reserved.
+            © 2024 {settings?.store_name || 'DropshipPro'}. All rights reserved.
           </p>
           <div className="flex flex-wrap gap-6 text-sm">
             <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">

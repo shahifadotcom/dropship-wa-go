@@ -5,11 +5,13 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useStoreSettings } from "@/hooks/useStoreSettings";
 import CartDrawer from "./CartDrawer";
 
 const Header = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const { settings } = useStoreSettings();
 
   const handleSignOut = async () => {
     await signOut();
@@ -27,9 +29,17 @@ const Header = () => {
               <Menu className="h-5 w-5" />
             </Button>
             <a href="/" className="flex items-center space-x-2">
-              <Package className="h-8 w-8 text-navigation-foreground" />
+              {settings?.store_logo ? (
+                <img 
+                  src={settings.store_logo} 
+                  alt={settings.store_name || 'Store Logo'} 
+                  className="h-8 w-8 object-contain"
+                />
+              ) : (
+                <Package className="h-8 w-8 text-navigation-foreground" />
+              )}
               <span className="text-xl font-bold text-navigation-foreground">
-                DropshipPro
+                {settings?.store_name || 'DropshipPro'}
               </span>
             </a>
           </div>

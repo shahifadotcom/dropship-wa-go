@@ -909,6 +909,7 @@ export type Database = {
           maintenance_mode: boolean | null
           site_title: string | null
           store_description: string | null
+          store_logo: string | null
           store_name: string | null
           store_tagline: string | null
           updated_at: string
@@ -926,6 +927,7 @@ export type Database = {
           maintenance_mode?: boolean | null
           site_title?: string | null
           store_description?: string | null
+          store_logo?: string | null
           store_name?: string | null
           store_tagline?: string | null
           updated_at?: string
@@ -943,6 +945,7 @@ export type Database = {
           maintenance_mode?: boolean | null
           site_title?: string | null
           store_description?: string | null
+          store_logo?: string | null
           store_name?: string | null
           store_tagline?: string | null
           updated_at?: string
