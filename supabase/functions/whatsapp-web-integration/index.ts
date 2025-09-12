@@ -42,7 +42,7 @@ serve(async (req) => {
     switch (action) {
       case 'initialize': {
         try {
-          console.log('Initializing WhatsApp Web client...');
+          console.log('Initializing real WhatsApp Web client...');
           
           if (isInitializing) {
             return new Response(
@@ -56,79 +56,79 @@ serve(async (req) => {
             );
           }
 
+          // Get WhatsApp bridge URL from secrets
+          const bridgeUrl = Deno.env.get('WHATSAPP_BRIDGE_URL');
+          if (!bridgeUrl) {
+            return new Response(
+              JSON.stringify({ 
+                success: false,
+                message: 'WhatsApp bridge URL not configured. Please set WHATSAPP_BRIDGE_URL secret.'
+              }),
+              { 
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+              }
+            );
+          }
+
           isInitializing = true;
           
-          // Generate a new session ID
-          sessionId = `whatsapp_session_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+          // Call real WhatsApp bridge server
+          const response = await fetch(`${bridgeUrl}/initialize`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+          });
           
-          // Generate a realistic WhatsApp QR code
-          currentQRCode = generateWhatsAppQR();
-          isConnected = false;
+          const data = await response.json();
           
-          console.log('Generated WhatsApp QR Code:', currentQRCode.substring(0, 50) + '...');
-          
-          // Store QR code in database
-          await supabase
-            .from('whatsapp_config')
-            .upsert({
-              qr_code: currentQRCode,
-              is_connected: false,
-              session_data: { 
-                qr_generated: true, 
-                session_id: sessionId,
-                timestamp: new Date().toISOString(),
-                expires_at: new Date(Date.now() + 60000).toISOString() // QR expires in 1 minute
+          if (data.success && data.qrCode) {
+            currentQRCode = data.qrCode;
+            isConnected = false;
+            sessionId = `whatsapp_session_${Date.now()}`;
+            
+            // Store real QR code in database
+            await supabase
+              .from('whatsapp_config')
+              .upsert({
+                qr_code: currentQRCode,
+                is_connected: false,
+                session_data: { 
+                  real_qr: true, 
+                  session_id: sessionId,
+                  timestamp: new Date().toISOString(),
+                  bridge_url: bridgeUrl
+                }
+              });
+            
+            console.log('Real WhatsApp QR code generated successfully');
+            
+            return new Response(
+              JSON.stringify({ 
+                success: true,
+                message: 'Real WhatsApp QR code generated. Scan with your mobile device.',
+                qrCode: currentQRCode
+              }),
+              { 
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
               }
-            });
-          
-          // Set timeout for QR expiration
-          setTimeout(async () => {
-            if (!isConnected && currentQRCode) {
-              console.log('QR Code expired, generating new one...');
-              currentQRCode = generateWhatsAppQR();
-              
-              await supabase
-                .from('whatsapp_config')
-                .upsert({
-                  qr_code: currentQRCode,
-                  is_connected: false,
-                  session_data: { 
-                    qr_regenerated: true, 
-                    session_id: sessionId,
-                    timestamp: new Date().toISOString(),
-                    expires_at: new Date(Date.now() + 60000).toISOString()
-                  }
-                });
-            }
-          }, 60000); // Refresh QR every minute
-          
-          isInitializing = false;
-          
-          console.log('WhatsApp QR code generated successfully');
-          
-          return new Response(
-            JSON.stringify({ 
-              success: true,
-              message: 'WhatsApp QR code generated. Scan with your mobile device.',
-              qrCode: currentQRCode
-            }),
-            { 
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-            }
-          );
+            );
+          } else {
+            throw new Error(data.error || 'Failed to generate QR code from bridge');
+          }
         } catch (error) {
-          console.error('Error initializing WhatsApp:', error);
+          console.error('Error initializing real WhatsApp:', error);
           isInitializing = false;
           return new Response(
             JSON.stringify({ 
               success: false,
-              message: 'Failed to generate WhatsApp QR code',
+              message: 'Failed to connect to WhatsApp bridge server. Make sure it\'s running.',
               error: error.message
             }),
             { 
               headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
             }
           );
+        } finally {
+          isInitializing = false;
         }
       }
 
@@ -158,47 +158,50 @@ serve(async (req) => {
           );
         }
 
-        if (!isConnected) {
-          return new Response(
-            JSON.stringify({ error: 'WhatsApp client is not connected' }),
-            { 
-              status: 400, 
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-            }
-          );
-        }
-
         try {
-          // Format phone number for WhatsApp
-          const formattedNumber = phoneNumber.replace(/\D/g, '');
-          
-          console.log(`Simulating message send to ${formattedNumber}: ${message}`);
-          
-          // Log the message as sent (simulation)
-          await supabase
-            .from('notification_logs')
-            .insert({
-              phone_number: phoneNumber,
-              message: message,
-              status: 'sent',
-              session_data: { 
-                simulated: true, 
-                session_id: sessionId,
-                timestamp: new Date().toISOString() 
-              }
-            });
+          const bridgeUrl = Deno.env.get('WHATSAPP_BRIDGE_URL');
+          if (!bridgeUrl) {
+            throw new Error('WhatsApp bridge URL not configured');
+          }
 
-          return new Response(
-            JSON.stringify({ 
-              success: true,
-              messageId: `msg_${Date.now()}`,
-              timestamp: Date.now(),
-              simulated: true
-            }),
-            { 
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-            }
-          );
+          // Send real message via bridge
+          const response = await fetch(`${bridgeUrl}/send-message`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phoneNumber, message })
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            // Log successful message
+            await supabase
+              .from('notification_logs')
+              .insert({
+                phone_number: phoneNumber,
+                message: message,
+                status: 'sent',
+                session_data: { 
+                  real_message: true, 
+                  session_id: sessionId,
+                  message_id: data.messageId,
+                  timestamp: new Date().toISOString() 
+                }
+              });
+
+            return new Response(
+              JSON.stringify({ 
+                success: true,
+                messageId: data.messageId,
+                timestamp: data.timestamp
+              }),
+              { 
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+              }
+            );
+          } else {
+            throw new Error(data.error || 'Failed to send message');
+          }
         } catch (error) {
           console.error('Error sending message:', error);
           
@@ -259,17 +262,46 @@ serve(async (req) => {
       }
 
       case 'status': {
-        // Check database for latest status
-        const { data: dbData } = await supabase
-          .from('whatsapp_config')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(1);
-        
-        if (dbData && dbData.length > 0) {
-          const latest = dbData[0];
-          isConnected = latest.is_connected || false;
-          currentQRCode = latest.qr_code || '';
+        try {
+          const bridgeUrl = Deno.env.get('WHATSAPP_BRIDGE_URL');
+          
+          if (bridgeUrl) {
+            // Check real bridge status
+            const response = await fetch(`${bridgeUrl}/status`);
+            const data = await response.json();
+            
+            if (data.isReady !== undefined) {
+              isConnected = data.isReady;
+              currentQRCode = data.qrCode || '';
+              
+              // Update database with real status
+              await supabase
+                .from('whatsapp_config')
+                .upsert({
+                  qr_code: currentQRCode,
+                  is_connected: isConnected,
+                  session_data: { 
+                    real_status: true,
+                    timestamp: new Date().toISOString() 
+                  }
+                });
+            }
+          } else {
+            // Fallback to database check
+            const { data: dbData } = await supabase
+              .from('whatsapp_config')
+              .select('*')
+              .order('created_at', { ascending: false })
+              .limit(1);
+            
+            if (dbData && dbData.length > 0) {
+              const latest = dbData[0];
+              isConnected = latest.is_connected || false;
+              currentQRCode = latest.qr_code || '';
+            }
+          }
+        } catch (error) {
+          console.error('Error checking bridge status:', error);
         }
         
         return new Response(
