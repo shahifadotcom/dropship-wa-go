@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { Settings as SettingsIcon, Store, Mail, Phone, Globe } from 'lucide-react';
+import { Settings as SettingsIcon, Store, Mail, Phone, Globe, Upload, Image } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import AdminLayout from '@/layouts/AdminLayout';
@@ -16,6 +16,7 @@ interface StoreSettings {
   store_name: string;
   store_tagline: string;
   store_description: string;
+  store_logo: string;
   contact_email: string;
   contact_phone: string;
   contact_address: string;
