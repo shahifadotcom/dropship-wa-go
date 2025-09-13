@@ -1,23 +1,42 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Product } from '@/lib/types';
+import { useRoles } from './useRoles';
 
 export function useProducts() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const { isAdmin } = useRoles();
 
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('products')
-        .select(`
+      
+      // Admin users get full product data including cost_price
+      // Non-admin users get filtered data excluding sensitive pricing
+      const selectFields = isAdmin 
+        ? `
           *,
           categories:category_id(name, slug),
           subcategories:subcategory_id(name, slug),
           product_variants(*)
-        `);
+        `
+        : `
+          id, name, description, price, images, category_id, subcategory_id,
+          country_id, vendor_id, sku, stock_quantity, in_stock, rating, 
+          review_count, tags, brand, weight, dimensions, slug, meta_title,
+          meta_description, social_preview_image, shipping_cost, tax_rate,
+          cash_on_delivery_enabled, auto_order_enabled, allowed_payment_gateways,
+          created_at, updated_at,
+          categories:category_id(name, slug),
+          subcategories:subcategory_id(name, slug),
+          product_variants(*)
+        `;
+        
+      const { data, error } = await supabase
+        .from('products')
+        .select(selectFields);
       
       if (error) throw error;
       
@@ -59,7 +78,7 @@ export function useProducts() {
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [isAdmin]);
 
   return { products, loading, error, refetch: fetchProducts };
 }
@@ -68,6 +87,7 @@ export function useProduct(id: string) {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const { isAdmin } = useRoles();
 
   useEffect(() => {
     if (!id) return;
@@ -75,16 +95,33 @@ export function useProduct(id: string) {
     const fetchProduct = async () => {
       try {
         setLoading(true);
-        const { data, error } = await supabase
-          .from('products')
-          .select(`
+        
+        // Admin users get full product data including cost_price
+        // Non-admin users get filtered data excluding sensitive pricing
+        const selectFields = isAdmin 
+          ? `
             *,
             categories:category_id(name, slug),
             subcategories:subcategory_id(name, slug),
             product_variants(*)
-          `)
+          `
+          : `
+            id, name, description, price, images, category_id, subcategory_id,
+            country_id, vendor_id, sku, stock_quantity, in_stock, rating, 
+            review_count, tags, brand, weight, dimensions, slug, meta_title,
+            meta_description, social_preview_image, shipping_cost, tax_rate,
+            cash_on_delivery_enabled, auto_order_enabled, allowed_payment_gateways,
+            created_at, updated_at,
+            categories:category_id(name, slug),
+            subcategories:subcategory_id(name, slug),
+            product_variants(*)
+          `;
+          
+        const { data, error } = await supabase
+          .from('products')
+          .select(selectFields)
           .eq('id', id)
-          .single();
+          .maybeSingle();
         
         if (error) throw error;
         
@@ -125,7 +162,7 @@ export function useProduct(id: string) {
     };
 
     fetchProduct();
-  }, [id]);
+  }, [id, isAdmin]);
 
   return { product, loading, error };
 }
