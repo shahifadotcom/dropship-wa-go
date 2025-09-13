@@ -87,7 +87,9 @@ const App = () => (
               <Route path="/orders" element={<Orders />} />
               <Route path="/whatsapp-setup" element={<WhatsAppSetup />} />
               <Route path="/android-app" element={<AndroidApp />} />
-              <Route path="/wc-auth/v1/authorize" element={<WCAuth />} />
+        <Route path="/wc-auth/v1/authorize" element={<WCAuth />} />
+        <Route path="/wp-json/*" element={<WCAuth />} />
+        <Route path="/wc/v3/*" element={<WCAuth />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

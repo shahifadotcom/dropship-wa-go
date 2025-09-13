@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,8 +11,19 @@ import { toast } from 'sonner';
 export default function WCAuth() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+
+  // Handle WooCommerce API requests
+  useEffect(() => {
+    if (location.pathname.startsWith('/wp-json/') || location.pathname.startsWith('/wc/v3/')) {
+      // Redirect to the edge function
+      const fullUrl = `${window.location.origin}/functions/v1/wp-json-api${location.pathname}${location.search}`;
+      window.location.href = fullUrl;
+      return;
+    }
+  }, [location]);
 
   const callbackUrl = searchParams.get('callback_url');
   const appName = searchParams.get('app_name');
