@@ -24,18 +24,61 @@ export const useStoreSettings = () => {
 
   const fetchSettings = async () => {
     try {
+      // Use anon access for public store settings
       const { data, error } = await supabase
         .from('store_settings')
-        .select('*')
+        .select('id, store_name, store_tagline, store_description, store_logo, site_title, currency')
         .single();
 
       if (error && error.code !== 'PGRST116') {
         console.error('Error fetching store settings:', error);
+        // Set default values if fetch fails
+        setSettings({
+          id: 'default',
+          store_name: 'DropshipPro',
+          store_tagline: 'Your One-Stop Shop',
+          store_description: 'Quality products at affordable prices',
+          site_title: 'DropshipPro - Online Store',
+          currency: 'BDT',
+          contact_email: '',
+          contact_phone: '',
+          contact_address: '',
+          email_notifications: false,
+          whatsapp_notifications: false,
+          inventory_alerts: false,
+          maintenance_mode: false
+        });
       } else {
-        setSettings(data);
+        setSettings({
+          ...data,
+          id: data.id || 'default',
+          contact_email: '',
+          contact_phone: '',
+          contact_address: '',
+          email_notifications: false,
+          whatsapp_notifications: false,
+          inventory_alerts: false,
+          maintenance_mode: false
+        });
       }
     } catch (error) {
       console.error('Error:', error);
+      // Set default values on error
+      setSettings({
+        id: 'default',
+        store_name: 'DropshipPro',
+        store_tagline: 'Your One-Stop Shop',
+        store_description: 'Quality products at affordable prices',
+        site_title: 'DropshipPro - Online Store',
+        currency: 'BDT',
+        contact_email: '',
+        contact_phone: '',
+        contact_address: '',
+        email_notifications: false,
+        whatsapp_notifications: false,
+        inventory_alerts: false,
+        maintenance_mode: false
+      });
     } finally {
       setLoading(false);
     }

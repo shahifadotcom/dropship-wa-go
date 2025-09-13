@@ -155,7 +155,43 @@ const ProductCard = ({ product, onQuickView }: ProductCardProps) => {
 
           {/* Price and Buy Now */}
           <div className="space-y-2">
-            <div className="flex items-center gap-2 justify-between">
+            {/* Mobile: Price and Buy Now stacked */}
+            <div className="md:hidden">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-lg font-bold text-primary">
+                  {product.price.toFixed(2)} {currency}
+                </span>
+                {product.originalPrice && (
+                  <span className="text-sm text-muted-foreground line-through">
+                    {product.originalPrice.toFixed(2)} {currency}
+                  </span>
+                )}
+              </div>
+              <Button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (!product.inStock) {
+                    toast({
+                      title: "Out of Stock",
+                      description: "This product is currently out of stock.",
+                      variant: "destructive"
+                    });
+                    return;
+                  }
+                  addToCart(product);
+                  window.location.href = '/checkout';
+                }}
+                disabled={!product.inStock}
+                size="sm"
+                className="w-full bg-primary text-primary-foreground hover:bg-primary/90 text-xs"
+              >
+                Buy Now
+              </Button>
+            </div>
+
+            {/* Desktop: Price and Buy Now side by side */}
+            <div className="hidden md:flex items-center gap-2 justify-between">
               <div className="flex items-center gap-2">
                 <span className="text-lg font-bold text-primary">
                   {product.price.toFixed(2)} {currency}
@@ -166,7 +202,6 @@ const ProductCard = ({ product, onQuickView }: ProductCardProps) => {
                   </span>
                 )}
               </div>
-              {/* Buy Now button next to price - always visible on all devices */}
               <Button
                 onClick={(e) => {
                   e.preventDefault();

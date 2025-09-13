@@ -168,16 +168,17 @@ const Home = () => {
               </div>
             </div>
 
-            {/* Mobile Grid Products */}
+            {/* Mobile Grid Products - Perfect 2x4 alignment */}
             <div>
               <h2 className="text-xl font-bold text-foreground mb-4">All Products</h2>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3 items-start">
                 {products.slice(12, 20).map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    onQuickView={handleProductClick}
-                  />
+                  <div key={product.id} className="flex">
+                    <ProductCard
+                      product={product}
+                      onQuickView={handleProductClick}
+                    />
+                  </div>
                 ))}
               </div>
             </div>
