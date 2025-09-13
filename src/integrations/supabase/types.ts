@@ -422,6 +422,13 @@ export type Database = {
             foreignKeyName: "order_items_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
+            referencedRelation: "products_catalog"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
             referencedRelation: "products_public"
             referencedColumns: ["id"]
           },
@@ -600,6 +607,13 @@ export type Database = {
             foreignKeyName: "price_sync_logs_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
+            referencedRelation: "products_catalog"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "price_sync_logs_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
             referencedRelation: "products_public"
             referencedColumns: ["id"]
           },
@@ -649,6 +663,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_catalog"
             referencedColumns: ["id"]
           },
           {
@@ -1203,6 +1224,13 @@ export type Database = {
             foreignKeyName: "vendor_products_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
+            referencedRelation: "products_catalog"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
             referencedRelation: "products_public"
             referencedColumns: ["id"]
           },
@@ -1304,6 +1332,118 @@ export type Database = {
       }
     }
     Views: {
+      products_catalog: {
+        Row: {
+          allowed_payment_gateways: string[] | null
+          brand: string | null
+          cash_on_delivery_enabled: boolean | null
+          category_id: string | null
+          country_id: string | null
+          created_at: string | null
+          description: string | null
+          dimensions: Json | null
+          id: string | null
+          images: string[] | null
+          in_stock: boolean | null
+          meta_description: string | null
+          meta_title: string | null
+          name: string | null
+          price: number | null
+          rating: number | null
+          review_count: number | null
+          shipping_cost: number | null
+          sku: string | null
+          slug: string | null
+          social_preview_image: string | null
+          stock_quantity: number | null
+          subcategory_id: string | null
+          tags: string[] | null
+          tax_rate: number | null
+          updated_at: string | null
+          weight: number | null
+        }
+        Insert: {
+          allowed_payment_gateways?: string[] | null
+          brand?: string | null
+          cash_on_delivery_enabled?: boolean | null
+          category_id?: string | null
+          country_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          dimensions?: Json | null
+          id?: string | null
+          images?: string[] | null
+          in_stock?: boolean | null
+          meta_description?: string | null
+          meta_title?: string | null
+          name?: string | null
+          price?: number | null
+          rating?: number | null
+          review_count?: number | null
+          shipping_cost?: number | null
+          sku?: string | null
+          slug?: string | null
+          social_preview_image?: string | null
+          stock_quantity?: number | null
+          subcategory_id?: string | null
+          tags?: string[] | null
+          tax_rate?: number | null
+          updated_at?: string | null
+          weight?: number | null
+        }
+        Update: {
+          allowed_payment_gateways?: string[] | null
+          brand?: string | null
+          cash_on_delivery_enabled?: boolean | null
+          category_id?: string | null
+          country_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          dimensions?: Json | null
+          id?: string | null
+          images?: string[] | null
+          in_stock?: boolean | null
+          meta_description?: string | null
+          meta_title?: string | null
+          name?: string | null
+          price?: number | null
+          rating?: number | null
+          review_count?: number | null
+          shipping_cost?: number | null
+          sku?: string | null
+          slug?: string | null
+          social_preview_image?: string | null
+          stock_quantity?: number | null
+          subcategory_id?: string | null
+          tags?: string[] | null
+          tax_rate?: number | null
+          updated_at?: string | null
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_subcategory_id_fkey"
+            columns: ["subcategory_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products_public: {
         Row: {
           allowed_payment_gateways: string[] | null

@@ -102,19 +102,16 @@ export class CountryService {
     }
   }
 
-  // Get products by country
+  // Get products by country using secure catalog view (excludes sensitive pricing)
   static async getProductsByCountry(countryId?: string) {
     try {
+      // Use secure products_catalog view to prevent exposure of cost_price data
       let query = supabase
-        .from('products')
-        .select('*')
-        .eq('in_stock', true);
+        .from('products_catalog')
+        .select('*');
 
       if (countryId) {
         query = query.eq('country_id', countryId);
-      } else {
-        // If no country specified, show products without country restriction
-        query = query.is('country_id', null);
       }
 
       const { data, error } = await query.order('created_at', { ascending: false });
@@ -127,7 +124,7 @@ export class CountryService {
         name: item.name,
         description: item.description,
         price: Number(item.price),
-        originalPrice: item.original_price ? Number(item.original_price) : undefined,
+        originalPrice: undefined, // Excluded from catalog view for security
         images: item.images || [],
         category: '',
         subcategory: '',
@@ -136,7 +133,7 @@ export class CountryService {
         stockQuantity: item.stock_quantity || 0,
         sku: item.sku,
         tags: item.tags || [],
-        variants: [],
+        variants: [], // Variants excluded from public catalog for security
         rating: Number(item.rating) || 0,
         reviewCount: item.review_count || 0,
         createdAt: new Date(item.created_at),
