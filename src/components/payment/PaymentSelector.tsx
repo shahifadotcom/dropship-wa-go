@@ -15,9 +15,10 @@ interface PaymentSelectorProps {
   orderAmount: number;
   productId?: string;
   onPaymentSubmitted?: () => void;
+  onCODSelected?: () => void;
 }
 
-export const PaymentSelector = ({ orderId, orderAmount, productId, onPaymentSubmitted }: PaymentSelectorProps) => {
+export const PaymentSelector = ({ orderId, orderAmount, productId, onPaymentSubmitted, onCODSelected }: PaymentSelectorProps) => {
   const [paymentGateways, setPaymentGateways] = useState<PaymentGateway[]>([]);
   const [selectedGateway, setSelectedGateway] = useState<PaymentGateway | null>(null);
   const [transactionId, setTransactionId] = useState('');
@@ -34,12 +35,16 @@ export const PaymentSelector = ({ orderId, orderAmount, productId, onPaymentSubm
         const gateways = productId 
           ? await PaymentService.getProductPaymentGateways(productId, 'bangladesh-default')
           : await PaymentService.getBangladeshPaymentGateways();
-        setPaymentGateways(gateways);
+        // Filter out COD 100 initially - it will be shown after OTP verification
+        const filteredGateways = gateways.filter(gateway => gateway.name !== 'cod' || !gateway.display_name.includes('100'));
+        setPaymentGateways(filteredGateways);
       } else {
         const gateways = productId 
           ? await PaymentService.getProductPaymentGateways(productId, effectiveCountry.id)
           : await PaymentService.getPaymentGateways(effectiveCountry.id);
-        setPaymentGateways(gateways);
+        // Filter out COD 100 initially - it will be shown after OTP verification
+        const filteredGateways = gateways.filter(gateway => gateway.name !== 'cod' || !gateway.display_name.includes('100'));
+        setPaymentGateways(filteredGateways);
       }
     };
 
@@ -60,12 +65,13 @@ export const PaymentSelector = ({ orderId, orderAmount, productId, onPaymentSubm
     try {
       // Handle COD advance payment
       if (selectedGateway.name === 'cod') {
+        onCODSelected?.(); // Notify parent about COD selection
         const advancePaymentId = await PaymentService.createAdvancePayment(orderId, 100, 'binance_pay');
         if (advancePaymentId) {
           setShowAdvancePayment(true);
           toast({
             title: "COD Selected",
-            description: "Please pay 100 BDT advance to confirm your delivery.",
+            description: "Please pay 100 BDT delivery charge to confirm your order.",
           });
         }
         return;
@@ -227,7 +233,7 @@ export const PaymentSelector = ({ orderId, orderAmount, productId, onPaymentSubm
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
                 {selectedGateway.name === 'cod' ? (
-                  <>Pay <strong>100 BDT advance</strong> using Binance Pay to confirm delivery. Remaining <strong>৳{orderAmount - 100}</strong> will be collected on delivery.</>
+                  <>Pay <strong>100 BDT delivery charge</strong> using Binance Pay to confirm your order. Remaining <strong>৳{orderAmount - 100}</strong> will be collected on delivery.</>
                 ) : selectedGateway.name === 'binance_pay' ? (
                   <>Send <strong>৳{orderAmount}</strong> using Binance Pay, then enter your transaction ID below for automatic verification.</>
                 ) : (
@@ -269,7 +275,7 @@ export const PaymentSelector = ({ orderId, orderAmount, productId, onPaymentSubm
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                Pay <strong>100 BDT advance</strong> using Binance Pay to confirm your Cash on Delivery order.
+                Pay <strong>100 BDT delivery charge</strong> using Binance Pay to confirm your Cash on Delivery order.
                 Remaining <strong>৳{orderAmount - 100}</strong> will be collected when your order is delivered.
               </AlertDescription>
             </Alert>

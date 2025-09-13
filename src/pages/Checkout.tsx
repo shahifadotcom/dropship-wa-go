@@ -42,10 +42,11 @@ const Checkout = () => {
   const [showOTPModal, setShowOTPModal] = useState(false);
   const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
   const [showPaymentSection, setShowPaymentSection] = useState(false);
+  const [selectedPaymentIsCOD, setSelectedPaymentIsCOD] = useState(false);
 
   const subtotal = cart.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const shipping = subtotal > 100 ? 0 : 15;
-  const total = subtotal + shipping;
+  const deliveryCharge = selectedPaymentIsCOD ? 100 : 0;
+  const total = subtotal + deliveryCharge;
 
   const handleOrderSuccess = (orderId: string) => {
     setCreatedOrderId(orderId);
@@ -56,6 +57,10 @@ const Checkout = () => {
       title: "Order Created Successfully!",
       description: "Please complete payment to confirm your order.",
     });
+  };
+
+  const handleCODSelected = () => {
+    setSelectedPaymentIsCOD(true);
   };
 
   const handlePaymentSubmitted = () => {
@@ -186,6 +191,7 @@ const Checkout = () => {
                 orderAmount={total}
                 productId={cart.items[0]?.productId}
                 onPaymentSubmitted={handlePaymentSubmitted}
+                onCODSelected={handleCODSelected}
               />
             )}
           </div>
@@ -303,10 +309,12 @@ const Checkout = () => {
                     <span>Subtotal</span>
                     <span>{subtotal.toFixed(2)} {currency}</span>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Shipping</span>
-                    <span>{shipping === 0 ? 'Free' : `${shipping.toFixed(2)} ${currency}`}</span>
-                  </div>
+                  {selectedPaymentIsCOD && (
+                    <div className="flex justify-between text-sm">
+                      <span>Delivery Charge</span>
+                      <span>{deliveryCharge.toFixed(2)} {currency}</span>
+                    </div>
+                  )}
                   <Separator />
                   <div className="flex justify-between font-semibold">
                     <span>Total</span>
@@ -345,7 +353,7 @@ const Checkout = () => {
             ...formData,
             items: cart.items,
             subtotal,
-            shipping,
+            deliveryCharge,
             total,
             email: user?.email || ''
           }}
