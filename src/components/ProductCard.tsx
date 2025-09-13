@@ -158,15 +158,15 @@ const ProductCard = ({ product, onQuickView }: ProductCardProps) => {
             <div className="flex items-center gap-2 justify-between">
               <div className="flex items-center gap-2">
                 <span className="text-lg font-bold text-primary">
-                  {currency}{product.price.toFixed(2)}
+                  {product.price.toFixed(2)} {currency}
                 </span>
                 {product.originalPrice && (
                   <span className="text-sm text-muted-foreground line-through">
-                    {currency}{product.originalPrice.toFixed(2)}
+                    {product.originalPrice.toFixed(2)} {currency}
                   </span>
                 )}
               </div>
-              {/* Buy Now button next to price - always visible */}
+              {/* Buy Now button next to price - always visible on all devices */}
               <Button
                 onClick={(e) => {
                   e.preventDefault();
@@ -184,7 +184,7 @@ const ProductCard = ({ product, onQuickView }: ProductCardProps) => {
                 }}
                 disabled={!product.inStock}
                 size="sm"
-                className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs px-3"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs px-3 shrink-0"
               >
                 Buy Now
               </Button>
