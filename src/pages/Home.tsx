@@ -135,15 +135,11 @@ const Home = () => {
               <h2 className="text-xl font-bold text-foreground mb-4">Featured</h2>
               <div className="grid grid-cols-2 gap-3">
                 {featuredProducts1.slice(0, 2).map((product) => (
-                  <div key={product.id} className="bg-card rounded-lg p-3 border border-navigation/20">
-                    <img 
-                      src={product.images[0]} 
-                      alt={product.name}
-                      className="w-full h-32 object-cover rounded-lg mb-2"
-                    />
-                    <h3 className="font-medium text-sm text-card-foreground mb-1 line-clamp-2">{product.name}</h3>
-                    <p className="text-primary font-bold text-sm">${product.price}</p>
-                  </div>
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    onQuickView={handleProductClick}
+                  />
                 ))}
               </div>
             </div>
@@ -159,7 +155,11 @@ const Home = () => {
               <div className="overflow-x-auto">
                 <div className="flex gap-3 pb-4">
                   {products.slice(0, 12).map((product) => (
-                    <div key={product.id} className="flex-shrink-0 w-40 bg-card rounded-lg p-3 border border-navigation/20">
+                    <div 
+                      key={product.id} 
+                      className="flex-shrink-0 w-40 bg-card rounded-lg p-3 border border-navigation/20 cursor-pointer"
+                      onClick={() => handleProductClick(product)}
+                    >
                       <img 
                         src={product.images[0]} 
                         alt={product.name}
