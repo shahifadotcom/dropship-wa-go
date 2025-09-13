@@ -67,24 +67,24 @@ export default function WCAuth() {
         key_permissions: scope || 'read_write'
       });
 
+      // 1) Try POST via proxy (preferred by CJ)
       if (callbackUrl) {
         try {
           await supabase.functions.invoke('wc-auth-callback-proxy', {
             body: {
               callback_url: callbackUrl,
-              payload: {
-                success: '1',
-                user_id: userId || '',
-                consumer_key: apiKey,
-                consumer_secret: apiSecret,
-                key_permissions: scope || 'read_write'
-              }
+              payload: Object.fromEntries(callbackParams)
             }
           });
         } catch (e) {
           console.error('Callback proxy error:', e);
-          // Continue to returnUrl/admin even if CJ callback fails
         }
+      }
+
+      // 2) Also perform GET redirect as fallback (some flows expect this)
+      if (callbackUrl) {
+        window.location.href = `${callbackUrl}?${callbackParams.toString()}`;
+        return;
       }
 
       if (returnUrl) {
