@@ -161,6 +161,219 @@ export type Database = {
           },
         ]
       }
+      cj_dropshipping_connections: {
+        Row: {
+          access_token: string | null
+          client_id: string
+          client_secret: string
+          created_at: string
+          domain: string
+          id: string
+          is_active: boolean
+          last_sync_at: string | null
+          refresh_token: string | null
+          token_expires_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token?: string | null
+          client_id: string
+          client_secret: string
+          created_at?: string
+          domain: string
+          id?: string
+          is_active?: boolean
+          last_sync_at?: string | null
+          refresh_token?: string | null
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string | null
+          client_id?: string
+          client_secret?: string
+          created_at?: string
+          domain?: string
+          id?: string
+          is_active?: boolean
+          last_sync_at?: string | null
+          refresh_token?: string | null
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      cj_import_jobs: {
+        Row: {
+          completed_at: string | null
+          connection_id: string
+          created_at: string
+          error_log: string | null
+          failed_items: number
+          id: string
+          job_data: Json | null
+          job_type: string
+          processed_items: number
+          started_at: string | null
+          status: string
+          total_items: number
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          connection_id: string
+          created_at?: string
+          error_log?: string | null
+          failed_items?: number
+          id?: string
+          job_data?: Json | null
+          job_type?: string
+          processed_items?: number
+          started_at?: string | null
+          status?: string
+          total_items?: number
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          connection_id?: string
+          created_at?: string
+          error_log?: string | null
+          failed_items?: number
+          id?: string
+          job_data?: Json | null
+          job_type?: string
+          processed_items?: number
+          started_at?: string | null
+          status?: string
+          total_items?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cj_import_jobs_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "cj_dropshipping_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cj_product_imports: {
+        Row: {
+          cj_data: Json | null
+          cj_product_id: string
+          cj_sku: string
+          connection_id: string
+          created_at: string
+          id: string
+          import_status: string
+          last_sync_at: string | null
+          local_product_id: string | null
+          mapping_config: Json | null
+          sync_errors: string | null
+          updated_at: string
+        }
+        Insert: {
+          cj_data?: Json | null
+          cj_product_id: string
+          cj_sku: string
+          connection_id: string
+          created_at?: string
+          id?: string
+          import_status?: string
+          last_sync_at?: string | null
+          local_product_id?: string | null
+          mapping_config?: Json | null
+          sync_errors?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cj_data?: Json | null
+          cj_product_id?: string
+          cj_sku?: string
+          connection_id?: string
+          created_at?: string
+          id?: string
+          import_status?: string
+          last_sync_at?: string | null
+          local_product_id?: string | null
+          mapping_config?: Json | null
+          sync_errors?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cj_product_imports_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "cj_dropshipping_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cj_product_imports_local_product_id_fkey"
+            columns: ["local_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cj_product_imports_local_product_id_fkey"
+            columns: ["local_product_id"]
+            isOneToOne: false
+            referencedRelation: "products_catalog"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cj_product_imports_local_product_id_fkey"
+            columns: ["local_product_id"]
+            isOneToOne: false
+            referencedRelation: "products_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cj_webhook_logs: {
+        Row: {
+          connection_id: string | null
+          created_at: string
+          id: string
+          payload: Json
+          processed: boolean
+          processing_error: string | null
+          webhook_type: string
+        }
+        Insert: {
+          connection_id?: string | null
+          created_at?: string
+          id?: string
+          payload: Json
+          processed?: boolean
+          processing_error?: string | null
+          webhook_type: string
+        }
+        Update: {
+          connection_id?: string | null
+          created_at?: string
+          id?: string
+          payload?: Json
+          processed?: boolean
+          processing_error?: string | null
+          webhook_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cj_webhook_logs_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "cj_dropshipping_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       countries: {
         Row: {
           code: string

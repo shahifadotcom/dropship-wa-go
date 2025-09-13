@@ -37,6 +37,7 @@ import Theme from "./pages/admin/Theme";
 import IPRanges from "./pages/admin/IPRanges";
 import Countries from "./pages/admin/Countries";
 import Notifications from "./pages/admin/Notifications";
+import CJDropshipping from "./pages/admin/CJDropshipping";
 
 const queryClient = new QueryClient();
 
@@ -69,6 +70,7 @@ const App = () => (
               <Route path="/admin/settings" element={<Settings />} />
               <Route path="/admin/payment-gateways" element={<PaymentGateways />} />
               <Route path="/admin/vendors" element={<Vendors />} />
+              <Route path="/admin/cj-dropshipping" element={<CJDropshipping />} />
               <Route path="/admin/payment-methods" element={<PaymentMethods />} />
               <Route path="/admin/order-automation" element={<OrderAutomation />} />
               <Route path="/admin/google-services" element={<GoogleServices />} />
