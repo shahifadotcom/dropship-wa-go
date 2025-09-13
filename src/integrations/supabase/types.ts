@@ -1546,6 +1546,51 @@ export type Database = {
         }
         Relationships: []
       }
+      woocommerce_api_keys: {
+        Row: {
+          api_key: string
+          api_secret: string
+          app_name: string
+          callback_url: string | null
+          created_at: string
+          external_user_id: string | null
+          id: string
+          is_active: boolean
+          last_access_at: string | null
+          scope: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          api_key: string
+          api_secret: string
+          app_name: string
+          callback_url?: string | null
+          created_at?: string
+          external_user_id?: string | null
+          id?: string
+          is_active?: boolean
+          last_access_at?: string | null
+          scope?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          api_key?: string
+          api_secret?: string
+          app_name?: string
+          callback_url?: string | null
+          created_at?: string
+          external_user_id?: string | null
+          id?: string
+          is_active?: boolean
+          last_access_at?: string | null
+          scope?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       products_catalog: {
