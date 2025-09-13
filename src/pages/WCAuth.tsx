@@ -68,13 +68,28 @@ export default function WCAuth() {
       });
 
       if (callbackUrl) {
-        // Redirect to the callback URL with the generated keys
-        window.location.href = `${callbackUrl}?${callbackParams.toString()}`;
-      } else if (returnUrl) {
-        // Fallback to return URL
+        try {
+          await supabase.functions.invoke('wc-auth-callback-proxy', {
+            body: {
+              callback_url: callbackUrl,
+              payload: {
+                success: '1',
+                user_id: userId || '',
+                consumer_key: apiKey,
+                consumer_secret: apiSecret,
+                key_permissions: scope || 'read_write'
+              }
+            }
+          });
+        } catch (e) {
+          console.error('Callback proxy error:', e);
+          // Continue to returnUrl/admin even if CJ callback fails
+        }
+      }
+
+      if (returnUrl) {
         window.location.href = returnUrl;
       } else {
-        // Fallback to admin dashboard
         navigate('/admin');
         toast.success('Application authorized successfully');
       }
