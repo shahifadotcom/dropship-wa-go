@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Product } from '@/lib/types';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/hooks/use-toast';
+import { useCountryDetection } from '@/hooks/useCountryDetection';
 
 interface ProductCardProps {
   product: Product;
@@ -17,6 +18,7 @@ const ProductCard = ({ product, onQuickView }: ProductCardProps) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const { addToCart } = useCart();
   const { toast } = useToast();
+  const { currency } = useCountryDetection();
 
   const handleProductClick = () => {
     // Navigate to product detail page or trigger quick view
@@ -156,15 +158,15 @@ const ProductCard = ({ product, onQuickView }: ProductCardProps) => {
             <div className="flex items-center gap-2 justify-between">
               <div className="flex items-center gap-2">
                 <span className="text-lg font-bold text-primary">
-                  ${product.price.toFixed(2)}
+                  {currency}{product.price.toFixed(2)}
                 </span>
                 {product.originalPrice && (
                   <span className="text-sm text-muted-foreground line-through">
-                    ${product.originalPrice.toFixed(2)}
+                    {currency}{product.originalPrice.toFixed(2)}
                   </span>
                 )}
               </div>
-              {/* Buy Now button next to price - visible on hover for desktop, always visible on mobile */}
+              {/* Buy Now button next to price - always visible */}
               <Button
                 onClick={(e) => {
                   e.preventDefault();
@@ -182,7 +184,7 @@ const ProductCard = ({ product, onQuickView }: ProductCardProps) => {
                 }}
                 disabled={!product.inStock}
                 size="sm"
-                className="md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 bg-primary text-primary-foreground hover:bg-primary/90 text-xs px-3"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs px-3"
               >
                 Buy Now
               </Button>
