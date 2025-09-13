@@ -129,6 +129,7 @@ const Home = () => {
         {/* Mobile Layout - Optimized */}
         <div className="md:hidden">
           <div className="px-4 py-4 space-y-6">
+            {/* Hide Footer on Mobile - handled separately */}
             {/* Mobile Featured Products */}
             <div>
               <h2 className="text-xl font-bold text-foreground mb-4">Featured</h2>

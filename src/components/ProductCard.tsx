@@ -121,10 +121,11 @@ const ProductCard = ({ product, onQuickView }: ProductCardProps) => {
         {/* Quick Actions - Always visible on mobile, hover on desktop */}
         <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
           <div className="flex gap-2">
+            {/* Hide Add to Cart on mobile, show only Buy Now */}
             <Button
               onClick={handleAddToCart}
               disabled={!product.inStock}
-              className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg"
+              className="hidden md:flex flex-1 bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg"
               size="sm"
             >
               <ShoppingCart className="h-4 w-4 mr-2" />
@@ -148,7 +149,7 @@ const ProductCard = ({ product, onQuickView }: ProductCardProps) => {
               disabled={!product.inStock}
               variant="outline"
               size="sm"
-              className="px-3 bg-white text-black border-white hover:bg-white/90 shadow-lg font-medium"
+              className="flex-1 md:px-3 bg-white text-black border-white hover:bg-white/90 shadow-lg font-medium"
             >
               Buy Now
             </Button>
@@ -187,16 +188,42 @@ const ProductCard = ({ product, onQuickView }: ProductCardProps) => {
             </span>
           </div>
 
-          {/* Price */}
-          <div className="flex items-center gap-2">
-            <span className="text-lg font-bold text-primary">
-              ${product.price.toFixed(2)}
-            </span>
-            {product.originalPrice && (
-              <span className="text-sm text-muted-foreground line-through">
-                ${product.originalPrice.toFixed(2)}
+          {/* Price and Buy Now */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="text-lg font-bold text-primary">
+                ${product.price.toFixed(2)}
               </span>
-            )}
+              {product.originalPrice && (
+                <span className="text-sm text-muted-foreground line-through">
+                  ${product.originalPrice.toFixed(2)}
+                </span>
+              )}
+            </div>
+            {/* Buy Now button after price on mobile */}
+            <div className="md:hidden">
+              <Button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (!product.inStock) {
+                    toast({
+                      title: "Out of Stock",
+                      description: "This product is currently out of stock.",
+                      variant: "destructive"
+                    });
+                    return;
+                  }
+                  addToCart(product);
+                  window.location.href = '/checkout';
+                }}
+                disabled={!product.inStock}
+                size="sm"
+                className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                Buy Now
+              </Button>
+            </div>
           </div>
 
           {/* Stock Status */}

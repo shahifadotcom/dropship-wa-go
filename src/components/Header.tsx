@@ -25,9 +25,7 @@ const Header = () => {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="icon" className="md:hidden text-navigation-foreground hover:bg-navigation/80">
-              <Menu className="h-5 w-5" />
-            </Button>
+            {/* Hide menu button on mobile as requested */}
             <a href="/" className="flex items-center space-x-2">
               {settings?.store_logo ? (
                 <img 
@@ -44,8 +42,8 @@ const Header = () => {
             </a>
           </div>
 
-          {/* Search Bar - Center */}
-          <div className="flex-1 max-w-md mx-8">
+          {/* Search Bar - Hidden on mobile, shown on desktop */}
+          <div className="hidden md:flex flex-1 max-w-md mx-8">
             <div className="relative w-full">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-navigation-foreground/70" />
               <Input
