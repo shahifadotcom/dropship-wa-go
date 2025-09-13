@@ -134,7 +134,7 @@ const Checkout = () => {
           <div className="text-center py-12">
             <h1 className="text-2xl font-bold mb-4">Your cart is empty</h1>
             <p className="text-muted-foreground mb-6">Add some products to your cart to proceed with checkout.</p>
-            <Button onClick={() => navigate('/shop')}>Continue Shopping</Button>
+            <Button onClick={() => navigate('/')}>Continue Shopping</Button>
           </div>
         </div>
       </div>
@@ -145,9 +145,9 @@ const Checkout = () => {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         <div className="mb-6">
-          <Button variant="ghost" onClick={() => navigate('/shop')} className="mb-4">
+          <Button variant="ghost" onClick={() => navigate('/')} className="mb-4">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Shop
+            Back to Home
           </Button>
           <h1 className="text-3xl font-bold">
             {showPaymentSection ? 'Complete Payment' : 'Checkout'}
@@ -175,7 +175,7 @@ const Checkout = () => {
                 <div className="bg-muted p-4 rounded-lg">
                   <div className="flex justify-between items-center">
                     <span className="font-semibold">Order Total:</span>
-                    <span className="font-bold text-lg">{currency}{total.toFixed(2)}</span>
+                    <span className="font-bold text-lg">{total.toFixed(2)} {currency}</span>
                   </div>
                 </div>
               </CardContent>
@@ -289,9 +289,9 @@ const Checkout = () => {
                         )}
                         <p className="text-sm">Qty: {item.quantity}</p>
                       </div>
-                      <div className="text-sm font-medium">
-                        ${(item.price * item.quantity).toFixed(2)}
-                      </div>
+                        <div className="text-sm font-medium">
+                          {(item.price * item.quantity).toFixed(2)} {currency}
+                        </div>
                     </div>
                   ))}
                 </div>
@@ -301,20 +301,20 @@ const Checkout = () => {
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span>Subtotal</span>
-                    <span>${subtotal.toFixed(2)}</span>
+                    <span>{subtotal.toFixed(2)} {currency}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span>Shipping</span>
-                    <span>{shipping === 0 ? 'Free' : `$${shipping.toFixed(2)}`}</span>
+                    <span>{shipping === 0 ? 'Free' : `${shipping.toFixed(2)} ${currency}`}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span>Tax</span>
-                    <span>${tax.toFixed(2)}</span>
+                    <span>{tax.toFixed(2)} {currency}</span>
                   </div>
                   <Separator />
                   <div className="flex justify-between font-semibold">
                     <span>Total</span>
-                    <span>${total.toFixed(2)}</span>
+                    <span>{total.toFixed(2)} {currency}</span>
                   </div>
                 </div>
 
@@ -331,7 +331,7 @@ const Checkout = () => {
                       Processing...
                     </>
                   ) : (
-                    `Place Order - $${total.toFixed(2)}`
+                    <span>{`Place Order - ${total.toFixed(2)} ${currency}`}</span>
                   )}
                 </Button>
               </CardContent>

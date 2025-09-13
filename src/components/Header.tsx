@@ -94,9 +94,6 @@ const Header = () => {
             <a href="/" className="text-navigation-foreground hover:text-navigation-foreground/80 transition-colors">
               Home
             </a>
-            <a href="/shop" className="text-navigation-foreground hover:text-navigation-foreground/80 transition-colors">
-              Shop
-            </a>
             <a href="/categories" className="text-navigation-foreground hover:text-navigation-foreground/80 transition-colors">
               Categories
             </a>

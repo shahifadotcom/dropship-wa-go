@@ -130,7 +130,7 @@ const Dashboard = () => {
                   <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                   <h3 className="text-lg font-semibold mb-2">No orders yet</h3>
                   <p className="text-muted-foreground mb-4">Start shopping to see your orders here</p>
-                  <Button onClick={() => navigate('/shop')}>
+                  <Button onClick={() => navigate('/')}>
                     Browse Products
                   </Button>
                 </div>

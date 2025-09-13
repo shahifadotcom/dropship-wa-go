@@ -10,12 +10,14 @@ import MobileBottomNav from "@/components/MobileBottomNav";
 import { useProducts } from "@/hooks/useProducts";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
 import { Product } from "@/lib/types";
+import { useCountryDetection } from "@/hooks/useCountryDetection";
 
 const Home = () => {
   const { products, loading } = useProducts();
   const { settings } = useStoreSettings();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const { currency } = useCountryDetection();
 
   // Update document title when settings load
   useEffect(() => {
@@ -67,7 +69,7 @@ const Home = () => {
                       className="w-full h-48 md:h-64 object-cover rounded-lg mb-4"
                     />
                     <h3 className="font-semibold text-card-foreground mb-2 line-clamp-2">{product.name}</h3>
-                    <p className="text-primary font-bold text-lg">${product.price}</p>
+                    <p className="text-primary font-bold text-lg">{product.price.toFixed(2)} {currency}</p>
                     <Button 
                       onClick={() => handleProductClick(product)} 
                       className="w-full mt-3"
@@ -97,7 +99,7 @@ const Home = () => {
                       className="w-full h-48 md:h-64 object-cover rounded-lg mb-4"
                     />
                     <h3 className="font-semibold text-card-foreground mb-2 line-clamp-2">{product.name}</h3>
-                    <p className="text-primary font-bold text-lg">${product.price}</p>
+                    <p className="text-primary font-bold text-lg">{product.price.toFixed(2)} {currency}</p>
                     <Button 
                       onClick={() => handleProductClick(product)} 
                       className="w-full mt-3"
@@ -155,18 +157,11 @@ const Home = () => {
               <div className="overflow-x-auto">
                 <div className="flex gap-3 pb-4">
                   {products.slice(0, 12).map((product) => (
-                    <div 
-                      key={product.id} 
-                      className="flex-shrink-0 w-40 bg-card rounded-lg p-3 border border-navigation/20 cursor-pointer"
-                      onClick={() => handleProductClick(product)}
-                    >
-                      <img 
-                        src={product.images[0]} 
-                        alt={product.name}
-                        className="w-full h-32 object-cover rounded-lg mb-2"
+                    <div key={product.id} className="flex-shrink-0 w-40">
+                      <ProductCard
+                        product={product}
+                        onQuickView={handleProductClick}
                       />
-                      <h3 className="font-medium text-xs text-card-foreground mb-1 line-clamp-2">{product.name}</h3>
-                      <p className="text-primary font-bold text-sm">${product.price}</p>
                     </div>
                   ))}
                 </div>

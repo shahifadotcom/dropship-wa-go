@@ -7,7 +7,7 @@ import { CartProvider } from "@/contexts/CartContext";
 import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import Home from "./pages/Home";
-import ShopPage from "./components/ShopPage";
+
 import Auth from "./pages/Auth";
 import Checkout from "./pages/Checkout";
 import OrderSuccess from "./pages/OrderSuccess";
@@ -52,7 +52,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/home" element={<Home />} />
-              <Route path="/shop" element={<ShopPage />} />
+              
               <Route path="/auth" element={<Auth />} />
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/order-success/:orderId" element={<OrderSuccess />} />

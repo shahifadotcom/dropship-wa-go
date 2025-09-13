@@ -7,12 +7,14 @@ import { Separator } from '@/components/ui/separator';
 import { CheckCircle, Package, Mail, ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Order } from '@/lib/types';
+import { useCountryDetection } from '@/hooks/useCountryDetection';
 
 const OrderSuccess = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+  const { currency } = useCountryDetection();
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -86,7 +88,7 @@ const OrderSuccess = () => {
           <div className="text-center py-12">
             <h1 className="text-2xl font-bold mb-4">Order not found</h1>
             <p className="text-muted-foreground mb-6">The order you're looking for doesn't exist or has been removed.</p>
-            <Button onClick={() => navigate('/shop')}>
+            <Button onClick={() => navigate('/')}>
               Continue Shopping
             </Button>
           </div>
@@ -100,7 +102,7 @@ const OrderSuccess = () => {
       <div className="container mx-auto px-4 py-8">
         <Button
           variant="ghost"
-          onClick={() => navigate('/shop')}
+          onClick={() => navigate('/')}
           className="mb-6"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
@@ -187,9 +189,9 @@ const OrderSuccess = () => {
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium">${(item.price * item.quantity).toFixed(2)}</p>
+                      <p className="font-medium">{(item.price * item.quantity).toFixed(2)} {currency}</p>
                       <p className="text-sm text-muted-foreground">
-                        ${item.price.toFixed(2)} each
+                        {item.price.toFixed(2)} {currency} each
                       </p>
                     </div>
                   </div>
@@ -201,20 +203,20 @@ const OrderSuccess = () => {
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span>Subtotal</span>
-                  <span>${order.subtotal.toFixed(2)}</span>
+                  <span>{order.subtotal.toFixed(2)} {currency}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>Shipping</span>
-                  <span>{order.shipping === 0 ? 'Free' : `$${order.shipping.toFixed(2)}`}</span>
+                  <span>{order.shipping === 0 ? 'Free' : `${order.shipping.toFixed(2)} ${currency}`}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>Tax</span>
-                  <span>${order.tax.toFixed(2)}</span>
+                  <span>{order.tax.toFixed(2)} {currency}</span>
                 </div>
                 <Separator />
                 <div className="flex justify-between font-semibold">
                   <span>Total</span>
-                  <span>${order.total.toFixed(2)}</span>
+                  <span>{order.total.toFixed(2)} {currency}</span>
                 </div>
               </div>
             </CardContent>
