@@ -44,9 +44,8 @@ const Checkout = () => {
   const [showPaymentSection, setShowPaymentSection] = useState(false);
 
   const subtotal = cart.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const tax = subtotal * 0.08;
   const shipping = subtotal > 100 ? 0 : 15;
-  const total = subtotal + tax + shipping;
+  const total = subtotal + shipping;
 
   const handleOrderSuccess = (orderId: string) => {
     setCreatedOrderId(orderId);
@@ -185,6 +184,7 @@ const Checkout = () => {
               <PaymentSelector
                 orderId={createdOrderId}
                 orderAmount={total}
+                productId={cart.items[0]?.productId}
                 onPaymentSubmitted={handlePaymentSubmitted}
               />
             )}
@@ -307,10 +307,6 @@ const Checkout = () => {
                     <span>Shipping</span>
                     <span>{shipping === 0 ? 'Free' : `${shipping.toFixed(2)} ${currency}`}</span>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Tax</span>
-                    <span>{tax.toFixed(2)} {currency}</span>
-                  </div>
                   <Separator />
                   <div className="flex justify-between font-semibold">
                     <span>Total</span>
@@ -349,7 +345,6 @@ const Checkout = () => {
             ...formData,
             items: cart.items,
             subtotal,
-            tax,
             shipping,
             total,
             email: user?.email || ''
