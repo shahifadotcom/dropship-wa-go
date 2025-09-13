@@ -29,6 +29,7 @@ import OrderAutomation from "./pages/admin/OrderAutomation";
 import UserDashboard from "./pages/Dashboard";
 import WhatsAppSetup from "./pages/WhatsAppSetup";
 import AndroidApp from "./pages/AndroidApp";
+import WCAuth from "./pages/WCAuth";
 import NotFound from "./pages/NotFound";
 import ErrorLogger from "./components/ErrorLogger";
 import Profile from "./pages/Profile";
@@ -86,6 +87,7 @@ const App = () => (
               <Route path="/orders" element={<Orders />} />
               <Route path="/whatsapp-setup" element={<WhatsAppSetup />} />
               <Route path="/android-app" element={<AndroidApp />} />
+              <Route path="/wc-auth/v1/authorize" element={<WCAuth />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

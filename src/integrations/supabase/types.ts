@@ -1849,6 +1849,18 @@ export type Database = {
         }
         Returns: boolean
       }
+      store_woocommerce_api_key: {
+        Args: {
+          p_api_key: string
+          p_api_secret: string
+          p_app_name: string
+          p_callback_url: string
+          p_external_user_id: string
+          p_scope: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"

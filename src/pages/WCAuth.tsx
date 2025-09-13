@@ -32,15 +32,17 @@ export default function WCAuth() {
       const apiKey = `ck_${crypto.randomUUID().replace(/-/g, '')}`;
       const apiSecret = `cs_${crypto.randomUUID().replace(/-/g, '')}`;
 
-      // Store the API keys in our database using raw SQL until types update
-      const { error: insertError } = await supabase.rpc('store_woocommerce_api_key', {
-        p_user_id: user.id,
-        p_app_name: appName || 'Unknown App',
-        p_api_key: apiKey,
-        p_api_secret: apiSecret,
-        p_scope: scope || 'read_write',
-        p_callback_url: callbackUrl,
-        p_external_user_id: userId
+      // For now, create a simple edge function call until types update
+      const { error: insertError } = await supabase.functions.invoke('wc-store-api-key', {
+        body: {
+          user_id: user.id,
+          app_name: appName || 'Unknown App',
+          api_key: apiKey,
+          api_secret: apiSecret,
+          scope: scope || 'read_write',
+          callback_url: callbackUrl,
+          external_user_id: userId
+        }
       });
 
       if (insertError) throw insertError;
