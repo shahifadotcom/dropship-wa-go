@@ -14,11 +14,12 @@ interface PaymentSelectorProps {
   orderId: string;
   orderAmount: number;
   productId?: string;
+  productIds?: string[];
   onPaymentSubmitted?: () => void;
   onCODSelected?: () => void;
 }
 
-export const PaymentSelector = ({ orderId, orderAmount, productId, onPaymentSubmitted, onCODSelected }: PaymentSelectorProps) => {
+export const PaymentSelector = ({ orderId, orderAmount, productId, productIds, onPaymentSubmitted, onCODSelected }: PaymentSelectorProps) => {
   const [paymentGateways, setPaymentGateways] = useState<PaymentGateway[]>([]);
   const [selectedGateway, setSelectedGateway] = useState<PaymentGateway | null>(null);
   const [transactionId, setTransactionId] = useState('');
@@ -30,26 +31,50 @@ export const PaymentSelector = ({ orderId, orderAmount, productId, onPaymentSubm
 
   useEffect(() => {
     const loadPaymentGateways = async () => {
+      const currentProductIds = productIds || (productId ? [productId] : []);
+      
       if (!effectiveCountry?.id) {
         // Fallback to Bangladesh payment gateways
-        const gateways = productId 
-          ? await PaymentService.getProductPaymentGateways(productId, 'bangladesh-default')
-          : await PaymentService.getBangladeshPaymentGateways();
-        // Filter out COD 100 initially - it will be shown after OTP verification
-        const filteredGateways = gateways.filter(gateway => gateway.name !== 'cod' || !gateway.display_name.includes('100'));
-        setPaymentGateways(filteredGateways);
+        if (currentProductIds.length > 0) {
+          // Get intersection of all products' allowed gateways
+          const allProductGateways = await Promise.all(
+            currentProductIds.map(id => PaymentService.getProductPaymentGateways(id, 'bangladesh-default'))
+          );
+          // Find common gateways across all products
+          let intersectionGateways = allProductGateways[0] || [];
+          for (let i = 1; i < allProductGateways.length; i++) {
+            intersectionGateways = intersectionGateways.filter(gateway => 
+              allProductGateways[i].some(g => g.id === gateway.id)
+            );
+          }
+          setPaymentGateways(intersectionGateways);
+        } else {
+          const gateways = await PaymentService.getBangladeshPaymentGateways();
+          setPaymentGateways(gateways);
+        }
       } else {
-        const gateways = productId 
-          ? await PaymentService.getProductPaymentGateways(productId, effectiveCountry.id)
-          : await PaymentService.getPaymentGateways(effectiveCountry.id);
-        // Filter out COD 100 initially - it will be shown after OTP verification
-        const filteredGateways = gateways.filter(gateway => gateway.name !== 'cod' || !gateway.display_name.includes('100'));
-        setPaymentGateways(filteredGateways);
+        if (currentProductIds.length > 0) {
+          // Get intersection of all products' allowed gateways
+          const allProductGateways = await Promise.all(
+            currentProductIds.map(id => PaymentService.getProductPaymentGateways(id, effectiveCountry.id))
+          );
+          // Find common gateways across all products
+          let intersectionGateways = allProductGateways[0] || [];
+          for (let i = 1; i < allProductGateways.length; i++) {
+            intersectionGateways = intersectionGateways.filter(gateway => 
+              allProductGateways[i].some(g => g.id === gateway.id)
+            );
+          }
+          setPaymentGateways(intersectionGateways);
+        } else {
+          const gateways = await PaymentService.getPaymentGateways(effectiveCountry.id);
+          setPaymentGateways(gateways);
+        }
       }
     };
 
     loadPaymentGateways();
-  }, [effectiveCountry, productId]);
+  }, [effectiveCountry, productId, productIds]);
 
   const handleSubmitPayment = async () => {
     if (!selectedGateway || !transactionId.trim()) {

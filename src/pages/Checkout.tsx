@@ -189,7 +189,7 @@ const Checkout = () => {
               <PaymentSelector
                 orderId={createdOrderId}
                 orderAmount={total}
-                productId={cart.items[0]?.productId}
+                productIds={cart.items.map(item => item.productId)}
                 onPaymentSubmitted={handlePaymentSubmitted}
                 onCODSelected={handleCODSelected}
               />
