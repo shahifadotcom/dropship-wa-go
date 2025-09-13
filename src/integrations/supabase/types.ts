@@ -171,6 +171,7 @@ export type Database = {
           id: string
           is_active: boolean
           last_sync_at: string | null
+          oauth_state: string | null
           refresh_token: string | null
           token_expires_at: string | null
           updated_at: string
@@ -185,6 +186,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           last_sync_at?: string | null
+          oauth_state?: string | null
           refresh_token?: string | null
           token_expires_at?: string | null
           updated_at?: string
@@ -199,6 +201,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           last_sync_at?: string | null
+          oauth_state?: string | null
           refresh_token?: string | null
           token_expires_at?: string | null
           updated_at?: string
