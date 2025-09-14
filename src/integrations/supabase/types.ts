@@ -1996,6 +1996,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      store_cj_credentials: {
+        Args: { client_secret: string; connection_id: string }
+        Returns: boolean
+      }
       store_woocommerce_api_key: {
         Args: {
           p_api_key: string
