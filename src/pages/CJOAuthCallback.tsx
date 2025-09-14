@@ -25,19 +25,18 @@ export default function CJOAuthCallback() {
         return;
       }
 
-      if (!code || !state || !connectionId) {
+      if (!code || !state) {
         setStatus('error');
         setMessage('Missing required parameters in callback');
         return;
       }
 
       try {
+        const body: any = { authCode: code, state };
+        if (connectionId) body.connectionId = connectionId;
+
         const { data, error: callbackError } = await supabase.functions.invoke('cj-oauth-callback', {
-          body: { 
-            connectionId,
-            authCode: code,
-            state
-          }
+          body
         });
 
         if (callbackError) {

@@ -40,6 +40,7 @@ import Countries from "./pages/admin/Countries";
 import Notifications from "./pages/admin/Notifications";
 import CJDropshipping from "./pages/admin/CJDropshipping";
 import OAuthClients from "./pages/admin/OAuthClients";
+import CJOAuthCallback from "./pages/CJOAuthCallback";
 
 const queryClient = new QueryClient();
 
@@ -91,7 +92,7 @@ const App = () => (
         <Route path="/wc-auth/v1/authorize" element={<WCAuth />} />
         <Route path="/wp-json/*" element={<WCAuth />} />
         <Route path="/wc/v3/*" element={<WCAuth />} />
-        <Route path="/cj-oauth-callback" element={<NotFound />} />
+        <Route path="/cj-oauth-callback" element={<CJOAuthCallback />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

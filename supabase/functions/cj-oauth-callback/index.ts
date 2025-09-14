@@ -25,9 +25,9 @@ serve(async (req) => {
 
     const { connectionId, authCode, state } = await req.json()
 
-    if (!connectionId || !authCode) {
+    if (!authCode || (!connectionId && !state)) {
       return new Response(
-        JSON.stringify({ error: 'Connection ID and authorization code are required' }),
+        JSON.stringify({ error: 'Authorization code and state or connection ID are required' }),
         { 
           status: 400, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -36,11 +36,27 @@ serve(async (req) => {
     }
 
     // Get connection details
-    const { data: connection, error: connectionError } = await supabaseClient
-      .from('cj_dropshipping_connections')
-      .select('*')
-      .eq('id', connectionId)
-      .single()
+    let connection: any = null
+    let connectionError: any = null
+
+    if (connectionId) {
+      const result = await supabaseClient
+        .from('cj_dropshipping_connections')
+        .select('*')
+        .eq('id', connectionId)
+        .single()
+      connection = result.data
+      connectionError = result.error
+    } else {
+      const result = await supabaseClient
+        .from('cj_dropshipping_connections')
+        .select('*')
+        .eq('oauth_state', state)
+        .single()
+      connection = result.data
+      connectionError = result.error
+    }
+
 
     if (connectionError || !connection) {
       console.error('Connection fetch error:', connectionError)
@@ -68,7 +84,7 @@ serve(async (req) => {
       client_id: connection.client_id,
       client_secret: connection.client_secret,
       code: authCode,
-      redirect_uri: `https://${connection.domain}/cj-oauth-callback?connection_id=${connectionId}`
+      redirect_uri: `https://${connection.domain}/cj-oauth-callback`
     })
 
     const tokenResponse = await fetch('https://developers.cjdropshipping.com/oauth/token', {
@@ -109,7 +125,7 @@ serve(async (req) => {
         oauth_state: null,
         updated_at: new Date().toISOString()
       })
-      .eq('id', connectionId)
+      .eq('id', connection.id)
 
     if (updateError) {
       console.error('Token update error:', updateError)
@@ -122,7 +138,7 @@ serve(async (req) => {
       )
     }
 
-    console.log(`OAuth flow completed for connection ${connectionId}`)
+    console.log(`OAuth flow completed for connection ${connection.id}`)
 
     return new Response(
       JSON.stringify({ 

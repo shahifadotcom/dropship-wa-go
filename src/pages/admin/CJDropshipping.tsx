@@ -42,8 +42,8 @@ export default function CJDropshipping() {
   const [showAddConnection, setShowAddConnection] = useState(false);
   const [newConnection, setNewConnection] = useState({
     domain: window.location.hostname,
-    client_id: 'auto',
-    client_secret: 'auto'
+    client_id: '',
+    client_secret: ''
   });
 
   useEffect(() => {
@@ -229,6 +229,27 @@ export default function CJDropshipping() {
                   The domain where your store is hosted (auto-detected: {window.location.hostname})
                 </p>
               </div>
+
+              <div>
+                <Label htmlFor="client_id">CJ Client ID</Label>
+                <Input
+                  id="client_id"
+                  placeholder="Enter your CJ Client ID"
+                  value={newConnection.client_id}
+                  onChange={(e) => setNewConnection({ ...newConnection, client_id: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="client_secret">CJ Client Secret</Label>
+                <Input
+                  id="client_secret"
+                  type="password"
+                  placeholder="Enter your CJ Client Secret"
+                  value={newConnection.client_secret}
+                  onChange={(e) => setNewConnection({ ...newConnection, client_secret: e.target.value })}
+                />
+              </div>
               
               <div className="p-4 bg-muted rounded-lg">
                 <h4 className="font-semibold mb-2 flex items-center gap-2">
@@ -236,7 +257,8 @@ export default function CJDropshipping() {
                   How it works
                 </h4>
                 <p className="text-sm text-muted-foreground">
-                  We'll connect to CJ Dropshipping using your domain. You'll be redirected to CJ's website to authorize the connection, then brought back here.
+                  Create a developer app in CJ Dropshipping and paste your Client ID and Secret here.
+                  Set the Redirect URI to: https://{window.location.hostname}/cj-oauth-callback
                 </p>
               </div>
               <Button onClick={handleCreateConnection} className="w-full">
