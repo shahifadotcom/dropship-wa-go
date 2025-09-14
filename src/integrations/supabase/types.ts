@@ -161,48 +161,69 @@ export type Database = {
           },
         ]
       }
-      cj_dropshipping_connections: {
+      cj_credentials: {
         Row: {
           access_token: string | null
-          client_id: string
           client_secret: string
+          connection_id: string
+          created_at: string
+          id: string
+          refresh_token: string | null
+          updated_at: string
+        }
+        Insert: {
+          access_token?: string | null
+          client_secret: string
+          connection_id: string
+          created_at?: string
+          id?: string
+          refresh_token?: string | null
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string | null
+          client_secret?: string
+          connection_id?: string
+          created_at?: string
+          id?: string
+          refresh_token?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      cj_dropshipping_connections: {
+        Row: {
+          client_id: string
           created_at: string
           domain: string
           id: string
           is_active: boolean
           last_sync_at: string | null
           oauth_state: string | null
-          refresh_token: string | null
           token_expires_at: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
-          access_token?: string | null
           client_id: string
-          client_secret: string
           created_at?: string
           domain: string
           id?: string
           is_active?: boolean
           last_sync_at?: string | null
           oauth_state?: string | null
-          refresh_token?: string | null
           token_expires_at?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
-          access_token?: string | null
           client_id?: string
-          client_secret?: string
           created_at?: string
           domain?: string
           id?: string
           is_active?: boolean
           last_sync_at?: string | null
           oauth_state?: string | null
-          refresh_token?: string | null
           token_expires_at?: string | null
           updated_at?: string
           user_id?: string
@@ -260,6 +281,13 @@ export type Database = {
             foreignKeyName: "cj_import_jobs_connection_id_fkey"
             columns: ["connection_id"]
             isOneToOne: false
+            referencedRelation: "cj_connections_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cj_import_jobs_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
             referencedRelation: "cj_dropshipping_connections"
             referencedColumns: ["id"]
           },
@@ -309,6 +337,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "cj_product_imports_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "cj_connections_safe"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "cj_product_imports_connection_id_fkey"
             columns: ["connection_id"]
@@ -368,6 +403,13 @@ export type Database = {
           webhook_type?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "cj_webhook_logs_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "cj_connections_safe"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "cj_webhook_logs_connection_id_fkey"
             columns: ["connection_id"]
@@ -1635,6 +1677,48 @@ export type Database = {
       }
     }
     Views: {
+      cj_connections_safe: {
+        Row: {
+          client_id: string | null
+          created_at: string | null
+          domain: string | null
+          has_credentials: boolean | null
+          id: string | null
+          is_active: boolean | null
+          last_sync_at: string | null
+          oauth_state: string | null
+          token_expires_at: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string | null
+          domain?: string | null
+          has_credentials?: never
+          id?: string | null
+          is_active?: boolean | null
+          last_sync_at?: string | null
+          oauth_state?: string | null
+          token_expires_at?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string | null
+          domain?: string | null
+          has_credentials?: never
+          id?: string | null
+          is_active?: boolean | null
+          last_sync_at?: string | null
+          oauth_state?: string | null
+          token_expires_at?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       products_catalog: {
         Row: {
           allowed_payment_gateways: string[] | null
@@ -1891,6 +1975,14 @@ export type Database = {
           id: string
         }[]
       }
+      get_cj_credentials: {
+        Args: { connection_id: string }
+        Returns: {
+          access_token: string
+          client_secret: string
+          refresh_token: string
+        }[]
+      }
       get_user_roles: {
         Args: { _user_id: string }
         Returns: {
@@ -1915,6 +2007,14 @@ export type Database = {
           p_user_id: string
         }
         Returns: undefined
+      }
+      update_cj_credentials: {
+        Args: {
+          connection_id: string
+          new_access_token?: string
+          new_refresh_token?: string
+        }
+        Returns: boolean
       }
     }
     Enums: {
