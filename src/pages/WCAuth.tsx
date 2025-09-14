@@ -67,24 +67,30 @@ export default function WCAuth() {
         key_permissions: scope || 'read_write'
       });
 
-      // 1) Try POST via proxy (preferred by CJ)
+      // 1) Try POST via proxy (preferred by CJ). Only fallback to GET if POST fails
       if (callbackUrl) {
         try {
-          await supabase.functions.invoke('wc-auth-callback-proxy', {
+          const { data: cbData, error: cbError } = await supabase.functions.invoke('wc-auth-callback-proxy', {
             body: {
               callback_url: callbackUrl,
               payload: Object.fromEntries(callbackParams)
             }
           });
+          if (cbError) throw cbError;
+          // POST succeeded — finish locally or redirect to returnUrl if provided
+          if (returnUrl) {
+            window.location.href = returnUrl;
+            return;
+          }
+          navigate('/admin');
+          toast.success('Application authorized successfully');
+          return;
         } catch (e) {
           console.error('Callback proxy error:', e);
+          // Fallback to GET redirect (some flows expect this)
+          window.location.href = `${callbackUrl}?${callbackParams.toString()}`;
+          return;
         }
-      }
-
-      // 2) Also perform GET redirect as fallback (some flows expect this)
-      if (callbackUrl) {
-        window.location.href = `${callbackUrl}?${callbackParams.toString()}`;
-        return;
       }
 
       if (returnUrl) {

@@ -27,19 +27,37 @@ serve(async (req) => {
       )
     }
 
-    // POST to CJ's callback (avoids browser CORS)
-    const cjRes = await fetch(callback_url, {
+    // Try x-www-form-urlencoded first, then fall back to JSON (some endpoints reject GET and require POST form data)
+    let res = await fetch(callback_url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json, text/plain;q=0.9, */*;q=0.8',
+        'User-Agent': 'supabase-edge/wc-auth-callback-proxy'
+      },
+      body: new URLSearchParams(payload).toString()
     })
 
-    const text = await cjRes.text()
-    const isJson = cjRes.headers.get('content-type')?.includes('application/json')
+    if (!res.ok) {
+      // Fallback to JSON body
+      res = await fetch(callback_url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json, text/plain;q=0.9, */*;q=0.8',
+          'User-Agent': 'supabase-edge/wc-auth-callback-proxy'
+        },
+        body: JSON.stringify(payload)
+      })
+    }
+
+    const resText = await res.text()
+    const resIsJson = res.headers.get('content-type')?.includes('application/json')
+    console.log('wc-auth-callback-proxy response', { status: res.status, contentType: res.headers.get('content-type') })
 
     return new Response(
-      isJson ? text : JSON.stringify({ raw: text }),
-      { status: cjRes.status, headers: { ...corsHeaders, 'Content-Type': isJson ? 'application/json' : 'application/json' } }
+      resIsJson ? resText : JSON.stringify({ raw: resText }),
+      { status: res.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (e) {
     console.error('wc-auth-callback-proxy error:', e)
