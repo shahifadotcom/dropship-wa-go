@@ -15,12 +15,7 @@ serve(async (req) => {
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
-        },
-      }
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
     const { connectionId } = await req.json()
@@ -35,7 +30,7 @@ serve(async (req) => {
       )
     }
 
-    // Get connection details
+    // Get connection details and credentials separately
     const { data: connection, error: connectionError } = await supabaseClient
       .from('cj_dropshipping_connections')
       .select('*')
@@ -52,6 +47,25 @@ serve(async (req) => {
         }
       )
     }
+
+    // Get credentials securely
+    const { data: credentials } = await supabaseClient.rpc('get_cj_credentials', {
+      connection_id: connectionId
+    })
+
+    if (!credentials || credentials.length === 0) {
+      console.error('No credentials found for connection')
+      return new Response(
+        JSON.stringify({ error: 'Connection credentials not found' }),
+        { 
+          status: 404, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+
+    const clientSecret = credentials[0].client_secret
+
 
     // Generate OAuth authorization URL
     const state = crypto.randomUUID()

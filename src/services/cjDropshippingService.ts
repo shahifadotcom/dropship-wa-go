@@ -5,14 +5,16 @@ export interface CJDropshippingConnection {
   user_id: string;
   domain: string;
   client_id: string;
-  client_secret: string;
+  client_secret?: string; // Optional since it's stored separately for security
   access_token?: string;
   refresh_token?: string;
   token_expires_at?: string;
   is_active: boolean;
   last_sync_at?: string;
+  oauth_state?: string;
   created_at: string;
   updated_at: string;
+  has_credentials?: boolean; // Indicates if credentials exist in secure storage
 }
 
 export interface CJProduct {
@@ -65,19 +67,35 @@ class CJDropshippingService {
     client_secret: string;
   }): Promise<CJDropshippingConnection | null> {
     try {
+      // First create the connection record without sensitive data
       const { data, error } = await supabase
         .from('cj_dropshipping_connections')
         .insert({
           domain: connectionData.domain,
           client_id: connectionData.client_id,
-          client_secret: connectionData.client_secret,
           user_id: (await supabase.auth.getUser()).data.user?.id,
         })
         .select()
         .single();
 
       if (error) throw error;
-      return data;
+
+      // Store credentials securely via edge function
+      const { error: credentialsError } = await supabase.functions.invoke('store-cj-credentials', {
+        body: {
+          connection_id: data.id,
+          client_secret: connectionData.client_secret
+        }
+      });
+
+      if (credentialsError) {
+        console.error('Error storing credentials:', credentialsError);
+        // Clean up the connection if credential storage failed
+        await supabase.from('cj_dropshipping_connections').delete().eq('id', data.id);
+        return null;
+      }
+
+      return { ...data, has_credentials: true };
     } catch (error) {
       console.error('Error creating CJ connection:', error);
       return null;
@@ -86,8 +104,9 @@ class CJDropshippingService {
 
   async getConnections(): Promise<CJDropshippingConnection[]> {
     try {
+      // Use the safe view that excludes sensitive credentials
       const { data, error } = await supabase
-        .from('cj_dropshipping_connections')
+        .from('cj_connections_safe')
         .select('*')
         .order('created_at', { ascending: false });
 

@@ -15,12 +15,7 @@ serve(async (req) => {
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
-        },
-      }
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
     const { connectionId, authCode, state } = await req.json()
@@ -57,7 +52,6 @@ serve(async (req) => {
       connectionError = result.error
     }
 
-
     if (connectionError || !connection) {
       console.error('Connection fetch error:', connectionError)
       return new Response(
@@ -68,6 +62,26 @@ serve(async (req) => {
         }
       )
     }
+
+    // Get credentials securely
+    const { data: credentials } = await supabaseClient.rpc('get_cj_credentials', {
+      connection_id: connection.id
+    })
+
+    if (!credentials || credentials.length === 0) {
+      console.error('No credentials found for connection')
+      return new Response(
+        JSON.stringify({ error: 'Connection credentials not found' }),
+        { 
+          status: 404, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+
+    const clientSecret = credentials[0].client_secret
+
+
 
     // Verify state parameter for security
     if (state && connection.oauth_state !== state) {
@@ -83,7 +97,7 @@ serve(async (req) => {
     const tokenRequestBody = new URLSearchParams({
       grant_type: 'authorization_code',
       client_id: connection.client_id,
-      client_secret: connection.client_secret,
+      client_secret: clientSecret,
       code: authCode,
       redirect_uri: `https://${domain}/cj-oauth-callback`
     })
@@ -115,12 +129,10 @@ serve(async (req) => {
     const expiresAt = new Date()
     expiresAt.setSeconds(expiresAt.getSeconds() + (tokenData.expires_in || 3600))
 
-    // Update connection with tokens
+    // Update connection status and clear oauth state
     const { error: updateError } = await supabaseClient
       .from('cj_dropshipping_connections')
       .update({
-        access_token: tokenData.access_token,
-        refresh_token: tokenData.refresh_token,
         token_expires_at: expiresAt.toISOString(),
         is_active: true,
         oauth_state: null,
@@ -129,15 +141,34 @@ serve(async (req) => {
       .eq('id', connection.id)
 
     if (updateError) {
-      console.error('Token update error:', updateError)
+      console.error('Connection update error:', updateError)
       return new Response(
-        JSON.stringify({ error: 'Failed to save tokens' }),
+        JSON.stringify({ error: 'Failed to update connection' }),
         { 
           status: 500, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       )
     }
+
+    // Update credentials securely
+    const { data: credentialsUpdateResult } = await supabaseClient.rpc('update_cj_credentials', {
+      connection_id: connection.id,
+      new_access_token: tokenData.access_token,
+      new_refresh_token: tokenData.refresh_token
+    })
+
+    if (!credentialsUpdateResult) {
+      console.error('Failed to update credentials')
+      return new Response(
+        JSON.stringify({ error: 'Failed to update credentials' }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+
 
     console.log(`OAuth flow completed for connection ${connection.id}`)
 

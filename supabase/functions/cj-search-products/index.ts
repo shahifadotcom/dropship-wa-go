@@ -15,12 +15,7 @@ serve(async (req) => {
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
-        },
-      }
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
     const { connectionId, filters } = await req.json()
@@ -53,7 +48,26 @@ serve(async (req) => {
       )
     }
 
-    if (!connection.access_token) {
+    // Get credentials securely
+    const { data: credentials } = await supabaseClient.rpc('get_cj_credentials', {
+      connection_id: connectionId
+    })
+
+    if (!credentials || credentials.length === 0) {
+      console.error('No credentials found for connection')
+      return new Response(
+        JSON.stringify({ error: 'Connection credentials not found' }),
+        { 
+          status: 404, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+
+    const accessToken = credentials[0].access_token
+
+
+    if (!accessToken) {
       return new Response(
         JSON.stringify({ error: 'Connection not authorized' }),
         { 
@@ -83,23 +97,20 @@ serve(async (req) => {
     }
 
     // Call CJ Dropshipping API
-    const apiResponse = await fetch(
-      `https://developers.cjdropshipping.com/api2.0/v1/product/list?${searchParams.toString()}`,
-      {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${connection.access_token}`,
-          'Content-Type': 'application/json'
-        }
+    const response = await fetch(`https://developers.cjdropshipping.cn/api2.0/v1/product/list?${searchParams}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
       }
-    )
+    })
 
-    if (!apiResponse.ok) {
-      const errorText = await apiResponse.text()
+    if (!response.ok) {
+      const errorText = await response.text()
       console.error('CJ API error:', errorText)
       
       // Check if token needs refresh
-      if (apiResponse.status === 401) {
+      if (response.status === 401) {
         return new Response(
           JSON.stringify({ error: 'Access token expired, please re-authorize' }),
           { 
@@ -118,10 +129,10 @@ serve(async (req) => {
       )
     }
 
-    const apiData = await apiResponse.json()
+    const responseData = await response.json()
 
     // Transform CJ API response to our format
-    const products = apiData.data?.list?.map((product: any) => ({
+    const products = responseData.data?.list?.map((product: any) => ({
       id: product.pid,
       productName: product.productName,
       productSku: product.productSku,
@@ -142,7 +153,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         products,
-        total: apiData.data?.total || products.length,
+        total: responseData.data?.total || products.length,
         page: filters?.page || 1,
         pageSize: filters?.pageSize || 20
       }),
