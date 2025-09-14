@@ -47,7 +47,8 @@ sudo npm install -g pm2
 
 # Install Supabase CLI
 echo -e "${YELLOW}Installing Supabase CLI...${NC}"
-sudo npm install -g supabase
+curl -fsSL https://supabase.com/install.sh | sh
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
 
 # Install project dependencies
 echo -e "${YELLOW}Installing project dependencies...${NC}"
