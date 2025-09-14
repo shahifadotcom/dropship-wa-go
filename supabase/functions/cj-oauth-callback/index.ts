@@ -53,13 +53,22 @@ serve(async (req) => {
       )
     }
 
+    // Verify state parameter for security
+    if (state && connection.oauth_state !== state) {
+      console.error('State mismatch:', { expected: connection.oauth_state, received: state })
+      return new Response(
+        JSON.stringify({ error: 'Invalid state parameter' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     // Exchange authorization code for access token
     const tokenRequestBody = new URLSearchParams({
       grant_type: 'authorization_code',
       client_id: connection.client_id,
       client_secret: connection.client_secret,
       code: authCode,
-      redirect_uri: `https://${connection.domain}/cj-oauth-callback`
+      redirect_uri: `https://${connection.domain}/cj-oauth-callback?connection_id=${connectionId}`
     })
 
     const tokenResponse = await fetch('https://developers.cjdropshipping.com/oauth/token', {

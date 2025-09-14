@@ -55,7 +55,7 @@ serve(async (req) => {
 
     // Generate OAuth authorization URL
     const state = crypto.randomUUID()
-    const redirectUri = `https://${connection.domain}/cj-oauth-callback`
+    const redirectUri = `https://${connection.domain}/cj-oauth-callback?connection_id=${connectionId}`
     
     const authorizationUrl = `https://developers.cjdropshipping.com/oauth/authorize` +
       `?client_id=${connection.client_id}` +

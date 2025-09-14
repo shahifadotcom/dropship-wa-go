@@ -96,10 +96,10 @@ export default function CJDropshipping() {
 
   const handleAuthorize = async (connection: CJDropshippingConnection) => {
     try {
-      const authUrl = await cjDropshippingService.initiateOAuth(connection.id);
-      if (authUrl) {
-        window.open(authUrl, '_blank');
-        toast.success('Authorization window opened. Complete the process and refresh.');
+      const result = await cjDropshippingService.initiateOAuth(connection.id);
+      if (result?.authorizationUrl) {
+        // Open authorization URL in current window
+        window.location.href = result.authorizationUrl;
       } else {
         toast.error('Failed to initiate authorization');
       }

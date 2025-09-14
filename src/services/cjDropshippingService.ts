@@ -131,7 +131,7 @@ class CJDropshippingService {
   }
 
   // OAuth Authorization
-  async initiateOAuth(connectionId: string): Promise<string | null> {
+  async initiateOAuth(connectionId: string): Promise<{ authorizationUrl: string; state: string; redirectUri: string } | null> {
     try {
       // Call edge function to initiate OAuth flow
       const { data, error } = await supabase.functions.invoke('cj-oauth-initiate', {
@@ -139,7 +139,7 @@ class CJDropshippingService {
       });
 
       if (error) throw error;
-      return data.authorizationUrl;
+      return data || null;
     } catch (error) {
       console.error('Error initiating OAuth:', error);
       return null;
