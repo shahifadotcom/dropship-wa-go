@@ -39,7 +39,7 @@ import IPRanges from "./pages/admin/IPRanges";
 import Countries from "./pages/admin/Countries";
 import Notifications from "./pages/admin/Notifications";
 import CJDropshipping from "./pages/admin/CJDropshipping";
-import CJOAuthCallback from "./pages/CJOAuthCallback";
+import OAuthClients from "./pages/admin/OAuthClients";
 
 const queryClient = new QueryClient();
 
@@ -72,7 +72,7 @@ const App = () => (
               <Route path="/admin/settings" element={<Settings />} />
               <Route path="/admin/payment-gateways" element={<PaymentGateways />} />
               <Route path="/admin/vendors" element={<Vendors />} />
-              <Route path="/admin/cj-dropshipping" element={<CJDropshipping />} />
+              <Route path="/admin/oauth-clients" element={<OAuthClients />} />
               <Route path="/admin/payment-methods" element={<PaymentMethods />} />
               <Route path="/admin/order-automation" element={<OrderAutomation />} />
               <Route path="/admin/google-services" element={<GoogleServices />} />
@@ -91,7 +91,7 @@ const App = () => (
         <Route path="/wc-auth/v1/authorize" element={<WCAuth />} />
         <Route path="/wp-json/*" element={<WCAuth />} />
         <Route path="/wc/v3/*" element={<WCAuth />} />
-        <Route path="/cj-oauth-callback" element={<CJOAuthCallback />} />
+        <Route path="/cj-oauth-callback" element={<NotFound />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

@@ -585,6 +585,48 @@ export type Database = {
         }
         Relationships: []
       }
+      oauth_clients: {
+        Row: {
+          client_id: string
+          client_secret: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          redirect_uris: string[] | null
+          scopes: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          client_secret: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          redirect_uris?: string[] | null
+          scopes?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          client_secret?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          redirect_uris?: string[] | null
+          scopes?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           created_at: string | null
@@ -1835,6 +1877,19 @@ export type Database = {
       create_error_logs_table_if_not_exists: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      generate_oauth_client: {
+        Args: {
+          p_description?: string
+          p_name: string
+          p_redirect_uris?: string[]
+          p_scopes?: string[]
+        }
+        Returns: {
+          client_id: string
+          client_secret: string
+          id: string
+        }[]
       }
       get_user_roles: {
         Args: { _user_id: string }

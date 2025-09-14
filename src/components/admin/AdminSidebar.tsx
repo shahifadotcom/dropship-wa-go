@@ -17,7 +17,8 @@ import {
   Palette,
   Flag,
   Bell,
-  MapPin
+  MapPin,
+  Key
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -38,6 +39,7 @@ const AdminSidebar = () => {
     { icon: MapPin, label: "IP Ranges", href: "/admin/ip-ranges" },
     { icon: Building2, label: "Vendors", href: "/admin/vendors" },
     { icon: Package, label: "CJ Dropshipping", href: "/admin/cj-dropshipping" },
+    { icon: Key, label: "OAuth Clients", href: "/admin/oauth-clients" },
     { icon: Bot, label: "Order Automation", href: "/admin/order-automation" },
     { icon: CreditCard, label: "Payment Methods", href: "/admin/payment-methods" },
     { icon: CreditCard, label: "Payment Gateways", href: "/admin/payment-gateways" },
