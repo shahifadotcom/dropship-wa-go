@@ -79,15 +79,16 @@ serve(async (req) => {
     }
 
     // Exchange authorization code for access token
+    const domain = connection.domain.replace(/^https?:\/\//, '').replace(/\/+$/,'')
     const tokenRequestBody = new URLSearchParams({
       grant_type: 'authorization_code',
       client_id: connection.client_id,
       client_secret: connection.client_secret,
       code: authCode,
-      redirect_uri: `https://${connection.domain}/cj-oauth-callback`
+      redirect_uri: `https://${domain}/cj-oauth-callback`
     })
 
-    const tokenResponse = await fetch('https://developers.cjdropshipping.com/oauth/token', {
+    const tokenResponse = await fetch('https://developers.cjdropshipping.cn/oauth/token', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',

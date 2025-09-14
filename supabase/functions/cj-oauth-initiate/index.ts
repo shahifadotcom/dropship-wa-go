@@ -55,14 +55,16 @@ serve(async (req) => {
 
     // Generate OAuth authorization URL
     const state = crypto.randomUUID()
-    const redirectUri = `https://${connection.domain}/cj-oauth-callback`
+    const domain = connection.domain.replace(/^https?:\/\//, '').replace(/\/+$/,'')
+    const redirectUri = `https://${domain}/cj-oauth-callback`
     
-    const authorizationUrl = `https://developers.cjdropshipping.com/oauth/authorize` +
+    const scope = encodeURIComponent('read_products manage_orders read_inventory')
+    const authorizationUrl = `https://developers.cjdropshipping.cn/oauth/authorize` +
       `?client_id=${connection.client_id}` +
       `&response_type=code` +
       `&redirect_uri=${encodeURIComponent(redirectUri)}` +
       `&state=${state}` +
-      `&scope=read_products,manage_orders,read_inventory`
+      `&scope=${scope}`
 
     // Store state for verification
     const { error: updateError } = await supabaseClient
