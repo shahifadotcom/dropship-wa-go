@@ -20,7 +20,8 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  AlertTriangle
+  AlertTriangle,
+  Info
 } from 'lucide-react';
 import { 
   cjDropshippingService, 
@@ -40,9 +41,9 @@ export default function CJDropshipping() {
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
   const [showAddConnection, setShowAddConnection] = useState(false);
   const [newConnection, setNewConnection] = useState({
-    domain: '',
-    client_id: '',
-    client_secret: ''
+    domain: window.location.hostname,
+    client_id: 'auto',
+    client_secret: 'auto'
   });
 
   useEffect(() => {
@@ -207,70 +208,36 @@ export default function CJDropshipping() {
               Add Connection
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-lg">
             <DialogHeader>
-              <DialogTitle>Add CJ Dropshipping Connection</DialogTitle>
+              <DialogTitle>Connect to CJ Dropshipping</DialogTitle>
               <DialogDescription>
-                First create API credentials in CJ Dropshipping, then enter them here
+                Authorize your store with CJ Dropshipping using your domain
               </DialogDescription>
             </DialogHeader>
             
-            {/* Setup Instructions */}
-            <div className="mb-6 p-4 bg-muted rounded-lg">
-              <h4 className="font-semibold mb-3 flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-orange-500" />
-                Setup Instructions
-              </h4>
-              <ol className="text-sm space-y-2 list-decimal list-inside">
-                <li>
-                  Go to{' '}
-                  <a 
-                    href="https://developers.cjdropshipping.com/" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-primary hover:underline"
-                  >
-                    CJ Dropshipping Developer Portal
-                  </a>
-                </li>
-                <li>Login to your CJ account or create one</li>
-                <li>Create a new application/integration</li>
-                <li>Set the redirect URI to: <code className="bg-background px-1 rounded">{window.location.origin}/cj-oauth-callback</code></li>
-                <li>Copy the Client ID and Client Secret provided</li>
-                <li>Enter those credentials in the form below</li>
-              </ol>
-            </div>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="domain">Your Domain</Label>
+                <Label htmlFor="domain">Your Store Domain</Label>
                 <Input
                   id="domain"
-                  placeholder="yourdomain.com (without https://)"
+                  placeholder="yourdomain.com"
                   value={newConnection.domain}
                   onChange={(e) => setNewConnection({ ...newConnection, domain: e.target.value })}
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  This should match the domain where this admin panel is hosted
+                  The domain where your store is hosted (auto-detected: {window.location.hostname})
                 </p>
               </div>
-              <div>
-                <Label htmlFor="client_id">Client ID</Label>
-                <Input
-                  id="client_id"
-                  placeholder="From CJ Developer Portal"
-                  value={newConnection.client_id}
-                  onChange={(e) => setNewConnection({ ...newConnection, client_id: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="client_secret">Client Secret</Label>
-                <Input
-                  id="client_secret"
-                  type="password"
-                  placeholder="From CJ Developer Portal"
-                  value={newConnection.client_secret}
-                  onChange={(e) => setNewConnection({ ...newConnection, client_secret: e.target.value })}
-                />
+              
+              <div className="p-4 bg-muted rounded-lg">
+                <h4 className="font-semibold mb-2 flex items-center gap-2">
+                  <Info className="h-4 w-4 text-blue-500" />
+                  How it works
+                </h4>
+                <p className="text-sm text-muted-foreground">
+                  We'll connect to CJ Dropshipping using your domain. You'll be redirected to CJ's website to authorize the connection, then brought back here.
+                </p>
               </div>
               <Button onClick={handleCreateConnection} className="w-full">
                 Create Connection
