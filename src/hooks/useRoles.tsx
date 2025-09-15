@@ -19,15 +19,13 @@ export function useRoles() {
     const fetchUserRoles = async () => {
       try {
         const { data, error } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id);
+          .rpc('get_user_roles', { _user_id: user.id });
 
         if (error) {
-          console.error('Error fetching user roles:', error);
+          console.error('Error fetching user roles via RPC:', error);
           setRoles([]);
         } else {
-          setRoles(data?.map(item => item.role as AppRole) || []);
+          setRoles(data?.map((item: { role: AppRole }) => item.role) || []);
         }
       } catch (error) {
         console.error('Error fetching user roles:', error);

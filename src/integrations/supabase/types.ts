@@ -2162,6 +2162,13 @@ export type Database = {
       }
     }
     Functions: {
+      assign_user_role: {
+        Args: {
+          new_role: Database["public"]["Enums"]["app_role"]
+          target_user_id: string
+        }
+        Returns: boolean
+      }
       can_view_sensitive_product_data: {
         Args: Record<PropertyKey, never>
         Returns: boolean
