@@ -41,6 +41,8 @@ import Notifications from "./pages/admin/Notifications";
 import CJDropshipping from "./pages/admin/CJDropshipping";
 import OAuthClients from "./pages/admin/OAuthClients";
 import CJOAuthCallback from "./pages/CJOAuthCallback";
+import WhatsApp from "./pages/admin/WhatsApp";
+import VendorAutomation from "./pages/admin/VendorAutomation";
 
 const queryClient = new QueryClient();
 
@@ -82,7 +84,8 @@ const App = () => (
               <Route path="/admin/countries" element={<Countries />} />
               <Route path="/admin/ip-ranges" element={<IPRanges />} />
               <Route path="/admin/notifications" element={<Notifications />} />
-              <Route path="/admin/whatsapp" element={<WhatsAppSetup />} />
+              <Route path="/admin/whatsapp" element={<WhatsApp />} />
+              <Route path="/admin/vendor-automation" element={<VendorAutomation />} />
               
               <Route path="/dashboard" element={<UserDashboard />} />
               <Route path="/profile" element={<Profile />} />

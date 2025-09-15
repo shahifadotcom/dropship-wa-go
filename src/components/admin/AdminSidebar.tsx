@@ -18,7 +18,8 @@ import {
   Flag,
   Bell,
   MapPin,
-  Key
+  Key,
+  Zap
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -48,6 +49,7 @@ const AdminSidebar = () => {
     { icon: Search, label: "SEO & Search", href: "/admin/seo" },
     { icon: Palette, label: "Theme", href: "/admin/theme" },
     { icon: MessageSquare, label: "WhatsApp", href: "/admin/whatsapp" },
+    { icon: Zap, label: "Vendor Automation", href: "/admin/vendor-automation" },
     { icon: Bell, label: "Notifications", href: "/admin/notifications" },
     { icon: FileText, label: "Reports", href: "/admin/reports" },
     { icon: Settings, label: "Settings", href: "/admin/settings" }
