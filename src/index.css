@@ -15,14 +15,14 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 84% 4.9%;
 
-    /* Navigation - Professional blue */
-    --navigation: 220 100% 50%; /* #0066FF - Trust blue */
+    /* Navigation - Brand color #1D103CD */
+    --navigation: 245 72% 31%; /* #1D103CD */
     --navigation-foreground: 0 0% 100%; /* White text */
 
-    /* Primary - E-commerce blue */
-    --primary: 220 100% 50%; /* #0066FF */
+    /* Primary - Brand color #1D103CD */
+    --primary: 245 72% 31%; /* #1D103CD */
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 220 100% 60%;
+    --primary-glow: 245 72% 45%;
 
     /* Secondary - Light gray */
     --secondary: 210 40% 96.1%; /* Light gray */
@@ -47,19 +47,21 @@
 
     --border: 214 31.8% 91.4%;
     --input: 214 31.8% 91.4%;
-    --ring: 220 100% 50%;
+    --ring: 245 72% 31%;
 
     --radius: 0.75rem;
 
-    /* Professional E-commerce gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(220 100% 50%), hsl(220 100% 60%));
-    --gradient-hero: linear-gradient(135deg, hsl(220 100% 50%) 0%, hsl(210 100% 60%) 100%);
+    /* Brand gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(245 72% 31%), hsl(245 72% 45%));
+    --gradient-hero: linear-gradient(135deg, hsl(245 72% 31%) 0%, hsl(245 72% 25%) 100%);
     --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(210 40% 98%) 100%);
 
-    /* Professional shadows */
-    --shadow-soft: 0 2px 8px -2px hsl(220 100% 50% / 0.1);
-    --shadow-medium: 0 8px 25px -5px hsl(220 100% 50% / 0.15);
-    --shadow-large: 0 20px 40px -10px hsl(220 100% 50% / 0.2);
+    /* Brand shadows */
+    --shadow-soft: 0 2px 8px -2px hsl(245 72% 31% / 0.1);
+    --shadow-medium: 0 8px 25px -5px hsl(245 72% 31% / 0.15);
+    --shadow-large: 0 20px 40px -10px hsl(245 72% 31% / 0.2);
+    --shadow-brand: 0 10px 30px -10px hsl(245 72% 31% / 0.3);
+    --shadow-glow: 0 0 40px hsl(245 72% 45% / 0.4);
 
     /* Animation variables */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);

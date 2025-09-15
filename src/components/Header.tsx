@@ -20,12 +20,49 @@ const Header = () => {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-navigation border-b border-navigation/20">
+    <header className="sticky top-0 z-50 w-full bg-navigation border-b border-navigation/20 shadow-md">
       <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
+        {/* Mobile Header */}
+        <div className="flex md:hidden items-center justify-between h-16 gap-4">
+          {/* Store Logo */}
+          <a href="/" className="flex items-center space-x-2 flex-shrink-0">
+            {settings?.store_logo ? (
+              <img 
+                src={settings.store_logo} 
+                alt={settings.store_name || 'Store Logo'} 
+                className="h-8 w-8 object-contain"
+              />
+            ) : (
+              <Package className="h-8 w-8 text-navigation-foreground" />
+            )}
+            <span className="text-lg font-bold text-navigation-foreground">
+              {settings?.store_name || 'Shahifa'}
+            </span>
+          </a>
+
+          {/* Mobile Search Box */}
+          <div className="flex-1 max-w-sm mx-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-navigation-foreground/70" />
+              <Input
+                placeholder="Search..."
+                className="pl-10 pr-4 py-2 bg-background/10 border border-navigation-foreground/20 rounded-lg text-navigation-foreground placeholder:text-navigation-foreground/70 text-sm h-10"
+              />
+            </div>
+          </div>
+
+          {/* Cart Icon */}
+          <CartDrawer>
+            <Button variant="ghost" size="icon" className="relative text-navigation-foreground hover:bg-navigation/10 rounded-lg flex-shrink-0">
+              <ShoppingCart className="h-6 w-6" />
+            </Button>
+          </CartDrawer>
+        </div>
+
+        {/* Desktop Header */}
+        <div className="hidden md:flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center space-x-4">
-            {/* Hide menu button on mobile as requested */}
             <a href="/" className="flex items-center space-x-2">
               {settings?.store_logo ? (
                 <img 
@@ -37,13 +74,13 @@ const Header = () => {
                 <Package className="h-8 w-8 text-navigation-foreground" />
               )}
               <span className="text-xl font-bold text-navigation-foreground">
-                {settings?.store_name || 'DropshipPro'}
+                {settings?.store_name || 'Shahifa'}
               </span>
             </a>
           </div>
 
-          {/* Search Bar - Hidden on mobile, shown on desktop */}
-          <div className="hidden md:flex flex-1 max-w-md mx-8">
+          {/* Desktop Search Bar */}
+          <div className="flex flex-1 max-w-md mx-8">
             <div className="relative w-full">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-navigation-foreground/70" />
               <Input
@@ -53,7 +90,7 @@ const Header = () => {
             </div>
           </div>
 
-          {/* User Actions */}
+          {/* Desktop User Actions */}
           <div className="flex items-center space-x-2">
             {user ? (
               <DropdownMenu>
@@ -90,31 +127,20 @@ const Header = () => {
 
         {/* Desktop Navigation Menu */}
         <div className="hidden md:block">
-          <nav className="flex items-center justify-center space-x-8 py-2 border-t border-navigation-foreground/20">
-            <a href="/" className="text-navigation-foreground hover:text-navigation-foreground/80 transition-colors">
+          <nav className="flex items-center justify-center space-x-8 py-3 border-t border-navigation-foreground/20">
+            <a href="/" className="text-navigation-foreground hover:text-navigation-foreground/80 transition-colors font-medium">
               Home
             </a>
-            <a href="/categories" className="text-navigation-foreground hover:text-navigation-foreground/80 transition-colors">
+            <a href="/categories" className="text-navigation-foreground hover:text-navigation-foreground/80 transition-colors font-medium">
               Categories
             </a>
-            <a href="/deals" className="text-navigation-foreground hover:text-navigation-foreground/80 transition-colors">
+            <a href="/deals" className="text-navigation-foreground hover:text-navigation-foreground/80 transition-colors font-medium">
               Deals
             </a>
-            <a href="/contact" className="text-navigation-foreground hover:text-navigation-foreground/80 transition-colors">
+            <a href="/contact" className="text-navigation-foreground hover:text-navigation-foreground/80 transition-colors font-medium">
               Contact
             </a>
           </nav>
-        </div>
-
-        {/* Mobile Search - Only visible on mobile */}
-        <div className="md:hidden pb-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-navigation-foreground/70" />
-            <Input
-              placeholder="Search products..."
-              className="pl-10 bg-background/10 border-navigation-foreground/20 text-navigation-foreground placeholder:text-navigation-foreground/70"
-            />
-          </div>
         </div>
       </div>
     </header>
