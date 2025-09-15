@@ -19,7 +19,8 @@ import {
   Bell,
   MapPin,
   Key,
-  Zap
+  Zap,
+  Image
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -47,6 +48,7 @@ const AdminSidebar = () => {
     { icon: Truck, label: "Shipping", href: "/admin/shipping" },
     { icon: Globe, label: "Google Services", href: "/admin/google-services" },
     { icon: Search, label: "SEO & Search", href: "/admin/seo" },
+    { icon: Image, label: "Storefront Slider", href: "/admin/storefront-slider" },
     { icon: Palette, label: "Theme", href: "/admin/theme" },
     { icon: MessageSquare, label: "WhatsApp", href: "/admin/whatsapp" },
     { icon: Zap, label: "Vendor Automation", href: "/admin/vendor-automation" },

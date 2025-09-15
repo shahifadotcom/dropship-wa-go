@@ -43,6 +43,7 @@ import OAuthClients from "./pages/admin/OAuthClients";
 import CJOAuthCallback from "./pages/CJOAuthCallback";
 import WhatsApp from "./pages/admin/WhatsApp";
 import VendorAutomation from "./pages/admin/VendorAutomation";
+import StorefrontSlider from "./pages/admin/StorefrontSlider";
 
 const queryClient = new QueryClient();
 
@@ -86,6 +87,7 @@ const App = () => (
               <Route path="/admin/notifications" element={<Notifications />} />
               <Route path="/admin/whatsapp" element={<WhatsApp />} />
               <Route path="/admin/vendor-automation" element={<VendorAutomation />} />
+              <Route path="/admin/storefront-slider" element={<StorefrontSlider />} />
               
               <Route path="/dashboard" element={<UserDashboard />} />
               <Route path="/profile" element={<Profile />} />

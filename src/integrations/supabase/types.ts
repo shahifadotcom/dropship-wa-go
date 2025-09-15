@@ -117,6 +117,42 @@ export type Database = {
           },
         ]
       }
+      binance_pay_config: {
+        Row: {
+          api_key: string | null
+          api_secret: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          merchant_id: string | null
+          test_mode: boolean
+          updated_at: string
+          webhook_url: string | null
+        }
+        Insert: {
+          api_key?: string | null
+          api_secret?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          merchant_id?: string | null
+          test_mode?: boolean
+          updated_at?: string
+          webhook_url?: string | null
+        }
+        Update: {
+          api_key?: string | null
+          api_secret?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          merchant_id?: string | null
+          test_mode?: boolean
+          updated_at?: string
+          webhook_url?: string | null
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           created_at: string | null
@@ -559,6 +595,39 @@ export type Database = {
           },
         ]
       }
+      mobile_wallet_config: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          updated_at: string
+          wallet_name: string | null
+          wallet_number: string
+          wallet_type: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+          wallet_name?: string | null
+          wallet_number: string
+          wallet_type: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+          wallet_name?: string | null
+          wallet_number?: string
+          wallet_type?: string
+        }
+        Relationships: []
+      }
       notification_logs: {
         Row: {
           created_at: string | null
@@ -863,6 +932,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      paypal_personal_config: {
+        Row: {
+          auto_verification: boolean
+          created_at: string
+          id: string
+          is_active: boolean
+          paypal_email: string
+          updated_at: string
+          webhook_id: string | null
+        }
+        Insert: {
+          auto_verification?: boolean
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          paypal_email: string
+          updated_at?: string
+          webhook_id?: string | null
+        }
+        Update: {
+          auto_verification?: boolean
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          paypal_email?: string
+          updated_at?: string
+          webhook_id?: string | null
+        }
+        Relationships: []
       }
       price_sync_logs: {
         Row: {
@@ -1268,6 +1367,48 @@ export type Database = {
         }
         Relationships: []
       }
+      sms_transactions: {
+        Row: {
+          amount: number | null
+          created_at: string
+          device_id: string | null
+          id: string
+          is_processed: boolean
+          matched_order_id: string | null
+          message_content: string
+          sender_number: string
+          transaction_date: string | null
+          transaction_id: string
+          wallet_type: string
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          device_id?: string | null
+          id?: string
+          is_processed?: boolean
+          matched_order_id?: string | null
+          message_content: string
+          sender_number: string
+          transaction_date?: string | null
+          transaction_id: string
+          wallet_type: string
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          device_id?: string | null
+          id?: string
+          is_processed?: boolean
+          matched_order_id?: string | null
+          message_content?: string
+          sender_number?: string
+          transaction_date?: string | null
+          transaction_id?: string
+          wallet_type?: string
+        }
+        Relationships: []
+      }
       store_settings: {
         Row: {
           contact_address: string | null
@@ -1322,6 +1463,45 @@ export type Database = {
           store_tagline?: string | null
           updated_at?: string
           whatsapp_notifications?: boolean | null
+        }
+        Relationships: []
+      }
+      storefront_sliders: {
+        Row: {
+          button_text: string | null
+          created_at: string
+          display_order: number
+          id: string
+          image_url: string
+          is_active: boolean
+          link_url: string | null
+          subtitle: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          button_text?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_url: string
+          is_active?: boolean
+          link_url?: string | null
+          subtitle?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          button_text?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_url?: string
+          is_active?: boolean
+          link_url?: string | null
+          subtitle?: string | null
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1995,6 +2175,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      match_sms_transaction_with_order: {
+        Args: { p_transaction_id: string; p_wallet_type: string }
+        Returns: string
       }
       store_cj_credentials: {
         Args: { client_secret: string; connection_id: string }
