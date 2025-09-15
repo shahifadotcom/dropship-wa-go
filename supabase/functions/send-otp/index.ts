@@ -24,13 +24,6 @@ serve(async (req) => {
       );
     }
 
-    // Generate 6-digit OTP
-    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-    
-    // Set expiration to 10 minutes from now
-    const expiresAt = new Date();
-    expiresAt.setMinutes(expiresAt.getMinutes() + 10);
-
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -38,8 +31,74 @@ serve(async (req) => {
     const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Check rate limiting first
+    const { data: rateLimit, error: rateLimitError } = await supabase
+      .from('otp_rate_limits')
+      .select('*')
+      .eq('phone_number', phoneNumber)
+      .gte('window_start', new Date(Date.now() - 60 * 60 * 1000).toISOString()) // Last hour
+      .maybeSingle();
+
+    if (rateLimitError && rateLimitError.code !== 'PGRST116') {
+      console.error('Rate limit check error:', rateLimitError);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Rate limit check failed',
+          details: rateLimitError.message 
+        }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // If rate limit exists and count >= 3, deny request
+    if (rateLimit && rateLimit.request_count >= 3) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Too many OTP requests. Please wait an hour before trying again.' 
+        }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Update or create rate limit record
+    if (rateLimit) {
+      await supabase
+        .from('otp_rate_limits')
+        .update({ request_count: rateLimit.request_count + 1 })
+        .eq('id', rateLimit.id);
+    } else {
+      await supabase
+        .from('otp_rate_limits')
+        .insert({
+          phone_number: phoneNumber,
+          request_count: 1,
+          window_start: new Date().toISOString()
+        });
+    }
+
+    // Generate secure OTP using database function
+    const { data: otpData, error: otpError } = await supabase
+      .rpc('generate_secure_otp');
+
+    if (otpError) {
+      console.error('OTP generation error:', otpError);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Failed to generate OTP',
+          details: otpError.message 
+        }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const otpCode = otpData;
+    
+    // Set expiration to 10 minutes from now
+    const expiresAt = new Date();
+    expiresAt.setMinutes(expiresAt.getMinutes() + 10);
+
     // Store OTP in database
-    const { error: otpError } = await supabase
+    const { error: otpStoreError } = await supabase
       .from('otp_verifications')
       .insert({
         phone_number: phoneNumber,
@@ -48,9 +107,9 @@ serve(async (req) => {
         is_verified: false
       });
 
-    if (otpError) {
-      console.error('Error storing OTP:', otpError);
-      throw otpError;
+    if (otpStoreError) {
+      console.error('Error storing OTP:', otpStoreError);
+      throw otpStoreError;
     }
 
     // Send OTP via WhatsApp
@@ -66,7 +125,7 @@ serve(async (req) => {
       // Don't throw error here, OTP is still stored and can be used
     }
 
-    console.log(`OTP ${otpCode} sent to ${phoneNumber}`);
+    // Removed OTP logging for security reasons
 
     return new Response(
       JSON.stringify({ 

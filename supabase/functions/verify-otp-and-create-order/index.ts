@@ -31,17 +31,34 @@ serve(async (req) => {
     const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Verify OTP
-    const { data: otpVerification, error: otpError } = await supabase
+    // Verify OTP with timing-safe comparison
+    const { data: otpRecords, error: otpError } = await supabase
       .from('otp_verifications')
       .select('*')
       .eq('phone_number', phoneNumber)
-      .eq('otp_code', otpCode)
       .eq('is_verified', false)
       .gt('expires_at', new Date().toISOString())
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .order('created_at', { ascending: false });
+
+    // Find matching OTP with constant-time comparison to prevent timing attacks
+    let otpVerification = null;
+    if (otpRecords && otpRecords.length > 0) {
+      for (const record of otpRecords) {
+        // Simple timing-safe comparison
+        if (record.otp_code.length === otpCode.length) {
+          let isMatch = true;
+          for (let i = 0; i < record.otp_code.length; i++) {
+            if (record.otp_code.charCodeAt(i) !== otpCode.charCodeAt(i)) {
+              isMatch = false;
+            }
+          }
+          if (isMatch) {
+            otpVerification = record;
+            break;
+          }
+        }
+      }
+    }
 
     if (otpError) {
       console.error('Error verifying OTP:', otpError);

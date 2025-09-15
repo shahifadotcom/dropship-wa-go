@@ -862,6 +862,30 @@ export type Database = {
           },
         ]
       }
+      otp_rate_limits: {
+        Row: {
+          created_at: string | null
+          id: string
+          phone_number: string
+          request_count: number | null
+          window_start: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          phone_number: string
+          request_count?: number | null
+          window_start?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          phone_number?: string
+          request_count?: number | null
+          window_start?: string | null
+        }
+        Relationships: []
+      }
       otp_verifications: {
         Row: {
           created_at: string
@@ -2154,6 +2178,10 @@ export type Database = {
           client_secret: string
           id: string
         }[]
+      }
+      generate_secure_otp: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
       get_cj_credentials: {
         Args: { connection_id: string }
