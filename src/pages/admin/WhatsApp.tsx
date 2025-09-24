@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,7 @@ interface WhatsAppStatus {
   qrCode?: string;
   sessionData?: any;
   phoneNumber?: string;
+  clientInfo?: string;
 }
 
 const WhatsApp = () => {
@@ -27,39 +28,120 @@ const WhatsApp = () => {
     today: 0,
     failed: 0
   });
+  const [connectionLog, setConnectionLog] = useState<string[]>([]);
+  const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
-    checkWhatsAppStatus();
     fetchMessageStats();
-    const interval = setInterval(checkWhatsAppStatus, 5000);
-    return () => clearInterval(interval);
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+    };
   }, []);
 
-  const checkWhatsAppStatus = async () => {
-    try {
-      const { data: config, error } = await supabase
-        .from('whatsapp_config')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
-
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching WhatsApp config:', error);
-        return;
-      }
-
-      if (config) {
-        setStatus({
-          isConnected: config.is_connected || false,
-          isReady: config.is_connected || false,
-          sessionData: config.session_data,
-          phoneNumber: config.qr_code || undefined
-        });
-      }
-    } catch (error) {
-      console.error('Error checking WhatsApp status:', error);
+  const connectWebSocket = () => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      return;
     }
+
+    const wsUrl = `wss://mofwljpreecqqxkilywh.supabase.co/functions/v1/whatsapp-realtime`;
+    console.log('Connecting to WebSocket:', wsUrl);
+    
+    wsRef.current = new WebSocket(wsUrl);
+    
+    wsRef.current.onopen = () => {
+      console.log('WebSocket connected');
+      addLog('WebSocket connected successfully');
+    };
+    
+    wsRef.current.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        console.log('WebSocket message:', data);
+        
+        switch (data.type) {
+          case 'status':
+            setStatus({
+              isConnected: data.isConnected || false,
+              isReady: data.isConnected || false,
+              qrCode: data.qrCode,
+              clientInfo: data.clientInfo,
+              sessionData: data.sessionData
+            });
+            break;
+            
+          case 'qr':
+            generateQRImage(data.qrCode);
+            addLog('QR code generated - scan with WhatsApp');
+            break;
+            
+          case 'ready':
+            setStatus(prev => ({
+              ...prev,
+              isConnected: true,
+              isReady: true,
+              clientInfo: data.clientInfo,
+              sessionData: data.sessionData
+            }));
+            setQrDataUrl(null);
+            toast.success(`WhatsApp connected: ${data.clientInfo}`);
+            addLog(`WhatsApp connected: ${data.clientInfo}`);
+            break;
+            
+          case 'disconnected':
+            setStatus({
+              isConnected: false,
+              isReady: false
+            });
+            setQrDataUrl(null);
+            addLog('WhatsApp disconnected');
+            break;
+            
+          case 'message_sent':
+            toast.success('Test message sent successfully');
+            addLog(`Message sent to ${data.phoneNumber}`);
+            fetchMessageStats();
+            break;
+            
+          case 'message_error':
+            toast.error(`Failed to send message: ${data.error}`);
+            addLog(`Failed to send message: ${data.error}`);
+            break;
+            
+          case 'error':
+            toast.error(data.message);
+            addLog(`Error: ${data.message}`);
+            break;
+            
+          case 'initializing':
+            addLog('Initializing WhatsApp client...');
+            break;
+        }
+      } catch (error) {
+        console.error('Error parsing WebSocket message:', error);
+      }
+    };
+    
+    wsRef.current.onclose = (event) => {
+      console.log('WebSocket closed:', event);
+      addLog('WebSocket connection closed');
+      
+      // Reconnect after 3 seconds if not manually closed
+      if (event.code !== 1000) {
+        setTimeout(connectWebSocket, 3000);
+      }
+    };
+    
+    wsRef.current.onerror = (error) => {
+      console.error('WebSocket error:', error);
+      addLog('WebSocket connection error');
+    };
+  };
+
+  const addLog = (message: string) => {
+    const timestamp = new Date().toLocaleTimeString();
+    setConnectionLog(prev => [...prev.slice(-9), `${timestamp}: ${message}`]);
   };
 
   const fetchMessageStats = async () => {
@@ -90,67 +172,29 @@ const WhatsApp = () => {
     }
   };
 
-  const initializeWhatsApp = async () => {
+  const initializeWhatsApp = () => {
     setLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('whatsapp-web-integration', {
-        body: { action: 'initialize' }
-      });
-
-      if (error) throw error;
-
-      if (data.success) {
-        toast.success('WhatsApp initialization started');
-        pollForQR();
-      } else {
-        toast.error(data.message || 'Failed to initialize WhatsApp');
-      }
-    } catch (error) {
-      console.error('Error initializing WhatsApp:', error);
-      toast.error('Failed to initialize WhatsApp');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const pollForQR = async () => {
-    const maxAttempts = 30;
-    let attempts = 0;
-
-    const poll = async () => {
-      if (attempts >= maxAttempts) {
-        toast.error('QR code generation timeout');
+    connectWebSocket();
+    
+    // Wait for connection then send initialize message
+    const checkConnection = () => {
+      if (wsRef.current?.readyState === WebSocket.OPEN) {
+        wsRef.current.send(JSON.stringify({ action: 'initialize' }));
+        addLog('Initializing WhatsApp connection...');
         setLoading(false);
-        return;
-      }
-
-      try {
-        const { data, error } = await supabase.functions.invoke('whatsapp-web-integration', {
-          body: { action: 'get_qr' }
-        });
-
-        if (error) throw error;
-
-        if (data.qr_code && data.qr_code !== 'pending') {
-          await generateQRImage(data.qr_code);
-          setLoading(false);
-          checkForConnection();
-        } else if (data.connected) {
-          toast.success('WhatsApp connected successfully!');
-          setLoading(false);
-          checkWhatsAppStatus();
-        } else {
-          attempts++;
-          setTimeout(poll, 2000);
-        }
-      } catch (error) {
-        console.error('Error polling for QR:', error);
-        attempts++;
-        setTimeout(poll, 2000);
+      } else {
+        setTimeout(checkConnection, 100);
       }
     };
+    
+    checkConnection();
+  };
 
-    poll();
+  const disconnectWhatsApp = () => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ action: 'disconnect' }));
+      addLog('Disconnecting WhatsApp...');
+    }
   };
 
   const generateQRImage = async (qrString: string) => {
@@ -178,54 +222,7 @@ const WhatsApp = () => {
     }
   };
 
-  const checkForConnection = () => {
-    const connectionCheck = setInterval(async () => {
-      try {
-        const { data, error } = await supabase.functions.invoke('whatsapp-web-integration', {
-          body: { action: 'status' }
-        });
-
-        if (error) throw error;
-
-        if (data.connected) {
-          clearInterval(connectionCheck);
-          toast.success('WhatsApp connected successfully!');
-          setQrDataUrl(null);
-          checkWhatsAppStatus();
-        }
-      } catch (error) {
-        console.error('Error checking connection:', error);
-      }
-    }, 3000);
-
-    setTimeout(() => clearInterval(connectionCheck), 60000);
-  };
-
-  const disconnectWhatsApp = async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('whatsapp-web-integration', {
-        body: { action: 'disconnect' }
-      });
-
-      if (error) throw error;
-
-      if (data.success) {
-        toast.success('WhatsApp disconnected successfully');
-        setStatus({ isConnected: false, isReady: false });
-        setQrDataUrl(null);
-      } else {
-        toast.error('Failed to disconnect WhatsApp');
-      }
-    } catch (error) {
-      console.error('Error disconnecting WhatsApp:', error);
-      toast.error('Failed to disconnect WhatsApp');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const sendTestMessage = async () => {
+  const sendTestMessage = () => {
     if (!status.isReady) {
       toast.error('WhatsApp is not ready');
       return;
@@ -234,30 +231,20 @@ const WhatsApp = () => {
     const phoneNumber = prompt('Enter phone number (with country code):');
     if (!phoneNumber) return;
 
-    setLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('send-whatsapp-message', {
-        body: {
-          phoneNumber,
-          message: 'Test message from Shahifa Store - WhatsApp integration is working!'
-        }
-      });
-
-      if (error) throw error;
-
-      if (data.success) {
-        toast.success('Test message sent successfully');
-        fetchMessageStats();
-      } else {
-        toast.error(data.message || 'Failed to send test message');
-      }
-    } catch (error) {
-      console.error('Error sending test message:', error);
-      toast.error('Failed to send test message');
-    } finally {
-      setLoading(false);
+    const message = 'Test message from Shahifa Store - WhatsApp integration is working!';
+    
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ 
+        action: 'send_message', 
+        phoneNumber, 
+        text: message 
+      }));
+      addLog(`Sending test message to ${phoneNumber}`);
+    } else {
+      toast.error('WebSocket not connected');
     }
   };
+
 
   return (
     <AdminLayout>
@@ -357,8 +344,8 @@ const WhatsApp = () => {
                 <div className="flex items-center gap-2 text-green-600">
                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                   <span>WhatsApp is connected and ready</span>
-                  {status.phoneNumber && (
-                    <Badge variant="outline">{status.phoneNumber}</Badge>
+                  {status.clientInfo && (
+                    <Badge variant="outline">{status.clientInfo}</Badge>
                   )}
                 </div>
 
@@ -373,15 +360,38 @@ const WhatsApp = () => {
                 </div>
 
                 <div className="flex gap-2">
-                  <Button onClick={sendTestMessage} variant="outline" disabled={loading}>
+                  <Button onClick={sendTestMessage} variant="outline" disabled={!status.isReady}>
                     Send Test Message
                   </Button>
-                  <Button onClick={disconnectWhatsApp} variant="destructive" disabled={loading}>
+                  <Button onClick={disconnectWhatsApp} variant="destructive" disabled={!status.isReady}>
                     Disconnect
                   </Button>
                 </div>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Connection Log */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5" />
+              Connection Log
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2 max-h-48 overflow-y-auto bg-muted/30 p-3 rounded-md">
+              {connectionLog.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No activity yet</p>
+              ) : (
+                connectionLog.map((log, index) => (
+                  <div key={index} className="text-sm font-mono">
+                    {log}
+                  </div>
+                ))
+              )}
+            </div>
           </CardContent>
         </Card>
 
