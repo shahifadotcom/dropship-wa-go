@@ -40,103 +40,82 @@ const WhatsApp = () => {
     };
   }, []);
 
-  const connectWebSocket = () => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      return;
-    }
+  const initializeWhatsApp = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('whatsapp-simple', {
+        body: { action: 'initialize' }
+      });
 
-    const wsUrl = `wss://mofwljpreecqqxkilywh.supabase.co/functions/v1/whatsapp-realtime`;
-    console.log('Connecting to WebSocket:', wsUrl);
-    
-    wsRef.current = new WebSocket(wsUrl);
-    
-    wsRef.current.onopen = () => {
-      console.log('WebSocket connected');
-      addLog('WebSocket connected successfully');
-    };
-    
-    wsRef.current.onmessage = (event) => {
+      if (error) throw error;
+
+      if (data.success) {
+        toast.success('WhatsApp initialization started');
+        await generateQRImage(data.qr_code);
+        addLog('QR code generated - scan with WhatsApp');
+        checkForConnection();
+      } else {
+        toast.error(data.message || 'Failed to initialize WhatsApp');
+      }
+    } catch (error) {
+      console.error('Error initializing WhatsApp:', error);
+      toast.error('Failed to initialize WhatsApp');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const checkForConnection = () => {
+    const connectionCheck = setInterval(async () => {
       try {
-        const data = JSON.parse(event.data);
-        console.log('WebSocket message:', data);
-        
-        switch (data.type) {
-          case 'status':
-            setStatus({
-              isConnected: data.isConnected || false,
-              isReady: data.isConnected || false,
-              qrCode: data.qrCode,
-              clientInfo: data.clientInfo,
-              sessionData: data.sessionData
-            });
-            break;
-            
-          case 'qr':
-            generateQRImage(data.qrCode);
-            addLog('QR code generated - scan with WhatsApp');
-            break;
-            
-          case 'ready':
-            setStatus(prev => ({
-              ...prev,
-              isConnected: true,
-              isReady: true,
-              clientInfo: data.clientInfo,
-              sessionData: data.sessionData
-            }));
-            setQrDataUrl(null);
-            toast.success(`WhatsApp connected: ${data.clientInfo}`);
-            addLog(`WhatsApp connected: ${data.clientInfo}`);
-            break;
-            
-          case 'disconnected':
-            setStatus({
-              isConnected: false,
-              isReady: false
-            });
-            setQrDataUrl(null);
-            addLog('WhatsApp disconnected');
-            break;
-            
-          case 'message_sent':
-            toast.success('Test message sent successfully');
-            addLog(`Message sent to ${data.phoneNumber}`);
-            fetchMessageStats();
-            break;
-            
-          case 'message_error':
-            toast.error(`Failed to send message: ${data.error}`);
-            addLog(`Failed to send message: ${data.error}`);
-            break;
-            
-          case 'error':
-            toast.error(data.message);
-            addLog(`Error: ${data.message}`);
-            break;
-            
-          case 'initializing':
-            addLog('Initializing WhatsApp client...');
-            break;
+        const { data, error } = await supabase.functions.invoke('whatsapp-simple', {
+          body: { action: 'status' }
+        });
+
+        if (error) throw error;
+
+        if (data.connected) {
+          clearInterval(connectionCheck);
+          setStatus({
+            isConnected: true,
+            isReady: true,
+            clientInfo: data.clientInfo || 'WhatsApp Connected'
+          });
+          setQrDataUrl(null);
+          toast.success('WhatsApp connected successfully!');
+          addLog('WhatsApp connected successfully');
         }
       } catch (error) {
-        console.error('Error parsing WebSocket message:', error);
+        console.error('Error checking connection:', error);
       }
-    };
-    
-    wsRef.current.onclose = (event) => {
-      console.log('WebSocket closed:', event);
-      addLog('WebSocket connection closed');
-      
-      // Reconnect after 3 seconds if not manually closed
-      if (event.code !== 1000) {
-        setTimeout(connectWebSocket, 3000);
+    }, 3000);
+
+    setTimeout(() => clearInterval(connectionCheck), 60000);
+  };
+
+  const disconnectWhatsApp = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('whatsapp-simple', {
+        body: { action: 'disconnect' }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        setStatus({ isConnected: false, isReady: false });
+        setQrDataUrl(null);
+        toast.success('WhatsApp disconnected successfully');
+        addLog('WhatsApp disconnected');
+      } else {
+        toast.error('Failed to disconnect WhatsApp');
       }
-    };
-    
-    wsRef.current.onerror = (error) => {
-      console.error('WebSocket error:', error);
-      addLog('WebSocket connection error');
-    };
+    } catch (error) {
+      console.error('Error disconnecting WhatsApp:', error);
+      toast.error('Failed to disconnect WhatsApp');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const addLog = (message: string) => {

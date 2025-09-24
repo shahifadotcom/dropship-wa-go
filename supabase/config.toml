@@ -34,6 +34,12 @@ verify_jwt = false
 [functions.whatsapp-simple]
 verify_jwt = false
 
+[functions.whatsapp-realtime]
+verify_jwt = false
+
+[functions.whatsapp-websocket]
+verify_jwt = false
+
 [functions.vendor-order-automation]
 verify_jwt = true
 
