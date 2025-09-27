@@ -34,6 +34,9 @@ verify_jwt = false
 [functions.whatsapp-simple]
 verify_jwt = false
 
+[functions.whatsapp-real]
+verify_jwt = false
+
 [functions.whatsapp-realtime]
 verify_jwt = false
 

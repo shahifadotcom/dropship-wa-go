@@ -43,7 +43,7 @@ const WhatsApp = () => {
   const initializeWhatsApp = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('whatsapp-simple', {
+      const { data, error } = await supabase.functions.invoke('whatsapp-real', {
         body: { action: 'initialize' }
       });
 
@@ -52,7 +52,7 @@ const WhatsApp = () => {
       if (data.success) {
         toast.success('WhatsApp initialization started');
         await generateQRImage(data.qr_code);
-        addLog('QR code generated - scan with WhatsApp');
+        addLog('QR code generated - scan with WhatsApp to connect your account');
         checkForConnection();
       } else {
         toast.error(data.message || 'Failed to initialize WhatsApp');
@@ -68,7 +68,7 @@ const WhatsApp = () => {
   const checkForConnection = () => {
     const connectionCheck = setInterval(async () => {
       try {
-        const { data, error } = await supabase.functions.invoke('whatsapp-simple', {
+        const { data, error } = await supabase.functions.invoke('whatsapp-real', {
           body: { action: 'status' }
         });
 
@@ -83,7 +83,7 @@ const WhatsApp = () => {
           });
           setQrDataUrl(null);
           toast.success('WhatsApp connected successfully!');
-          addLog('WhatsApp connected successfully');
+          addLog('WhatsApp account linked successfully');
         }
       } catch (error) {
         console.error('Error checking connection:', error);
@@ -96,7 +96,7 @@ const WhatsApp = () => {
   const disconnectWhatsApp = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('whatsapp-simple', {
+      const { data, error } = await supabase.functions.invoke('whatsapp-real', {
         body: { action: 'disconnect' }
       });
 
@@ -106,7 +106,7 @@ const WhatsApp = () => {
         setStatus({ isConnected: false, isReady: false });
         setQrDataUrl(null);
         toast.success('WhatsApp disconnected successfully');
-        addLog('WhatsApp disconnected');
+        addLog('WhatsApp account disconnected');
       } else {
         toast.error('Failed to disconnect WhatsApp');
       }
@@ -291,7 +291,7 @@ const WhatsApp = () => {
             {!status.isReady ? (
               <div className="space-y-4">
                 <p className="text-muted-foreground">
-                  Connect your WhatsApp account to enable automated notifications
+                  Link your personal WhatsApp account to enable automated customer notifications
                 </p>
                 
                 {qrDataUrl && (
@@ -304,7 +304,8 @@ const WhatsApp = () => {
                       <p className="text-sm text-muted-foreground">
                         1. Open WhatsApp on your phone<br/>
                         2. Go to Settings → Linked Devices<br/>
-                        3. Tap "Link a Device" and scan this QR code
+                        3. Tap "Link a Device" and scan this QR code<br/>
+                        4. Your personal WhatsApp account will be linked
                       </p>
                     </div>
                   </div>
