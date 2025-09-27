@@ -43,19 +43,30 @@ const WhatsApp = () => {
   const initializeWhatsApp = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('whatsapp-real', {
+      const { data, error } = await supabase.functions.invoke('whatsapp-web-integration', {
         body: { action: 'initialize' }
       });
 
       if (error) throw error;
 
-      if (data.success) {
+      if (data?.success) {
         toast.success('WhatsApp initialization started');
-        await generateQRImage(data.qr_code);
-        addLog('QR code generated - scan with WhatsApp to connect your account');
+        if (data.qrCode) {
+          await generateQRImage(data.qrCode);
+          addLog('QR code generated - scan with WhatsApp to connect your account');
+        } else {
+          // Try to fetch QR explicitly if not returned in initialize
+          const qrRes = await supabase.functions.invoke('whatsapp-web-integration', {
+            body: { action: 'get_qr' }
+          });
+          if (qrRes.data?.qrCode) {
+            await generateQRImage(qrRes.data.qrCode);
+            addLog('QR code fetched - scan with WhatsApp to connect your account');
+          }
+        }
         checkForConnection();
       } else {
-        toast.error(data.message || 'Failed to initialize WhatsApp');
+        toast.error(data?.message || 'Failed to initialize WhatsApp');
       }
     } catch (error) {
       console.error('Error initializing WhatsApp:', error);
@@ -68,22 +79,24 @@ const WhatsApp = () => {
   const checkForConnection = () => {
     const connectionCheck = setInterval(async () => {
       try {
-        const { data, error } = await supabase.functions.invoke('whatsapp-real', {
+        const { data, error } = await supabase.functions.invoke('whatsapp-web-integration', {
           body: { action: 'status' }
         });
 
         if (error) throw error;
 
-        if (data.connected) {
+        if (data?.isReady) {
           clearInterval(connectionCheck);
           setStatus({
             isConnected: true,
             isReady: true,
-            clientInfo: data.clientInfo || 'WhatsApp Connected'
+            clientInfo: 'WhatsApp Connected'
           });
           setQrDataUrl(null);
           toast.success('WhatsApp connected successfully!');
           addLog('WhatsApp account linked successfully');
+        } else if (data?.qrCode && !qrDataUrl) {
+          await generateQRImage(data.qrCode);
         }
       } catch (error) {
         console.error('Error checking connection:', error);
@@ -96,13 +109,13 @@ const WhatsApp = () => {
   const disconnectWhatsApp = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('whatsapp-real', {
+      const { data, error } = await supabase.functions.invoke('whatsapp-web-integration', {
         body: { action: 'disconnect' }
       });
 
       if (error) throw error;
 
-      if (data.success) {
+      if (data?.success) {
         setStatus({ isConnected: false, isReady: false });
         setQrDataUrl(null);
         toast.success('WhatsApp disconnected successfully');
@@ -188,23 +201,22 @@ const WhatsApp = () => {
 
     const message = 'Test message from Shahifa Store - WhatsApp integration is working!';
     
-    // Send message using the HTTP function
-    supabase.functions.invoke('whatsapp-real', {
+    supabase.functions.invoke('whatsapp-web-integration', {
       body: { 
         action: 'send_message', 
         phoneNumber, 
-        text: message 
+        message 
       }
     }).then(({ data, error }) => {
       if (error) {
         toast.error('Failed to send test message');
         addLog(`Failed to send test message to ${phoneNumber}`);
-      } else if (data.success) {
+      } else if (data?.success) {
         toast.success('Test message sent successfully');
         addLog(`Test message sent to ${phoneNumber}`);
       } else {
-        toast.error(data.error || 'Failed to send test message');
-        addLog(`Failed to send test message: ${data.error}`);
+        toast.error(data?.error || 'Failed to send test message');
+        addLog(`Failed to send test message: ${data?.error}`);
       }
     });
   };
