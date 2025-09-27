@@ -151,30 +151,6 @@ const WhatsApp = () => {
     }
   };
 
-  const initializeWhatsApp = () => {
-    setLoading(true);
-    connectWebSocket();
-    
-    // Wait for connection then send initialize message
-    const checkConnection = () => {
-      if (wsRef.current?.readyState === WebSocket.OPEN) {
-        wsRef.current.send(JSON.stringify({ action: 'initialize' }));
-        addLog('Initializing WhatsApp connection...');
-        setLoading(false);
-      } else {
-        setTimeout(checkConnection, 100);
-      }
-    };
-    
-    checkConnection();
-  };
-
-  const disconnectWhatsApp = () => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({ action: 'disconnect' }));
-      addLog('Disconnecting WhatsApp...');
-    }
-  };
 
   const generateQRImage = async (qrString: string) => {
     try {
@@ -212,16 +188,25 @@ const WhatsApp = () => {
 
     const message = 'Test message from Shahifa Store - WhatsApp integration is working!';
     
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({ 
+    // Send message using the HTTP function
+    supabase.functions.invoke('whatsapp-real', {
+      body: { 
         action: 'send_message', 
         phoneNumber, 
         text: message 
-      }));
-      addLog(`Sending test message to ${phoneNumber}`);
-    } else {
-      toast.error('WebSocket not connected');
-    }
+      }
+    }).then(({ data, error }) => {
+      if (error) {
+        toast.error('Failed to send test message');
+        addLog(`Failed to send test message to ${phoneNumber}`);
+      } else if (data.success) {
+        toast.success('Test message sent successfully');
+        addLog(`Test message sent to ${phoneNumber}`);
+      } else {
+        toast.error(data.error || 'Failed to send test message');
+        addLog(`Failed to send test message: ${data.error}`);
+      }
+    });
   };
 
 
