@@ -121,7 +121,7 @@ serve(async (req) => {
             JSON.stringify({ 
               success: false,
               message: 'Failed to connect to WhatsApp bridge server. Make sure it\'s running.',
-              error: error.message
+              error: error instanceof Error ? error.message : 'Unknown error'
             }),
             { 
               headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -212,14 +212,14 @@ serve(async (req) => {
               phone_number: phoneNumber,
               message: message,
               status: 'failed',
-              error_message: error.message
+              error_message: error instanceof Error ? error.message : 'Unknown error'
             });
 
           return new Response(
             JSON.stringify({ 
               success: false,
               error: 'Failed to send message',
-              details: error.message
+              details: error instanceof Error ? error.message : 'Unknown error'
             }),
             { 
               status: 500,
@@ -346,7 +346,7 @@ serve(async (req) => {
             JSON.stringify({ 
               success: false,
               message: 'Error disconnecting WhatsApp client',
-              error: error.message
+              error: error instanceof Error ? error.message : 'Unknown error'
             }),
             { 
               status: 500,
@@ -371,7 +371,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         error: 'Internal server error',
-        details: error.message 
+        details: error instanceof Error ? error.message : 'Unknown error' 
       }),
       { 
         status: 500, 
