@@ -234,28 +234,6 @@ const WhatsAppSetup = () => {
             <p className="text-muted-foreground">
               Connect your WhatsApp account to send OTP and order notifications
             </p>
-                          <Button 
-                            variant="secondary" 
-                            onClick={async () => {
-                              try {
-                                await supabase.functions.invoke('whatsapp-web-integration', {
-                                  body: { action: 'simulate_connect' }
-                                });
-                                setIsConnected(true);
-                                setQrCode('');
-                                setQrDataUrl('');
-                                toast({
-                                  title: "Connected",
-                                  description: "WhatsApp connected successfully!"
-                                });
-                              } catch (error) {
-                                console.error('Error simulating connection:', error);
-                              }
-                            }}
-                            disabled={loading}
-                          >
-                            Test Connection
-                          </Button>
                         </div>
 
           <Card>

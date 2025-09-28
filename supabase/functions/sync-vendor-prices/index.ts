@@ -138,9 +138,10 @@ serve(async (req) => {
         });
 
       } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
         logStep("Error syncing product price", {
           productId: vendorProduct.product_id,
-          error: error.message
+          error: msg
         });
 
         // Log the failed sync
@@ -152,14 +153,14 @@ serve(async (req) => {
             old_price: vendorProduct.products.price,
             new_price: null,
             sync_status: 'failed',
-            error_message: error.message
+            error_message: msg
           });
 
         syncResults.push({
           productId: vendorProduct.product_id,
           productName: vendorProduct.products.name,
           success: false,
-          error: error.message
+          error: msg
         });
       }
     }

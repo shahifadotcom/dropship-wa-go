@@ -43,7 +43,7 @@ const WhatsApp = () => {
   const initializeWhatsApp = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('whatsapp-direct', {
+      const { data, error } = await supabase.functions.invoke('whatsapp-web-integration', {
         body: { action: 'initialize' }
       });
 
@@ -56,7 +56,7 @@ const WhatsApp = () => {
           addLog('QR code generated - scan with WhatsApp to connect your account');
         } else {
           // Try to fetch QR explicitly if not returned in initialize
-          const qrRes = await supabase.functions.invoke('whatsapp-direct', {
+          const qrRes = await supabase.functions.invoke('whatsapp-web-integration', {
             body: { action: 'get_qr' }
           });
           if (qrRes.data?.qrCode) {
@@ -79,7 +79,7 @@ const WhatsApp = () => {
   const checkForConnection = () => {
     const connectionCheck = setInterval(async () => {
       try {
-        const { data, error } = await supabase.functions.invoke('whatsapp-direct', {
+        const { data, error } = await supabase.functions.invoke('whatsapp-web-integration', {
           body: { action: 'status' }
         });
 
@@ -109,7 +109,7 @@ const WhatsApp = () => {
   const disconnectWhatsApp = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('whatsapp-direct', {
+      const { data, error } = await supabase.functions.invoke('whatsapp-web-integration', {
         body: { action: 'disconnect' }
       });
 
@@ -201,7 +201,7 @@ const WhatsApp = () => {
 
     const message = 'Test message from Shahifa Store - WhatsApp integration is working!';
     
-    supabase.functions.invoke('whatsapp-direct', {
+    supabase.functions.invoke('whatsapp-web-integration', {
       body: { 
         action: 'send_message', 
         phoneNumber, 

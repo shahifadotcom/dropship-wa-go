@@ -250,7 +250,7 @@ async function importProductsInBackground(
       .update({
         status: 'failed',
         completed_at: new Date().toISOString(),
-        error_log: error.message
+        error_log: (error instanceof Error ? error.message : String(error))
       })
       .eq('id', jobId)
   }

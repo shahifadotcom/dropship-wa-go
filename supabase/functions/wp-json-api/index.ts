@@ -254,8 +254,8 @@ serve(async (req) => {
               slug: "general"
             }
           ],
-          tags: product.tags?.map(tag => ({ name: tag, slug: tag.toLowerCase().replace(/\s+/g, '-') })) || [],
-          images: product.images?.map((image, index) => ({
+          tags: product.tags?.map((tag: string) => ({ name: tag, slug: tag.toLowerCase().replace(/\s+/g, '-') })) || [],
+          images: product.images?.map((image: string, index: number) => ({
             id: index + 1,
             date_created: product.created_at,
             date_modified: product.updated_at,

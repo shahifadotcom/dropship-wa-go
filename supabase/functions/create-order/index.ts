@@ -128,11 +128,11 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error in create-order function:', error);
-    
+    const err = error instanceof Error ? error : new Error(String(error));
     return new Response(
       JSON.stringify({ 
-        error: error.message || 'Failed to create order',
-        details: error.toString()
+        error: err.message || 'Failed to create order',
+        details: err.stack || err.message
       }),
       { 
         headers: { 

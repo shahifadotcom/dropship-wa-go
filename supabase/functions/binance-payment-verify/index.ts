@@ -83,7 +83,8 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error verifying Binance payment:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    const err = error instanceof Error ? error : new Error(String(error));
+    return new Response(JSON.stringify({ error: err.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
     });

@@ -109,8 +109,9 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error generating sitemap:', error)
+    const message = error instanceof Error ? error.message : 'Unknown error'
     return new Response(
-      JSON.stringify({ error: 'Failed to generate sitemap', details: error.message }),
+      JSON.stringify({ error: 'Failed to generate sitemap', details: message }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     )
   }

@@ -73,10 +73,11 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error in send-whatsapp-message function:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
       JSON.stringify({ 
         error: 'Internal server error',
-        details: error.message 
+        details: message 
       }),
       { 
         status: 500, 

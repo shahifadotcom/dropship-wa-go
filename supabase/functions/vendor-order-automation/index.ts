@@ -192,11 +192,12 @@ serve(async (req) => {
 
       } catch (vendorError) {
         console.error(`Error processing vendor ${vendorId}:`, vendorError);
+        const msg = vendorError instanceof Error ? vendorError.message : String(vendorError);
         results.push({
           vendor_id: vendorId,
           items_count: items.length,
           success: false,
-          message: vendorError.message
+          message: msg
         });
       }
     }
@@ -226,10 +227,11 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error in vendor-order-automation function:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
       JSON.stringify({ 
         error: 'Internal server error',
-        details: error.message 
+        details: message 
       }),
       { 
         status: 500, 
@@ -301,10 +303,11 @@ async function processCJDropshippingOrder(items: OrderItem[], order: any, supaba
 
   } catch (error) {
     console.error('CJ Dropshipping order error:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
     return {
       success: false,
       vendor_order_id: null,
-      message: error.message
+      message
     };
   }
 }

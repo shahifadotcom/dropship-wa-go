@@ -197,7 +197,8 @@ serve(async (req) => {
             errors.push(`${product.name}: ${error}`)
           }
         } catch (error) {
-          errors.push(`${product.name}: ${error.message}`)
+          const msg = error instanceof Error ? error.message : String(error)
+          errors.push(`${product.name}: ${msg}`)
         }
       }
 
@@ -219,8 +220,9 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error:', error)
+    const message = error instanceof Error ? error.message : 'Unknown error'
     return new Response(
-      JSON.stringify({ error: 'Internal server error', details: error.message }),
+      JSON.stringify({ error: 'Internal server error', details: message }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     )
   }
