@@ -1,8 +1,10 @@
 const express = require('express');
 const cors = require('cors');
-const { Client, RemoteAuth } = require('whatsapp-web.js');
+const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 require('dotenv').config();
+const http = require('http');
+const { WebSocketServer } = require('ws');
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -25,7 +27,7 @@ function initializeClient() {
     
     return new Promise((resolve, reject) => {
         client = new Client({
-            authStrategy: new RemoteAuth({
+            authStrategy: new LocalAuth({
                 clientId: 'whatsapp-client',
                 dataPath: './.wwebjs_auth'
             }),
@@ -47,6 +49,7 @@ function initializeClient() {
             console.log('QR Code received');
             currentQR = qr;
             qrcode.generate(qr, { small: true });
+            try { broadcast({ type: 'qr', qrCode: qr }); } catch (_) {}
             resolve(qr);
         });
 
@@ -55,10 +58,12 @@ function initializeClient() {
             isReady = true;
             isInitializing = false;
             currentQR = null;
+            try { broadcast({ type: 'ready' }); } catch (_) {}
         });
 
         client.on('authenticated', () => {
             console.log('WhatsApp client authenticated');
+            try { broadcast({ type: 'authenticated' }); } catch (_) {}
         });
 
         client.on('auth_failure', (msg) => {
@@ -72,6 +77,7 @@ function initializeClient() {
             isReady = false;
             currentQR = null;
             client = null;
+            try { broadcast({ type: 'disconnected', reason }); } catch (_) {}
         });
 
         client.initialize();
@@ -181,11 +187,71 @@ app.post('/disconnect', async (req, res) => {
     }
 });
 
-app.listen(port, () => {
+// WebSocket Server for real-time QR & status
+const server = http.createServer(app);
+const wss = new WebSocketServer({ server });
+
+function broadcast(message) {
+    try {
+        const data = JSON.stringify(message);
+        wss.clients.forEach((ws) => {
+            if (ws.readyState === 1) ws.send(data);
+        });
+    } catch (e) {
+        console.error('Broadcast error:', e);
+    }
+}
+
+wss.on('connection', (ws) => {
+    console.log('WS client connected');
+    // Send current status immediately
+    ws.send(JSON.stringify({ type: 'status', isReady, qrCode: currentQR }));
+
+    ws.on('message', async (raw) => {
+        try {
+            const msg = JSON.parse(raw.toString());
+            switch (msg.action) {
+                case 'initialize': {
+                    await initializeClient();
+                    if (currentQR) ws.send(JSON.stringify({ type: 'qr', qrCode: currentQR }));
+                    break;
+                }
+                case 'disconnect': {
+                    if (client) await client.logout();
+                    isReady = false;
+                    currentQR = null;
+                    isInitializing = false;
+                    ws.send(JSON.stringify({ type: 'disconnected' }));
+                    break;
+                }
+                case 'send_message': {
+                    if (!isReady || !client) throw new Error('WhatsApp not ready');
+                    const formattedNumber = String(msg.phoneNumber || '').replace(/\D/g, '');
+                    const chatId = `${formattedNumber}@c.us`;
+                    await client.sendMessage(chatId, msg.text || msg.message || '');
+                    ws.send(JSON.stringify({ type: 'message_sent', phoneNumber: formattedNumber }));
+                    break;
+                }
+                case 'status':
+                default: {
+                    ws.send(JSON.stringify({ type: 'status', isReady, qrCode: currentQR }));
+                }
+            }
+        } catch (err) {
+            console.error('WS message error:', err);
+            ws.send(JSON.stringify({ type: 'error', message: err.message }));
+        }
+    });
+
+    ws.on('close', () => console.log('WS client disconnected'));
+});
+
+server.listen(port, () => {
     console.log(`WhatsApp Bridge Server running on port ${port}`);
     console.log('Available endpoints:');
     console.log(`  GET  /status - Check connection status`);
     console.log(`  POST /initialize - Generate QR code`);
     console.log(`  POST /send-message - Send WhatsApp message`);
     console.log(`  POST /disconnect - Disconnect WhatsApp`);
+    console.log('WS available at ws://localhost:' + port);
 });

@@ -42,56 +42,73 @@ const WhatsApp = () => {
 
   const initializeWhatsApp = async () => {
     setLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('whatsapp-web-integration', {
-        body: { action: 'initialize' }
-      });
+    const BRIDGE_HTTP = 'http://localhost:3001';
+    const BRIDGE_WS = 'ws://localhost:3001';
 
-      if (error) throw error;
-
-      if (data?.success) {
-        toast.success('WhatsApp initialization started');
-        if (data.qrCode) {
-          await generateQRImage(data.qrCode);
-          addLog('QR code generated - scan with WhatsApp to connect your account');
-        } else {
-          // Try to fetch QR explicitly if not returned in initialize
-          const qrRes = await supabase.functions.invoke('whatsapp-web-integration', {
-            body: { action: 'get_qr' }
-          });
-          if (qrRes.data?.qrCode) {
-            await generateQRImage(qrRes.data.qrCode);
-            addLog('QR code fetched - scan with WhatsApp to connect your account');
+    const ensureWebSocket = () => {
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) return;
+      try {
+        wsRef.current = new WebSocket(BRIDGE_WS);
+        wsRef.current.onopen = () => {
+          addLog('Connected to local WhatsApp bridge (WebSocket)');
+          wsRef.current?.send(JSON.stringify({ action: 'status' }));
+          wsRef.current?.send(JSON.stringify({ action: 'initialize' }));
+        };
+        wsRef.current.onmessage = async (event) => {
+          try {
+            const msg = JSON.parse(event.data);
+            if (msg.type === 'qr' && msg.qrCode) {
+              await generateQRImage(msg.qrCode);
+              addLog('QR code received from bridge');
+            } else if (msg.type === 'ready') {
+              setStatus({ isConnected: true, isReady: true, clientInfo: 'WhatsApp Connected' });
+              setQrDataUrl(null);
+              toast.success('WhatsApp connected successfully!');
+              addLog('WhatsApp account linked successfully');
+            } else if (msg.type === 'status' && msg.qrCode && !status.isReady) {
+              await generateQRImage(msg.qrCode);
+            } else if (msg.type === 'error') {
+              toast.error(msg.message || 'Bridge error');
+            }
+          } catch (e) {
+            console.error('WS parse error', e);
           }
-        }
-        checkForConnection();
-      } else {
-        toast.error(data?.message || 'Failed to initialize WhatsApp');
+        };
+        wsRef.current.onclose = () => addLog('WebSocket to bridge closed');
+        wsRef.current.onerror = () => addLog('WebSocket error');
+      } catch (e) {
+        console.warn('WebSocket connection to localhost failed, will use HTTP fallback');
       }
+    };
+
+    try {
+      ensureWebSocket();
+      // HTTP fallback to trigger QR generation
+      const res = await fetch(`${BRIDGE_HTTP}/initialize`, { method: 'POST' });
+      const data = await res.json().catch(() => ({}));
+      if (data?.qrCode) {
+        await generateQRImage(data.qrCode);
+        addLog('QR code generated (HTTP)');
+      }
+      checkForConnection();
     } catch (error) {
       console.error('Error initializing WhatsApp:', error);
-      toast.error('Failed to initialize WhatsApp');
+      toast.error('Failed to contact local bridge at localhost:3001');
+      addLog('Failed to contact local bridge at http://localhost:3001');
     } finally {
       setLoading(false);
     }
   };
 
   const checkForConnection = () => {
+    const BRIDGE_HTTP = 'http://localhost:3001';
     const connectionCheck = setInterval(async () => {
       try {
-        const { data, error } = await supabase.functions.invoke('whatsapp-web-integration', {
-          body: { action: 'status' }
-        });
-
-        if (error) throw error;
-
+        const res = await fetch(`${BRIDGE_HTTP}/status`);
+        const data = await res.json();
         if (data?.isReady) {
           clearInterval(connectionCheck);
-          setStatus({
-            isConnected: true,
-            isReady: true,
-            clientInfo: 'WhatsApp Connected'
-          });
+          setStatus({ isConnected: true, isReady: true, clientInfo: 'WhatsApp Connected' });
           setQrDataUrl(null);
           toast.success('WhatsApp connected successfully!');
           addLog('WhatsApp account linked successfully');
@@ -108,21 +125,17 @@ const WhatsApp = () => {
 
   const disconnectWhatsApp = async () => {
     setLoading(true);
+    const BRIDGE_HTTP = 'http://localhost:3001';
     try {
-      const { data, error } = await supabase.functions.invoke('whatsapp-web-integration', {
-        body: { action: 'disconnect' }
-      });
-
-      if (error) throw error;
-
-      if (data?.success) {
-        setStatus({ isConnected: false, isReady: false });
-        setQrDataUrl(null);
-        toast.success('WhatsApp disconnected successfully');
-        addLog('WhatsApp account disconnected');
-      } else {
-        toast.error('Failed to disconnect WhatsApp');
+      await fetch(`${BRIDGE_HTTP}/disconnect`, { method: 'POST' });
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        wsRef.current.send(JSON.stringify({ action: 'disconnect' }));
+        wsRef.current.close();
       }
+      setStatus({ isConnected: false, isReady: false });
+      setQrDataUrl(null);
+      toast.success('WhatsApp disconnected successfully');
+      addLog('WhatsApp account disconnected');
     } catch (error) {
       console.error('Error disconnecting WhatsApp:', error);
       toast.error('Failed to disconnect WhatsApp');
@@ -199,25 +212,34 @@ const WhatsApp = () => {
     const phoneNumber = prompt('Enter phone number (with country code):');
     if (!phoneNumber) return;
 
+    const BRIDGE_HTTP = 'http://localhost:3001';
     const message = 'Test message from Shahifa Store - WhatsApp integration is working!';
-    
-    supabase.functions.invoke('whatsapp-web-integration', {
-      body: { 
-        action: 'send_message', 
-        phoneNumber, 
-        message 
-      }
-    }).then(({ data, error }) => {
-      if (error) {
-        toast.error('Failed to send test message');
-        addLog(`Failed to send test message to ${phoneNumber}`);
-      } else if (data?.success) {
+
+    // Try WS first
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ action: 'send_message', phoneNumber, text: message }));
+      addLog(`Sent test message via WS to ${phoneNumber}`);
+      toast.success('Test message requested');
+      return;
+    }
+
+    // HTTP fallback
+    fetch(`${BRIDGE_HTTP}/send-message`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phoneNumber, message })
+    }).then(async (res) => {
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data?.success) {
         toast.success('Test message sent successfully');
         addLog(`Test message sent to ${phoneNumber}`);
       } else {
         toast.error(data?.error || 'Failed to send test message');
         addLog(`Failed to send test message: ${data?.error}`);
       }
+    }).catch(() => {
+      toast.error('Failed to contact local bridge');
+      addLog('Failed to contact local bridge for sending message');
     });
   };
 
