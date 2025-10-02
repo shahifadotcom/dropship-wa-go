@@ -27,30 +27,37 @@ serve(async (req) => {
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const whatsappBridgeUrl = Deno.env.get('WHATSAPP_BRIDGE_URL') || 'http://161.97.169.64:3001';
     
     const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Check if WhatsApp is connected
-    const { data: config } = await supabase.functions.invoke('whatsapp-qr-simple', {
-      body: { action: 'status' }
-    });
+    console.log(`Attempting to send WhatsApp message to ${phoneNumber}`);
 
-    if (!config?.isReady) {
-      console.log('WhatsApp not connected. Message queued:', message);
-      return new Response(
-        JSON.stringify({ 
-          success: false,
-          message: 'WhatsApp not connected'
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
+    let messageSent = false;
+    let errorMessage = '';
+
+    try {
+      // Send message through WhatsApp bridge
+      const bridgeResponse = await fetch(`${whatsappBridgeUrl}/send-message`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phoneNumber, message })
+      });
+
+      const bridgeData = await bridgeResponse.json().catch(() => ({}));
+      
+      if (bridgeResponse.ok && bridgeData.success) {
+        messageSent = true;
+        console.log(`✓ WhatsApp message sent successfully to ${phoneNumber}`);
+      } else {
+        errorMessage = bridgeData.error || 'Bridge returned error';
+        console.error(`✗ Failed to send WhatsApp message: ${errorMessage}`);
+      }
+    } catch (bridgeError) {
+      errorMessage = bridgeError instanceof Error ? bridgeError.message : 'Bridge connection failed';
+      console.error(`✗ WhatsApp bridge error: ${errorMessage}`);
     }
-
-    // For now, simulate message sending since WhatsApp Web.js has limitations in serverless
-    console.log(`Would send message to ${phoneNumber}: ${message}`);
 
     // Log the message attempt
     await supabase
@@ -58,15 +65,18 @@ serve(async (req) => {
       .insert({
         phone_number: phoneNumber,
         message: message,
-        status: 'sent'
+        status: messageSent ? 'sent' : 'failed',
+        error_message: messageSent ? null : errorMessage
       });
 
     return new Response(
       JSON.stringify({ 
-        success: true,
-        message: 'WhatsApp message sent successfully'
+        success: messageSent,
+        message: messageSent ? 'WhatsApp message sent successfully' : `Failed to send: ${errorMessage}`,
+        details: messageSent ? null : errorMessage
       }),
       { 
+        status: messageSent ? 200 : 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     );
