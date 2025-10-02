@@ -44,6 +44,7 @@ import CJOAuthCallback from "./pages/CJOAuthCallback";
 import WhatsApp from "./pages/admin/WhatsApp";
 import VendorAutomation from "./pages/admin/VendorAutomation";
 import StorefrontSlider from "./pages/admin/StorefrontSlider";
+import ProductDetail from "./pages/ProductDetail";
 
 const queryClient = new QueryClient();
 
@@ -59,6 +60,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/home" element={<Home />} />
+              <Route path="/products/:slug" element={<ProductDetail />} />
               
               <Route path="/auth" element={<Auth />} />
               <Route path="/checkout" element={<Checkout />} />

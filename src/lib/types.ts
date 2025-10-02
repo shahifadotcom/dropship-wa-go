@@ -11,6 +11,7 @@ export interface Product {
   inStock: boolean;
   stockQuantity: number;
   sku: string;
+  slug?: string;
   tags: string[];
   variants?: ProductVariant[];
   rating: number;

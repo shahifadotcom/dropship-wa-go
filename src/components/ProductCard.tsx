@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Heart, ShoppingCart, Star, Eye } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -20,11 +21,10 @@ const ProductCard = ({ product, onQuickView }: ProductCardProps) => {
   const { toast } = useToast();
   const { currency } = useCountryDetection();
 
-  const handleProductClick = () => {
-    // Navigate to product detail page or trigger quick view
-    console.log('Product clicked:', product.name);
-    onQuickView?.(product);
-  };
+  // Generate slug from product name
+  const productSlug = product.slug || product.name.toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
 
   const discount = product.originalPrice 
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
@@ -67,10 +67,10 @@ const ProductCard = ({ product, onQuickView }: ProductCardProps) => {
   };
 
   return (
-    <Card 
-      className="group relative overflow-hidden bg-gradient-card border-0 shadow-soft hover:shadow-medium transition-all duration-300 hover:-translate-y-1 cursor-pointer"
-      onClick={handleProductClick}
-    >
+    <Link to={`/products/${productSlug}`}>
+      <Card 
+        className="group relative overflow-hidden bg-gradient-card border-0 shadow-soft hover:shadow-medium transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+      >
       <div className="relative">
         {/* Product Image */}
         <div className="aspect-square overflow-hidden bg-muted">
@@ -234,6 +234,7 @@ const ProductCard = ({ product, onQuickView }: ProductCardProps) => {
         </div>
       </CardContent>
     </Card>
+    </Link>
   );
 };
 

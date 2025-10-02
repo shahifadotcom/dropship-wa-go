@@ -33,6 +33,34 @@ const WhatsApp = () => {
 
   useEffect(() => {
     fetchMessageStats();
+    
+    // Auto-detect existing WhatsApp session on page load
+    const checkExistingSession = async () => {
+      try {
+        addLog('Checking for existing WhatsApp session...');
+        const response = await fetch('http://161.97.169.64:3001/status');
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data?.isReady) {
+            setStatus({
+              isConnected: true,
+              isReady: true,
+              clientInfo: data.clientInfo || 'WhatsApp Connected'
+            });
+            addLog('✓ Found existing WhatsApp session');
+          } else {
+            addLog('No active session found');
+          }
+        }
+      } catch (error) {
+        console.log('No existing session or bridge not running');
+        addLog('Bridge not running or no session active');
+      }
+    };
+    
+    checkExistingSession();
+    
     return () => {
       if (wsRef.current) {
         wsRef.current.close();
@@ -42,8 +70,8 @@ const WhatsApp = () => {
 
   const initializeWhatsApp = async () => {
     setLoading(true);
-    const BRIDGE_HTTP = 'http://localhost:3001';
-    const BRIDGE_WS = 'ws://localhost:3001';
+    const BRIDGE_HTTP = 'http://161.97.169.64:3001';
+    const BRIDGE_WS = 'ws://161.97.169.64:3001';
 
     const ensureWebSocket = () => {
       if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) return;
@@ -93,15 +121,15 @@ const WhatsApp = () => {
       checkForConnection();
     } catch (error) {
       console.error('Error initializing WhatsApp:', error);
-      toast.error('Failed to contact local bridge at localhost:3001');
-      addLog('Failed to contact local bridge at http://localhost:3001');
+      toast.error('Failed to contact local bridge at 161.97.169.64:3001');
+      addLog('Failed to contact local bridge at http://161.97.169.64:3001');
     } finally {
       setLoading(false);
     }
   };
 
   const checkForConnection = () => {
-    const BRIDGE_HTTP = 'http://localhost:3001';
+    const BRIDGE_HTTP = 'http://161.97.169.64:3001';
     const connectionCheck = setInterval(async () => {
       try {
         const res = await fetch(`${BRIDGE_HTTP}/status`);
@@ -125,7 +153,7 @@ const WhatsApp = () => {
 
   const disconnectWhatsApp = async () => {
     setLoading(true);
-    const BRIDGE_HTTP = 'http://localhost:3001';
+    const BRIDGE_HTTP = 'http://161.97.169.64:3001';
     try {
       await fetch(`${BRIDGE_HTTP}/disconnect`, { method: 'POST' });
       if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
@@ -212,7 +240,7 @@ const WhatsApp = () => {
     const phoneNumber = prompt('Enter phone number (with country code):');
     if (!phoneNumber) return;
 
-    const BRIDGE_HTTP = 'http://localhost:3001';
+    const BRIDGE_HTTP = 'http://161.97.169.64:3001';
     const message = 'Test message from Shahifa Store - WhatsApp integration is working!';
 
     // Try WS first
