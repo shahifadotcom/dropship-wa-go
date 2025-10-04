@@ -6,6 +6,7 @@ import { Smartphone, QrCode, MessageSquare, Settings, Users, Activity } from "lu
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import AdminLayout from "@/layouts/AdminLayout";
+import { BRIDGE_HTTP, BRIDGE_WS } from "@/lib/whatsappBridge";
 
 interface WhatsAppStatus {
   isConnected: boolean;
@@ -38,7 +39,7 @@ const WhatsApp = () => {
     const checkExistingSession = async () => {
       try {
         addLog('Checking for existing WhatsApp session...');
-        const response = await fetch('http://161.97.169.64:3001/status');
+        const response = await fetch(`${BRIDGE_HTTP}/status`);
         
         if (response.ok) {
           const data = await response.json();
@@ -70,8 +71,6 @@ const WhatsApp = () => {
 
   const initializeWhatsApp = async () => {
     setLoading(true);
-    const BRIDGE_HTTP = 'http://161.97.169.64:3001';
-    const BRIDGE_WS = 'ws://161.97.169.64:3001';
 
     const ensureWebSocket = () => {
       if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) return;
@@ -129,7 +128,6 @@ const WhatsApp = () => {
   };
 
   const checkForConnection = () => {
-    const BRIDGE_HTTP = 'http://161.97.169.64:3001';
     const connectionCheck = setInterval(async () => {
       try {
         const res = await fetch(`${BRIDGE_HTTP}/status`);
@@ -153,7 +151,6 @@ const WhatsApp = () => {
 
   const disconnectWhatsApp = async () => {
     setLoading(true);
-    const BRIDGE_HTTP = 'http://161.97.169.64:3001';
     try {
       await fetch(`${BRIDGE_HTTP}/disconnect`, { method: 'POST' });
       if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
@@ -205,7 +202,6 @@ const WhatsApp = () => {
     }
   };
 
-
   const generateQRImage = async (qrString: string) => {
     try {
       const QRCode = await import('qrcode');
@@ -240,7 +236,7 @@ const WhatsApp = () => {
     const phoneNumber = prompt('Enter phone number (with country code):');
     if (!phoneNumber) return;
 
-    const BRIDGE_HTTP = 'http://161.97.169.64:3001';
+    
     const message = 'Test message from Shahifa Store - WhatsApp integration is working!';
 
     // Try WS first

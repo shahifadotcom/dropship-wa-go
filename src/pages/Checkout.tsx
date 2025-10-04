@@ -105,6 +105,7 @@ const Checkout = () => {
     }
 
     setIsProcessing(true);
+    setShowOTPModal(true);
 
     try {
       const { error } = await supabase.functions.invoke('send-otp', {
@@ -117,8 +118,6 @@ const Checkout = () => {
         title: "OTP Sent",
         description: "Please check your WhatsApp for the verification code."
       });
-
-      setShowOTPModal(true);
     } catch (error: any) {
       console.error('Error sending OTP:', error);
       toast({

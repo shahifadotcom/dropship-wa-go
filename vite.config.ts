@@ -8,6 +8,14 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    proxy: {
+      "/wa": {
+        target: "http://161.97.169.64:3001",
+        changeOrigin: true,
+        ws: true,
+        rewrite: (p) => p.replace(/^\/wa/, "")
+      }
+    }
   },
   plugins: [
     react(),
