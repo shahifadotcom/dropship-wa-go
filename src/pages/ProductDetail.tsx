@@ -250,17 +250,17 @@ const ProductDetail = () => {
               </div>
             )}
 
+            {virtualTrialEnabled && product.images.length > 0 && (
+              <div className="pt-4">
+                <VirtualTryOn
+                  productId={product.id}
+                  productImage={product.images[0]}
+                  productName={product.name}
+                />
+              </div>
+            )}
+
             <div className="flex gap-4 pt-4">
-              {virtualTrialEnabled && product.images.length > 0 && (
-                <div className="w-full mb-4">
-                  <VirtualTryOn
-                    productId={product.id}
-                    productImage={product.images[0]}
-                    productName={product.name}
-                  />
-                </div>
-              )}
-              
               <Button
                 onClick={handleAddToCart}
                 disabled={!product.inStock}
