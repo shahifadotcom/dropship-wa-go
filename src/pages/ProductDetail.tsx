@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/hooks/use-toast';
 import { useCountryDetection } from '@/hooks/useCountryDetection';
+import { VirtualTryOn } from '@/components/VirtualTryOn';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import MobileBottomNav from '@/components/MobileBottomNav';
@@ -18,6 +19,7 @@ const ProductDetail = () => {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [virtualTrialEnabled, setVirtualTrialEnabled] = useState(false);
   const { addToCart } = useCart();
   const { toast } = useToast();
   const { currency } = useCountryDetection();
@@ -30,13 +32,14 @@ const ProductDetail = () => {
       try {
         const { data, error } = await supabase
           .from('products')
-          .select('*')
+          .select('*, virtual_trial_enabled')
           .eq('slug', slug)
           .single();
 
         if (error) throw error;
         
         if (data) {
+          setVirtualTrialEnabled(data.virtual_trial_enabled || false);
           setProduct({
             id: data.id,
             name: data.name,
@@ -248,6 +251,16 @@ const ProductDetail = () => {
             )}
 
             <div className="flex gap-4 pt-4">
+              {virtualTrialEnabled && product.images.length > 0 && (
+                <div className="w-full mb-4">
+                  <VirtualTryOn
+                    productId={product.id}
+                    productImage={product.images[0]}
+                    productName={product.name}
+                  />
+                </div>
+              )}
+              
               <Button
                 onClick={handleAddToCart}
                 disabled={!product.inStock}

@@ -58,6 +58,12 @@ verify_jwt = false
 [functions.wc-auth-callback-proxy]
 verify_jwt = false
 
+[functions.virtual-tryon]
+verify_jwt = false
+
+[functions.check-gemini-key]
+verify_jwt = true
+
 [db]
 enabled = true
 port = 54322

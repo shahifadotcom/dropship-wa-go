@@ -1136,6 +1136,7 @@ export type Database = {
           tax_rate: number | null
           updated_at: string | null
           vendor_id: string | null
+          virtual_trial_enabled: boolean | null
           weight: number | null
         }
         Insert: {
@@ -1169,6 +1170,7 @@ export type Database = {
           tax_rate?: number | null
           updated_at?: string | null
           vendor_id?: string | null
+          virtual_trial_enabled?: boolean | null
           weight?: number | null
         }
         Update: {
@@ -1202,6 +1204,7 @@ export type Database = {
           tax_rate?: number | null
           updated_at?: string | null
           vendor_id?: string | null
+          virtual_trial_enabled?: boolean | null
           weight?: number | null
         }
         Relationships: [
@@ -1806,6 +1809,88 @@ export type Database = {
           webhook_url?: string | null
         }
         Relationships: []
+      }
+      virtual_trial_config: {
+        Row: {
+          ai_provider: string
+          created_at: string
+          id: string
+          is_active: boolean
+          model_name: string
+          updated_at: string
+        }
+        Insert: {
+          ai_provider?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          model_name?: string
+          updated_at?: string
+        }
+        Update: {
+          ai_provider?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          model_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      virtual_trial_sessions: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          product_id: string | null
+          result_image_url: string | null
+          status: string
+          user_image_url: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          product_id?: string | null
+          result_image_url?: string | null
+          status?: string
+          user_image_url: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          product_id?: string | null
+          result_image_url?: string | null
+          status?: string
+          user_image_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "virtual_trial_sessions_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "virtual_trial_sessions_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_catalog"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "virtual_trial_sessions_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_public"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       whatsapp_config: {
         Row: {
