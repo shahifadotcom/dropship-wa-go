@@ -43,6 +43,9 @@ verify_jwt = false
 [functions.whatsapp-websocket]
 verify_jwt = false
 
+[functions.whatsapp-bridge-proxy]
+verify_jwt = false
+
 [functions.vendor-order-automation]
 verify_jwt = true
 

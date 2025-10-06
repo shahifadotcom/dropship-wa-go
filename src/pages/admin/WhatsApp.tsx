@@ -6,7 +6,7 @@ import { Smartphone, QrCode, MessageSquare, Settings, Users, Activity } from "lu
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import AdminLayout from "@/layouts/AdminLayout";
-import { BRIDGE_HTTP, BRIDGE_WS } from "@/lib/whatsappBridge";
+import { BRIDGE_WS, buildBridgeUrl } from "@/lib/whatsappBridge";
 
 interface WhatsAppStatus {
   isConnected: boolean;
@@ -39,7 +39,7 @@ const WhatsApp = () => {
     const checkExistingSession = async () => {
       try {
         addLog('Checking for existing WhatsApp session...');
-        const response = await fetch(`${BRIDGE_HTTP}/status`);
+        const response = await fetch(buildBridgeUrl('/status'));
         
         if (response.ok) {
           const data = await response.json();
@@ -111,7 +111,7 @@ const WhatsApp = () => {
     try {
       ensureWebSocket();
       // HTTP fallback to trigger QR generation
-      const res = await fetch(`${BRIDGE_HTTP}/initialize`, { method: 'POST' });
+      const res = await fetch(buildBridgeUrl('/initialize'), { method: 'POST' });
       const data = await res.json().catch(() => ({}));
       if (data?.qrCode) {
         await generateQRImage(data.qrCode);
@@ -130,7 +130,7 @@ const WhatsApp = () => {
   const checkForConnection = () => {
     const connectionCheck = setInterval(async () => {
       try {
-        const res = await fetch(`${BRIDGE_HTTP}/status`);
+        const res = await fetch(buildBridgeUrl('/status'));
         const data = await res.json();
         if (data?.isReady) {
           clearInterval(connectionCheck);
@@ -152,7 +152,7 @@ const WhatsApp = () => {
   const disconnectWhatsApp = async () => {
     setLoading(true);
     try {
-      await fetch(`${BRIDGE_HTTP}/disconnect`, { method: 'POST' });
+      await fetch(buildBridgeUrl('/disconnect'), { method: 'POST' });
       if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
         wsRef.current.send(JSON.stringify({ action: 'disconnect' }));
         wsRef.current.close();
@@ -248,7 +248,7 @@ const WhatsApp = () => {
     }
 
     // HTTP fallback
-    fetch(`${BRIDGE_HTTP}/send-message`, {
+    fetch(buildBridgeUrl('/send-message'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ phoneNumber, message })
