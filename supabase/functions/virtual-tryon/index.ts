@@ -125,7 +125,23 @@ serve(async (req) => {
     if (!geminiResponse.ok) {
       const errorText = await geminiResponse.text();
       console.error('Gemini API error:', errorText);
-      throw new Error(`Gemini API error: ${geminiResponse.status}`);
+      
+      // Update session with error
+      await supabaseClient
+        .from('virtual_trial_sessions')
+        .update({
+          status: 'failed',
+          error_message: geminiResponse.status === 429 
+            ? 'API rate limit exceeded. Please try again later or check your Gemini API quota.'
+            : `Gemini API error: ${geminiResponse.status}`,
+        })
+        .eq('id', session.id);
+      
+      throw new Error(
+        geminiResponse.status === 429 
+          ? 'API rate limit exceeded. Please check your Gemini API quota and try again later.'
+          : `Gemini API error: ${geminiResponse.status}`
+      );
     }
 
     const geminiData = await geminiResponse.json();

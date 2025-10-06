@@ -35,29 +35,40 @@ const WhatsApp = () => {
   useEffect(() => {
     fetchMessageStats();
     
-    // Auto-detect existing WhatsApp session on page load
+    // Auto-detect existing WhatsApp session on page load with multiple endpoints
     const checkExistingSession = async () => {
-      try {
-        addLog('Checking for existing WhatsApp session...');
-        const response = await fetch(buildBridgeUrl('/status'));
-        
-        if (response.ok) {
-          const data = await response.json();
-          if (data?.isReady) {
-            setStatus({
-              isConnected: true,
-              isReady: true,
-              clientInfo: data.clientInfo || 'WhatsApp Connected'
-            });
-            addLog('✓ Found existing WhatsApp session');
-          } else {
-            addLog('No active session found');
+      const endpoints = [
+        'http://localhost:3001',
+        'http://161.97.169.64:3001'
+      ];
+      
+      addLog('Checking for existing WhatsApp session across multiple endpoints...');
+      
+      for (const endpoint of endpoints) {
+        try {
+          addLog(`Trying ${endpoint}...`);
+          const response = await fetch(buildBridgeUrl('/status'));
+          
+          if (response.ok) {
+            const data = await response.json();
+            if (data?.isReady) {
+              setStatus({
+                isConnected: true,
+                isReady: true,
+                clientInfo: data.clientInfo || 'WhatsApp Connected',
+                phoneNumber: data.phoneNumber
+              });
+              addLog(`✓ Found active WhatsApp session on ${endpoint}`);
+              addLog(`Connected as: ${data.phoneNumber || 'Unknown'}`);
+              return; // Exit on first successful connection
+            }
           }
+        } catch (error) {
+          addLog(`✗ ${endpoint} not reachable`);
         }
-      } catch (error) {
-        console.log('No existing session or bridge not running');
-        addLog('Bridge not running or no session active');
       }
+      
+      addLog('No active WhatsApp session found on any endpoint');
     };
     
     checkExistingSession();

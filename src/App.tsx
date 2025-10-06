@@ -27,7 +27,6 @@ import Vendors from "./pages/admin/Vendors";
 import PaymentMethods from "./pages/admin/PaymentMethods";
 import OrderAutomation from "./pages/admin/OrderAutomation";
 import UserDashboard from "./pages/Dashboard";
-import WhatsAppSetup from "./pages/WhatsAppSetup";
 import AndroidApp from "./pages/AndroidApp";
 import WCAuth from "./pages/WCAuth";
 import NotFound from "./pages/NotFound";
@@ -96,7 +95,6 @@ const App = () => (
               <Route path="/dashboard" element={<UserDashboard />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/orders" element={<Orders />} />
-              <Route path="/whatsapp-setup" element={<WhatsAppSetup />} />
               <Route path="/android-app" element={<AndroidApp />} />
         <Route path="/wc-auth/v1/authorize" element={<WCAuth />} />
         <Route path="/wp-json/*" element={<WCAuth />} />
