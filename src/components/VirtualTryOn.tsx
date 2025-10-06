@@ -80,10 +80,18 @@ export const VirtualTryOn = ({ productId, productImage, productName }: VirtualTr
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        // Check if the error response has a JSON body with error message
+        const errorMessage = error.message || data?.error || 'Failed to process virtual try-on';
+        throw new Error(errorMessage);
+      }
 
-      if (data.error) {
+      if (data?.error) {
         throw new Error(data.error);
+      }
+
+      if (!data?.success) {
+        throw new Error(data?.error || 'Failed to process virtual try-on');
       }
 
       setSessionId(data.sessionId);
