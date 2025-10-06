@@ -1813,6 +1813,7 @@ export type Database = {
       virtual_trial_config: {
         Row: {
           ai_provider: string
+          api_keys: Json | null
           created_at: string
           id: string
           is_active: boolean
@@ -1821,6 +1822,7 @@ export type Database = {
         }
         Insert: {
           ai_provider?: string
+          api_keys?: Json | null
           created_at?: string
           id?: string
           is_active?: boolean
@@ -1829,6 +1831,7 @@ export type Database = {
         }
         Update: {
           ai_provider?: string
+          api_keys?: Json | null
           created_at?: string
           id?: string
           is_active?: boolean

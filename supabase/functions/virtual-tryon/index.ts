@@ -12,11 +12,6 @@ serve(async (req) => {
   }
 
   try {
-    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
-    if (!GEMINI_API_KEY) {
-      throw new Error('GEMINI_API_KEY is not configured in Supabase secrets');
-    }
-
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -38,6 +33,26 @@ serve(async (req) => {
     if (configError || !config) {
       throw new Error('Virtual try-on is not configured or disabled');
     }
+
+    // Build API key list from config and environment
+    const apiKeysList: string[] = [];
+    
+    // Add API keys from database config
+    if (config.api_keys && Array.isArray(config.api_keys)) {
+      apiKeysList.push(...config.api_keys.filter((key: string) => key && key.trim() !== ''));
+    }
+    
+    // Add fallback from environment variable
+    const envApiKey = Deno.env.get('GEMINI_API_KEY');
+    if (envApiKey) {
+      apiKeysList.push(envApiKey);
+    }
+
+    if (apiKeysList.length === 0) {
+      throw new Error('No Gemini API keys configured. Please add API keys in admin settings or GEMINI_API_KEY secret.');
+    }
+
+    console.log(`Found ${apiKeysList.length} API key(s) to try`);
 
     // Fetch images as base64
     const [productImageResponse, userImageResponse] = await Promise.all([
@@ -80,72 +95,97 @@ serve(async (req) => {
       throw new Error('Failed to create virtual trial session');
     }
 
-    console.log('Calling Gemini API with model:', config.model_name);
+    // Try each API key until one succeeds
+    let geminiData: any = null;
+    let lastError: any = null;
+    let successfulKeyIndex = -1;
 
-    // Call Google Gemini API
-    const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${config.model_name}:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
+    for (let i = 0; i < apiKeysList.length; i++) {
+      const apiKey = apiKeysList[i];
+      console.log(`Trying API key ${i + 1}/${apiKeysList.length} with model:`, config.model_name);
+
+      try {
+        const geminiResponse = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${config.model_name}:generateContent?key=${apiKey}`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              contents: [
                 {
-                  text: "You are a virtual try-on AI. Create a realistic image showing the person wearing the clothing item. Maintain the person's body proportions, pose, and background. Only change the clothing to show them wearing the product. Make it look natural and realistic.",
-                },
-                {
-                  inline_data: {
-                    mime_type: 'image/jpeg',
-                    data: userImageBase64,
-                  },
-                },
-                {
-                  inline_data: {
-                    mime_type: 'image/jpeg',
-                    data: productImageBase64,
-                  },
+                  parts: [
+                    {
+                      text: "You are a virtual try-on AI. Create a realistic image showing the person wearing the clothing item. Maintain the person's body proportions, pose, and background. Only change the clothing to show them wearing the product. Make it look natural and realistic.",
+                    },
+                    {
+                      inline_data: {
+                        mime_type: 'image/jpeg',
+                        data: userImageBase64,
+                      },
+                    },
+                    {
+                      inline_data: {
+                        mime_type: 'image/jpeg',
+                        data: productImageBase64,
+                      },
+                    },
+                  ],
                 },
               ],
-            },
-          ],
-          generationConfig: {
-            temperature: 0.4,
-            topK: 32,
-            topP: 1,
-            maxOutputTokens: 4096,
-          },
-        }),
-      }
-    );
+              generationConfig: {
+                temperature: 0.4,
+                topK: 32,
+                topP: 1,
+                maxOutputTokens: 4096,
+              },
+            }),
+          }
+        );
 
-    if (!geminiResponse.ok) {
-      const errorText = await geminiResponse.text();
-      console.error('Gemini API error:', errorText);
+        if (geminiResponse.ok) {
+          geminiData = await geminiResponse.json();
+          successfulKeyIndex = i;
+          console.log(`✓ API key ${i + 1} succeeded`);
+          break; // Success! Exit the loop
+        } else {
+          const errorText = await geminiResponse.text();
+          lastError = {
+            status: geminiResponse.status,
+            message: errorText
+          };
+          console.log(`✗ API key ${i + 1} failed with status ${geminiResponse.status}`);
+          
+          // If it's not a rate limit error, stop trying
+          if (geminiResponse.status !== 429) {
+            break;
+          }
+        }
+      } catch (error) {
+        console.error(`Error with API key ${i + 1}:`, error);
+        lastError = error;
+      }
+    }
+
+    // If all keys failed
+    if (!geminiData) {
+      const errorMessage = lastError?.status === 429 
+        ? `All ${apiKeysList.length} API key(s) have exceeded their rate limits. Please try again later or add more API keys in admin settings.`
+        : `Failed to generate image. Error: ${lastError?.message || 'Unknown error'}`;
       
-      // Update session with error
       await supabaseClient
         .from('virtual_trial_sessions')
         .update({
           status: 'failed',
-          error_message: geminiResponse.status === 429 
-            ? 'API rate limit exceeded. Please try again later or check your Gemini API quota.'
-            : `Gemini API error: ${geminiResponse.status}`,
+          error_message: errorMessage,
         })
         .eq('id', session.id);
       
-      throw new Error(
-        geminiResponse.status === 429 
-          ? 'API rate limit exceeded. Please check your Gemini API quota and try again later.'
-          : `Gemini API error: ${geminiResponse.status}`
-      );
+      throw new Error(errorMessage);
     }
 
-    const geminiData = await geminiResponse.json();
-    console.log('Gemini response received');
+    console.log(`✓ Successfully generated image using API key ${successfulKeyIndex + 1}`);
 
     // Extract generated image from response
     const candidate = geminiData.candidates?.[0];

@@ -22,6 +22,7 @@ const VirtualTrial = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [hasGeminiKey, setHasGeminiKey] = useState(false);
+  const [apiKeys, setApiKeys] = useState<string[]>(['', '', '', '', '']);
 
   useEffect(() => {
     fetchConfig();
@@ -40,6 +41,12 @@ const VirtualTrial = () => {
         toast.error('Failed to load configuration');
       } else {
         setConfig(data);
+        // Load API keys from jsonb array
+        if (data?.api_keys && Array.isArray(data.api_keys)) {
+          const keys = (data.api_keys as string[]).map(k => String(k));
+          while (keys.length < 5) keys.push('');
+          setApiKeys(keys.slice(0, 5));
+        }
       }
     } catch (error) {
       console.error('Error:', error);
@@ -87,11 +94,22 @@ const VirtualTrial = () => {
 
   const handleSave = () => {
     if (!config) return;
+    
+    // Filter out empty API keys
+    const validApiKeys = apiKeys.filter(key => key.trim() !== '');
+    
     updateConfig({
       ai_provider: config.ai_provider,
       model_name: config.model_name,
       is_active: config.is_active,
-    });
+      api_keys: validApiKeys,
+    } as any);
+  };
+
+  const handleApiKeyChange = (index: number, value: string) => {
+    const newKeys = [...apiKeys];
+    newKeys[index] = value;
+    setApiKeys(newKeys);
   };
 
   if (loading) {
@@ -193,28 +211,45 @@ const VirtualTrial = () => {
             <CardHeader>
               <CardTitle>API Key Configuration</CardTitle>
               <CardDescription>
-                Manage your Google Gemini API key in Supabase secrets
+                Add multiple Gemini API keys for automatic load balancing and rate limit handling
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="rounded-lg border p-4 bg-muted/50">
+              <div className="rounded-lg border p-4 bg-muted/50 mb-4">
+                <p className="text-sm font-medium mb-2">Why Multiple API Keys?</p>
+                <p className="text-sm text-muted-foreground">
+                  When a request exceeds the rate limit for one API key, the system automatically tries the next key. This ensures uninterrupted service for your customers.
+                </p>
+              </div>
+
+              {apiKeys.map((key, index) => (
+                <div key={index} className="space-y-2">
+                  <Label htmlFor={`api_key_${index}`}>
+                    API Key {index + 1} {index === 0 && '(Primary)'}
+                  </Label>
+                  <Input
+                    id={`api_key_${index}`}
+                    type="password"
+                    value={key}
+                    onChange={(e) => handleApiKeyChange(index, e.target.value)}
+                    placeholder={index === 0 ? 'Enter primary Gemini API Key' : `Enter backup API Key ${index + 1} (optional)`}
+                  />
+                </div>
+              ))}
+
+              <div className="rounded-lg border p-4 bg-blue-50 dark:bg-blue-950/30">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-medium">Google Gemini API Key Status</span>
+                  <span className="font-medium text-sm">Supabase Secret (Fallback)</span>
                   <span className={`text-sm ${hasGeminiKey ? 'text-green-600' : 'text-orange-600'}`}>
                     {hasGeminiKey ? '✓ Configured' : '⚠ Not Configured'}
                   </span>
                 </div>
-                <p className="text-sm text-muted-foreground mb-3">
-                  The API key must be set as a Supabase secret named <code className="bg-background px-1 py-0.5 rounded">GEMINI_API_KEY</code>
+                <p className="text-sm text-muted-foreground mb-2">
+                  You can also set a fallback API key in Supabase secrets named <code className="bg-background px-1 py-0.5 rounded">GEMINI_API_KEY</code>
                 </p>
-                <div className="space-y-2 text-sm">
-                  <p className="font-medium">To configure:</p>
-                  <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
-                    <li>Go to Supabase Dashboard → Project Settings → Edge Functions</li>
-                    <li>Add a new secret named <code className="bg-background px-1 py-0.5 rounded">GEMINI_API_KEY</code></li>
-                    <li>Get your API key from <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Google AI Studio</a></li>
-                  </ol>
-                </div>
+                <p className="text-xs text-muted-foreground">
+                  Get your API key from <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Google AI Studio</a>
+                </p>
               </div>
             </CardContent>
           </Card>
