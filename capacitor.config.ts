@@ -4,10 +4,6 @@ const config: CapacitorConfig = {
   appId: 'app.lovable.f56ea3cdbd454fa5a24347efbd454051',
   appName: 'dropship-wa-go',
   webDir: 'dist',
-  server: {
-    url: 'https://f56ea3cd-bd45-4fa5-a243-47efbd454051.lovableproject.com?forceHideBadge=true',
-    cleartext: true
-  },
   plugins: {
     SplashScreen: {
       launchShowDuration: 3000,
