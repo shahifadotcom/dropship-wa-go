@@ -209,16 +209,20 @@ const VirtualTrial = () => {
 
           <Card>
             <CardHeader>
-              <CardTitle>API Key Configuration</CardTitle>
+              <CardTitle>Virtual Try-On Technology</CardTitle>
               <CardDescription>
-                Add multiple Gemini API keys for automatic load balancing and rate limit handling
+                Now powered by Lovable AI for superior image generation
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="rounded-lg border p-4 bg-muted/50 mb-4">
-                <p className="text-sm font-medium mb-2">Why Multiple API Keys?</p>
+              <div className="rounded-lg border p-4 bg-gradient-to-r from-primary/10 to-primary/5 mb-4">
+                <p className="text-sm font-semibold mb-2 flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  Now Using Lovable AI
+                </p>
                 <p className="text-sm text-muted-foreground">
-                  When a request exceeds the rate limit for one API key, the system automatically tries the next key. This ensures uninterrupted service for your customers.
+                  Virtual try-on now uses Lovable AI's advanced image editing model (google/gemini-2.5-flash-image-preview) 
+                  for more realistic and reliable results. The Gemini API keys below are kept for reference only.
                 </p>
               </div>
 

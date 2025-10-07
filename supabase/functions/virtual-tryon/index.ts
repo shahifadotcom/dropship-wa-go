@@ -6,6 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -23,61 +25,11 @@ serve(async (req) => {
       throw new Error('Missing required parameters');
     }
 
-    // Get virtual trial configuration
-    const { data: config, error: configError } = await supabaseClient
-      .from('virtual_trial_config')
-      .select('*')
-      .eq('is_active', true)
-      .single();
-
-    if (configError || !config) {
-      throw new Error('Virtual try-on is not configured or disabled');
+    if (!LOVABLE_API_KEY) {
+      throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    // Build API key list from config and environment
-    const apiKeysList: string[] = [];
-    
-    // Add API keys from database config
-    if (config.api_keys && Array.isArray(config.api_keys)) {
-      apiKeysList.push(...config.api_keys.filter((key: string) => key && key.trim() !== ''));
-    }
-    
-    // Add fallback from environment variable
-    const envApiKey = Deno.env.get('GEMINI_API_KEY');
-    if (envApiKey) {
-      apiKeysList.push(envApiKey);
-    }
-
-    if (apiKeysList.length === 0) {
-      throw new Error('No Gemini API keys configured. Please add API keys in admin settings or GEMINI_API_KEY secret.');
-    }
-
-    console.log(`Found ${apiKeysList.length} API key(s) to try`);
-
-    // Fetch images as base64
-    const [productImageResponse, userImageResponse] = await Promise.all([
-      fetch(productImage),
-      fetch(userImage)
-    ]);
-
-    const productImageBlob = await productImageResponse.blob();
-    const userImageBlob = await userImageResponse.blob();
-
-    const productImageArrayBuffer = await productImageBlob.arrayBuffer();
-    const userImageArrayBuffer = await userImageBlob.arrayBuffer();
-
-    const productImageBase64 = btoa(
-      new Uint8Array(productImageArrayBuffer).reduce(
-        (data, byte) => data + String.fromCharCode(byte),
-        ''
-      )
-    );
-    const userImageBase64 = btoa(
-      new Uint8Array(userImageArrayBuffer).reduce(
-        (data, byte) => data + String.fromCharCode(byte),
-        ''
-      )
-    );
+    console.log('Using Lovable AI for virtual try-on image generation');
 
     // Create session record
     const { data: session, error: sessionError } = await supabaseClient
@@ -95,107 +47,72 @@ serve(async (req) => {
       throw new Error('Failed to create virtual trial session');
     }
 
-    // Try each API key until one succeeds
-    let geminiData: any = null;
-    let lastError: any = null;
-    let successfulKeyIndex = -1;
-
-    for (let i = 0; i < apiKeysList.length; i++) {
-      const apiKey = apiKeysList[i];
-      console.log(`Trying API key ${i + 1}/${apiKeysList.length} with model:`, config.model_name);
-
-      try {
-        const geminiResponse = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${config.model_name}:generateContent?key=${apiKey}`,
+    // Use Lovable AI for image editing
+    console.log('Calling Lovable AI image editing API...');
+    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash-image-preview',
+        messages: [
           {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              contents: [
-                {
-                  parts: [
-                    {
-                      text: "You are a virtual try-on AI. Create a realistic image showing the person wearing the clothing item. Maintain the person's body proportions, pose, and background. Only change the clothing to show them wearing the product. Make it look natural and realistic.",
-                    },
-                    {
-                      inline_data: {
-                        mime_type: 'image/jpeg',
-                        data: userImageBase64,
-                      },
-                    },
-                    {
-                      inline_data: {
-                        mime_type: 'image/jpeg',
-                        data: productImageBase64,
-                      },
-                    },
-                  ],
-                },
-              ],
-              generationConfig: {
-                temperature: 0.4,
-                topK: 32,
-                topP: 1,
-                maxOutputTokens: 4096,
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: 'Create a realistic virtual try-on image showing the person wearing this clothing item. Maintain the person\'s body proportions, pose, and background. Only change the clothing to show them wearing the product naturally and realistically.'
               },
-            }),
+              {
+                type: 'image_url',
+                image_url: { url: userImage }
+              },
+              {
+                type: 'image_url',
+                image_url: { url: productImage }
+              }
+            ]
           }
-        );
+        ],
+        modalities: ['image', 'text']
+      })
+    });
 
-        if (geminiResponse.ok) {
-          geminiData = await geminiResponse.json();
-          successfulKeyIndex = i;
-          console.log(`✓ API key ${i + 1} succeeded`);
-          break; // Success! Exit the loop
-        } else {
-          const errorText = await geminiResponse.text();
-          lastError = {
-            status: geminiResponse.status,
-            message: errorText
-          };
-          console.log(`✗ API key ${i + 1} failed with status ${geminiResponse.status}`);
-          
-          // If it's not a rate limit error, stop trying
-          if (geminiResponse.status !== 429) {
-            break;
-          }
-        }
-      } catch (error) {
-        console.error(`Error with API key ${i + 1}:`, error);
-        lastError = error;
-      }
-    }
-
-    // If all keys failed
-    if (!geminiData) {
-      const errorMessage = lastError?.status === 429 
-        ? `All ${apiKeysList.length} API key(s) have exceeded their rate limits. Please try again later or add more API keys in admin settings.`
-        : `Failed to generate image. Error: ${lastError?.message || 'Unknown error'}`;
+    if (!aiResponse.ok) {
+      const errorText = await aiResponse.text();
+      console.error('Lovable AI error:', aiResponse.status, errorText);
       
       await supabaseClient
         .from('virtual_trial_sessions')
         .update({
           status: 'failed',
-          error_message: errorMessage,
+          error_message: `AI service error: ${aiResponse.status}`,
         })
         .eq('id', session.id);
       
-      throw new Error(errorMessage);
+      throw new Error(`Failed to generate image: ${aiResponse.status}`);
     }
 
-    console.log(`✓ Successfully generated image using API key ${successfulKeyIndex + 1}`);
+    const aiData = await aiResponse.json();
+    console.log('✓ Successfully generated image using Lovable AI');
 
-    // Extract generated image from response
-    const candidate = geminiData.candidates?.[0];
-    const imagePart = candidate?.content?.parts?.find((part: any) => part.inline_data);
-
-    if (!imagePart?.inline_data?.data) {
+    // Extract the generated image from response
+    const generatedImageUrl = aiData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    
+    if (!generatedImageUrl) {
+      console.error('No image in AI response:', JSON.stringify(aiData));
       throw new Error('No image generated by AI');
     }
 
-    const resultImageBase64 = imagePart.inline_data.data;
+    // The image is base64 encoded, extract the base64 data
+    const base64Match = generatedImageUrl.match(/^data:image\/\w+;base64,(.+)$/);
+    if (!base64Match) {
+      throw new Error('Invalid image format from AI');
+    }
+    
+    const resultImageBase64 = base64Match[1];
 
     // Upload result to Supabase Storage
     const resultFileName = `virtual-trial-results/${session.id}.jpg`;
