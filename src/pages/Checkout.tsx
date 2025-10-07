@@ -48,14 +48,13 @@ const Checkout = () => {
   const deliveryCharge = selectedPaymentIsCOD ? 100 : 0;
   const total = subtotal + deliveryCharge;
 
-  const handleOrderSuccess = (orderId: string) => {
-    setCreatedOrderId(orderId);
+  const handleOTPVerified = () => {
     setShowOTPModal(false);
     setShowPaymentSection(true);
     
     toast({
-      title: "Order Created Successfully!",
-      description: "Please complete payment to confirm your order.",
+      title: "Phone Verified!",
+      description: "Please complete payment to place your order.",
     });
   };
 
@@ -63,12 +62,42 @@ const Checkout = () => {
     setSelectedPaymentIsCOD(true);
   };
 
-  const handlePaymentSubmitted = () => {
-    clearCart();
-    if (createdOrderId) {
-      navigate(`/order-success/${createdOrderId}`);
-    } else {
-      navigate('/dashboard');
+  const handlePaymentSubmitted = async () => {
+    // Create order after payment is successful
+    setIsProcessing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('verify-otp-and-create-order', {
+        body: {
+          phoneNumber: formData.whatsappNumber,
+          otpCode: 'verified', // OTP already verified
+          orderData: {
+            ...formData,
+            items: cart.items,
+            subtotal,
+            deliveryCharge,
+            total,
+            email: user?.email || ''
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success && data.orderId) {
+        clearCart();
+        navigate(`/order-success/${data.orderId}`);
+      } else {
+        throw new Error('Failed to create order');
+      }
+    } catch (error: any) {
+      console.error('Order creation error:', error);
+      toast({
+        title: "Order Creation Failed",
+        description: "Failed to create order after payment. Please contact support.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -168,12 +197,12 @@ const Checkout = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <CheckCircle className="h-5 w-5 text-green-600" />
-                  Order Created Successfully
+                  Phone Verified Successfully
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground mb-4">
-                  Your order has been created. Please complete the payment to confirm your order.
+                  Your phone number has been verified. Please complete the payment to place your order.
                 </p>
                 <div className="bg-muted p-4 rounded-lg">
                   <div className="flex justify-between items-center">
@@ -184,15 +213,13 @@ const Checkout = () => {
               </CardContent>
             </Card>
 
-            {createdOrderId && (
-              <PaymentSelector
-                orderId={createdOrderId}
-                orderAmount={total}
-                productIds={cart.items.map(item => item.productId)}
-                onPaymentSubmitted={handlePaymentSubmitted}
-                onCODSelected={handleCODSelected}
-              />
-            )}
+            <PaymentSelector
+              orderId="pending"
+              orderAmount={total}
+              productIds={cart.items.map(item => item.productId)}
+              onPaymentSubmitted={handlePaymentSubmitted}
+              onCODSelected={handleCODSelected}
+            />
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -347,7 +374,7 @@ const Checkout = () => {
           isOpen={showOTPModal}
           onClose={() => setShowOTPModal(false)}
           phoneNumber={formData.whatsappNumber}
-          onVerificationSuccess={handleOrderSuccess}
+          onVerificationSuccess={handleOTPVerified}
           orderData={{
             ...formData,
             items: cart.items,

@@ -28,7 +28,7 @@ export default function AndroidApp() {
   const [backgroundPermission, setBackgroundPermission] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>({
     connected: false,
-    serverUrl: 'https://mofwljpreecqqxkilywh.supabase.co'
+    serverUrl: 'http://161.97.169.64'
   });
   const [recentMessages, setRecentMessages] = useState<SMSMessage[]>([]);
   const [processingCount, setProcessingCount] = useState(0);
@@ -116,7 +116,7 @@ export default function AndroidApp() {
       setIsConnected(true);
       setConnectionStatus({
         connected: true,
-        serverUrl: 'https://mofwljpreecqqxkilywh.supabase.co',
+        serverUrl: 'http://161.97.169.64',
         lastHeartbeat: Date.now()
       });
 

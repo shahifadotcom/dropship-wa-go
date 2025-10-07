@@ -39,30 +39,37 @@ export const OTPVerificationModal = ({
     setIsVerifying(true);
     
     try {
-      // Verify OTP and create order
-      const { data, error } = await supabase.functions.invoke('verify-otp-and-create-order', {
-        body: {
-          phoneNumber,
-          otpCode: otp,
-          orderData
-        }
-      });
+      // Just verify OTP (don't create order yet)
+      const { data: verificationData, error: verifyError } = await supabase
+        .from('otp_verifications')
+        .select('*')
+        .eq('phone_number', phoneNumber)
+        .eq('otp_code', otp)
+        .eq('is_verified', false)
+        .gt('expires_at', new Date().toISOString())
+        .single();
 
-      if (error) throw error;
-
-      if (data.success) {
-        toast({
-          title: "Verification Successful!",
-          description: "Your order has been placed successfully."
-        });
-        onVerificationSuccess(data.userId);
-      } else {
+      if (verifyError || !verificationData) {
         toast({
           title: "Invalid OTP",
-          description: data.message || "The OTP you entered is incorrect or expired.",
+          description: "The OTP you entered is incorrect or expired.",
           variant: "destructive"
         });
+        return;
       }
+
+      // Mark OTP as verified
+      await supabase
+        .from('otp_verifications')
+        .update({ is_verified: true })
+        .eq('id', verificationData.id);
+
+      toast({
+        title: "Verification Successful!",
+        description: "Please proceed with payment."
+      });
+      
+      onVerificationSuccess('verified');
     } catch (error: any) {
       console.error('OTP verification error:', error);
       toast({
@@ -148,7 +155,7 @@ export const OTPVerificationModal = ({
                   Verifying...
                 </>
               ) : (
-                'Verify & Place Order'
+                'Verify OTP'
               )}
             </Button>
 
