@@ -59,7 +59,6 @@ const Home = () => {
           <div className="container mx-auto px-4 py-8">
             {/* First 2-column products - Responsive */}
             <div className="mb-8">
-              <h2 className="text-2xl font-bold text-foreground mb-6">Featured Products</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {featuredProducts1.map((product) => (
                   <div key={product.id} className="bg-card rounded-lg p-4 border border-navigation/20 hover:shadow-lg transition-shadow">
@@ -134,7 +133,6 @@ const Home = () => {
             {/* Hide Footer on Mobile - handled separately */}
             {/* Mobile Featured Products */}
             <div>
-              <h2 className="text-xl font-bold text-foreground mb-4">Featured</h2>
               <div className="grid grid-cols-2 gap-3">
                 {featuredProducts1.slice(0, 2).map((product) => (
                   <ProductCard
