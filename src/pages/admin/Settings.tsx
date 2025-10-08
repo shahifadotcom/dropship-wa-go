@@ -49,17 +49,20 @@ const Settings = () => {
       const { data, error } = await supabase
         .from('store_settings')
         .select('*')
-        .maybeSingle();
+        .order('created_at', { ascending: false })
+        .limit(1);
 
       if (error) {
         console.error('Error fetching settings:', error);
         toast.error('Failed to load settings');
         return;
       }
-      
-      // If no settings exist, create default settings
-      if (!data) {
-        const { data: newSettings, error: insertError } = await supabase
+
+      const row = data?.[0] as StoreSettings | undefined;
+
+      if (!row) {
+        // If no settings exist, create default settings
+        const { data: newRows, error: insertError } = await supabase
           .from('store_settings')
           .insert({
             store_name: 'My Store',
@@ -75,19 +78,23 @@ const Settings = () => {
             inventory_alerts: true,
             maintenance_mode: false,
           })
-          .select()
-          .single();
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(1);
 
         if (insertError) {
           console.error('Error creating settings:', insertError);
           toast.error('Failed to create settings');
           return;
         }
-        
-        setSettings(newSettings);
-        toast.success('Settings initialized successfully');
+
+        const created = newRows?.[0] as StoreSettings | undefined;
+        if (created) {
+          setSettings(created);
+          toast.success('Settings initialized successfully');
+        }
       } else {
-        setSettings(data);
+        setSettings(row);
       }
     } catch (error) {
       console.error('Error:', error);
