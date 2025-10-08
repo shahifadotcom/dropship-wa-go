@@ -31,12 +31,18 @@ serve(async (req) => {
     const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get order details
+    // Get order details with items
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .select(`
         *,
-        profiles (first_name, last_name)
+        profiles (first_name, last_name),
+        order_items (
+          product_name,
+          product_image,
+          quantity,
+          price
+        )
       `)
       .eq('id', orderId)
       .single();
@@ -76,6 +82,15 @@ serve(async (req) => {
       message = message.replace(new RegExp(`{{${key}}}`, 'g'), value.toString());
     });
 
+    // Build product details for message
+    let productDetails = '';
+    if (order.order_items && order.order_items.length > 0) {
+      productDetails = '\n\nProducts:\n';
+      order.order_items.forEach((item: any) => {
+        productDetails += `- ${item.product_name} (Qty: ${item.quantity}) - ৳${item.price}\n`;
+      });
+    }
+
     // Get customer's WhatsApp number from billing address
     const phoneNumber = order.billing_address.whatsappNumber;
 
@@ -92,17 +107,39 @@ serve(async (req) => {
       );
     }
 
-    // Send WhatsApp message
-    const { error: messageError } = await supabase.functions.invoke('send-whatsapp-message', {
+    // Send WhatsApp message to customer with product details
+    const customerMessage = message + productDetails;
+    const { error: customerMessageError } = await supabase.functions.invoke('send-whatsapp-message', {
       body: {
         phoneNumber,
-        message
+        message: customerMessage
       }
     });
 
-    if (messageError) {
-      console.error('Error sending notification:', messageError);
-      // Don't throw error, just log it
+    if (customerMessageError) {
+      console.error('Error sending customer notification:', customerMessageError);
+    }
+
+    // Send notification to admin with full order details
+    const { data: storeSettings } = await supabase
+      .from('store_settings')
+      .select('admin_whatsapp')
+      .single();
+
+    if (storeSettings?.admin_whatsapp) {
+      const adminMessage = `🔔 New Order #${order.order_number}\n\n` +
+        `Customer: ${customerName}\n` +
+        `Phone: ${phoneNumber}\n` +
+        `Address: ${order.billing_address.fullAddress || 'N/A'}\n` +
+        `Total: ৳${order.total.toFixed(2)}\n` +
+        productDetails;
+
+      await supabase.functions.invoke('send-whatsapp-message', {
+        body: {
+          phoneNumber: storeSettings.admin_whatsapp,
+          message: adminMessage
+        }
+      });
     }
 
     console.log(`Notification sent for order ${order.order_number} using template ${templateName}`);

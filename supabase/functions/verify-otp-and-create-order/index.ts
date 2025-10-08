@@ -122,8 +122,23 @@ serve(async (req) => {
         });
     }
 
-    // Generate order number
-    const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
+    // Generate order number starting from 1001
+    const { data: lastOrder } = await supabase
+      .from('orders')
+      .select('order_number')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    
+    let orderSequence = 1001;
+    if (lastOrder?.order_number) {
+      const lastNumber = parseInt(lastOrder.order_number);
+      if (!isNaN(lastNumber) && lastNumber >= 1001) {
+        orderSequence = lastNumber + 1;
+      }
+    }
+    
+    const orderNumber = orderSequence.toString();
 
     // Create order
     const { data: order, error: orderError } = await supabase

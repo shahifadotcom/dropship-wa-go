@@ -26,6 +26,8 @@ export const PaymentSelector = ({ orderId, orderAmount, productId, productIds, o
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAdvancePayment, setShowAdvancePayment] = useState(false);
   const [isVerifyingBinance, setIsVerifyingBinance] = useState(false);
+  const [verificationFailed, setVerificationFailed] = useState(false);
+  const [failedTransactionId, setFailedTransactionId] = useState('');
   const { effectiveCountry } = useCountryDetection();
   const { toast } = useToast();
 
@@ -158,13 +160,14 @@ export const PaymentSelector = ({ orderId, orderAmount, productId, productIds, o
     if (!transactionId.trim()) {
       toast({
         title: "Missing Transaction ID",
-        description: "Please enter your Binance Pay transaction ID",
+        description: "Please enter your transaction ID",
         variant: "destructive"
       });
       return;
     }
 
     setIsVerifyingBinance(true);
+    setVerificationFailed(false);
     try {
       const verified = await PaymentService.verifyBinancePayment(transactionId, orderId, 100);
       
@@ -176,21 +179,30 @@ export const PaymentSelector = ({ orderId, orderAmount, productId, productIds, o
         setShowAdvancePayment(false);
         onPaymentSubmitted?.();
       } else {
+        setVerificationFailed(true);
+        setFailedTransactionId(transactionId);
         toast({
           title: "Verification Failed",
-          description: "Payment verification failed. Please check your transaction ID.",
+          description: "Payment verification failed. Please contact support.",
           variant: "destructive"
         });
       }
     } catch (error) {
+      setVerificationFailed(true);
+      setFailedTransactionId(transactionId);
       toast({
         title: "Verification Error",
-        description: "Failed to verify payment. Please try again.",
+        description: "Failed to verify payment. Please contact support.",
         variant: "destructive"
       });
     } finally {
       setIsVerifyingBinance(false);
     }
+  };
+
+  const handleContactSupport = () => {
+    const message = encodeURIComponent(`I have sent 100BDT but order not submitted, kindly check and confirm my order thank you. Transaction ID: ${failedTransactionId}`);
+    window.open(`https://wa.me/+8801775777308?text=${message}`, '_blank');
   };
 
   if (paymentGateways.length === 0) {
@@ -258,7 +270,7 @@ export const PaymentSelector = ({ orderId, orderAmount, productId, productIds, o
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
                 {selectedGateway.name === 'cod' ? (
-                  <>Pay <strong>100 BDT delivery charge</strong> using Binance Pay to confirm your order. Remaining <strong>৳{orderAmount - 100}</strong> will be collected on delivery.</>
+                  <>Pay <strong>100 BDT delivery charge</strong> to confirm your order. Remaining <strong>৳{orderAmount - 100}</strong> will be collected on delivery.</>
                 ) : selectedGateway.name === 'binance_pay' ? (
                   <>Send <strong>৳{orderAmount}</strong> using Binance Pay, then enter your transaction ID below for automatic verification.</>
                 ) : (
@@ -290,7 +302,7 @@ export const PaymentSelector = ({ orderId, orderAmount, productId, productIds, o
             >
               {isVerifyingBinance ? 'Verifying...' : isSubmitting ? 'Submitting...' : 
                selectedGateway.name === 'binance_pay' ? 'Auto Verify Payment' : 
-               selectedGateway.name === 'cod' ? 'Select COD' : 'Verify Payment'}
+               selectedGateway.name === 'cod' ? 'Submit Order' : 'Verify Payment'}
             </Button>
           </div>
         )}
@@ -300,21 +312,21 @@ export const PaymentSelector = ({ orderId, orderAmount, productId, productIds, o
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                Pay <strong>100 BDT delivery charge</strong> using Binance Pay to confirm your Cash on Delivery order.
+                Pay <strong>100 BDT delivery charge</strong> to confirm your Cash on Delivery order.
                 Remaining <strong>৳{orderAmount - 100}</strong> will be collected when your order is delivered.
               </AlertDescription>
             </Alert>
 
             <div className="space-y-2">
-              <Label htmlFor="advanceTransactionId">Binance Pay Transaction ID</Label>
+              <Label htmlFor="advanceTransactionId">Transaction ID</Label>
               <Input
                 id="advanceTransactionId"
-                placeholder="Enter Binance Pay transaction ID for 100 BDT"
+                placeholder="Enter transaction ID for 100 BDT"
                 value={transactionId}
                 onChange={(e) => setTransactionId(e.target.value)}
               />
               <p className="text-xs text-muted-foreground">
-                Pay exactly 100 BDT using Binance Pay and enter the transaction ID
+                Pay exactly 100 BDT and enter the transaction ID
               </p>
             </div>
 
@@ -323,8 +335,18 @@ export const PaymentSelector = ({ orderId, orderAmount, productId, productIds, o
               disabled={isVerifyingBinance || !transactionId.trim()}
               className="w-full"
             >
-              {isVerifyingBinance ? 'Verifying Advance Payment...' : 'Verify Advance Payment'}
+              {isVerifyingBinance ? 'Verifying...' : 'Submit Order'}
             </Button>
+
+            {verificationFailed && (
+              <Button 
+                variant="default"
+                onClick={handleContactSupport}
+                className="w-full bg-green-600 hover:bg-green-700"
+              >
+                Contact Support via WhatsApp
+              </Button>
+            )}
 
             <Button 
               variant="outline"
@@ -332,6 +354,8 @@ export const PaymentSelector = ({ orderId, orderAmount, productId, productIds, o
                 setShowAdvancePayment(false);
                 setSelectedGateway(null);
                 setTransactionId('');
+                setVerificationFailed(false);
+                setFailedTransactionId('');
               }}
               className="w-full"
             >

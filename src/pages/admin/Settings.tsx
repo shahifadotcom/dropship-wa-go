@@ -20,6 +20,7 @@ interface StoreSettings {
   contact_email: string;
   contact_phone: string;
   contact_address: string;
+  admin_whatsapp?: string;
   site_title: string;
   currency: string;
   email_notifications: boolean;
@@ -131,6 +132,7 @@ const Settings = () => {
       contact_email: settings.contact_email,
       contact_phone: settings.contact_phone,
       contact_address: settings.contact_address,
+      admin_whatsapp: settings.admin_whatsapp,
     });
   };
 
@@ -291,6 +293,18 @@ const Settings = () => {
                   onChange={(e) => setSettings({...settings, contact_address: e.target.value})}
                   placeholder="Store address" 
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="admin-whatsapp">Admin WhatsApp Number</Label>
+                <Input 
+                  id="admin-whatsapp" 
+                  value={settings.admin_whatsapp || ''}
+                  onChange={(e) => setSettings({...settings, admin_whatsapp: e.target.value})}
+                  placeholder="+8801775777308" 
+                />
+                <p className="text-xs text-muted-foreground">
+                  Order notifications will be sent to this WhatsApp number
+                </p>
               </div>
               <Button onClick={handleContactInfoSave} disabled={saving}>
                 {saving ? 'Saving...' : 'Save Contact Information'}

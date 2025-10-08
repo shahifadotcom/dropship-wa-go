@@ -1438,6 +1438,7 @@ export type Database = {
       }
       store_settings: {
         Row: {
+          admin_whatsapp: string | null
           contact_address: string | null
           contact_email: string | null
           contact_phone: string | null
@@ -1456,6 +1457,7 @@ export type Database = {
           whatsapp_notifications: boolean | null
         }
         Insert: {
+          admin_whatsapp?: string | null
           contact_address?: string | null
           contact_email?: string | null
           contact_phone?: string | null
@@ -1474,6 +1476,7 @@ export type Database = {
           whatsapp_notifications?: boolean | null
         }
         Update: {
+          admin_whatsapp?: string | null
           contact_address?: string | null
           contact_email?: string | null
           contact_phone?: string | null
