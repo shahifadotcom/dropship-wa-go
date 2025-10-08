@@ -44,11 +44,43 @@ const Settings = () => {
       const { data, error } = await supabase
         .from('store_settings')
         .select('*')
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         console.error('Error fetching settings:', error);
         toast.error('Failed to load settings');
+        return;
+      }
+      
+      // If no settings exist, create default settings
+      if (!data) {
+        const { data: newSettings, error: insertError } = await supabase
+          .from('store_settings')
+          .insert({
+            store_name: 'My Store',
+            store_tagline: 'Your Trusted Partner',
+            store_description: 'Quality products with fast delivery',
+            contact_email: 'admin@store.com',
+            contact_phone: '+880 123-456-789',
+            contact_address: 'Dhaka, Bangladesh',
+            site_title: 'My E-commerce Store',
+            currency: 'BDT',
+            email_notifications: true,
+            whatsapp_notifications: true,
+            inventory_alerts: true,
+            maintenance_mode: false,
+          })
+          .select()
+          .single();
+
+        if (insertError) {
+          console.error('Error creating settings:', insertError);
+          toast.error('Failed to create settings');
+          return;
+        }
+        
+        setSettings(newSettings);
+        toast.success('Settings initialized successfully');
       } else {
         setSettings(data);
       }
