@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useRoles } from '@/hooks/useRoles';
 import AdminSidebar from '@/components/admin/AdminSidebar';
@@ -14,6 +14,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: rolesLoading } = useRoles();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const loading = authLoading || rolesLoading;
 
@@ -33,7 +34,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
             <div className="text-center space-y-4">
               <h2 className="text-2xl font-bold">Admin Access Required</h2>
               <p className="text-muted-foreground">You need to be authenticated to access the admin panel. Please create an account or sign in first.</p>
-              <Button onClick={() => navigate('/auth')} className="w-full">
+              <Button onClick={() => navigate('/auth', { state: { from: location } })} className="w-full">
                 Go to Login/Register
               </Button>
             </div>

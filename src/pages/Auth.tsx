@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useRoles } from '@/hooks/useRoles';
 import { Button } from '@/components/ui/button';
@@ -17,17 +17,24 @@ export default function Auth() {
   const { signIn, signUp, user } = useAuth();
   const { isAdmin, loading: rolesLoading } = useRoles();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Get the return URL from location state, or default based on role
+  const from = (location.state as any)?.from?.pathname || null;
 
   // Handle redirect after successful authentication
   useEffect(() => {
     if (user && !rolesLoading) {
-      if (isAdmin) {
-        navigate('/admin');
+      // If there's a return URL, use it
+      if (from) {
+        navigate(from, { replace: true });
+      } else if (isAdmin) {
+        navigate('/admin', { replace: true });
       } else {
-        navigate('/');
+        navigate('/', { replace: true });
       }
     }
-  }, [user, isAdmin, rolesLoading, navigate]);
+  }, [user, isAdmin, rolesLoading, navigate, from]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
