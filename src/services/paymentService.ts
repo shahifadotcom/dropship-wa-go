@@ -233,6 +233,27 @@ export class PaymentService {
     }
   }
 
+  // Check if transaction ID exists in SMS transactions
+  static async checkSMSTransaction(transactionId: string): Promise<boolean> {
+    try {
+      const { data, error } = await supabase
+        .from('sms_transactions')
+        .select('id')
+        .eq('transaction_id', transactionId.trim())
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error checking SMS transaction:', error);
+        return false;
+      }
+
+      return !!data;
+    } catch (error) {
+      console.error('Error checking SMS transaction:', error);
+      return false;
+    }
+  }
+
   // Get Bangladesh payment gateways (default)
   static async getBangladeshPaymentGateways(): Promise<PaymentGateway[]> {
     try {

@@ -28,6 +28,7 @@ export const PaymentSelector = ({ orderId, orderAmount, productId, productIds, o
   const [isVerifyingBinance, setIsVerifyingBinance] = useState(false);
   const [verificationFailed, setVerificationFailed] = useState(false);
   const [failedTransactionId, setFailedTransactionId] = useState('');
+  const [showContactSupport, setShowContactSupport] = useState(false);
   const { effectiveCountry } = useCountryDetection();
   const { toast } = useToast();
 
@@ -89,10 +90,12 @@ export const PaymentSelector = ({ orderId, orderAmount, productId, productIds, o
     }
 
     setIsSubmitting(true);
+    setShowContactSupport(false);
+    
     try {
       // Handle COD advance payment
       if (selectedGateway.name === 'cod') {
-        onCODSelected?.(); // Notify parent about COD selection
+        onCODSelected?.();
         const advancePaymentId = await PaymentService.createAdvancePayment(orderId, 100, 'binance_pay');
         if (advancePaymentId) {
           setShowAdvancePayment(true);
@@ -100,7 +103,23 @@ export const PaymentSelector = ({ orderId, orderAmount, productId, productIds, o
             title: "COD Selected",
             description: "Please pay 100 BDT delivery charge to confirm your order.",
           });
+        } else {
+          throw new Error('Failed to create advance payment');
         }
+        return;
+      }
+
+      // Check if transaction ID exists in SMS transactions first
+      const smsExists = await PaymentService.checkSMSTransaction(transactionId);
+      
+      if (!smsExists) {
+        setFailedTransactionId(transactionId);
+        setShowContactSupport(true);
+        toast({
+          title: "Transaction Not Found",
+          description: "We couldn't find this transaction ID in our records. Please contact support.",
+          variant: "destructive"
+        });
         return;
       }
 
@@ -117,16 +136,18 @@ export const PaymentSelector = ({ orderId, orderAmount, productId, productIds, o
           onPaymentSubmitted?.();
           return;
         } else {
+          setFailedTransactionId(transactionId);
+          setShowContactSupport(true);
           toast({
             title: "Verification Failed",
-            description: "Binance payment verification failed. Please check your transaction ID.",
+            description: "Payment verification failed. Please contact support.",
             variant: "destructive"
           });
           return;
         }
       }
 
-      // Handle other payment methods
+      // Handle other payment methods - submit for manual verification
       const success = await PaymentService.submitTransaction(
         orderId,
         selectedGateway.name,
@@ -136,18 +157,21 @@ export const PaymentSelector = ({ orderId, orderAmount, productId, productIds, o
 
       if (success) {
         toast({
-          title: "Payment Submitted",
-          description: "Your payment is being verified. You will be notified once confirmed.",
+          title: "Payment Verified",
+          description: "Your payment has been confirmed! Completing your order...",
         });
-        setTransactionId('');
         onPaymentSubmitted?.();
       } else {
+        setFailedTransactionId(transactionId);
+        setShowContactSupport(true);
         throw new Error('Failed to submit payment');
       }
     } catch (error) {
+      setFailedTransactionId(transactionId);
+      setShowContactSupport(true);
       toast({
         title: "Submission Failed",
-        description: "Failed to submit payment details. Please try again.",
+        description: "Failed to submit payment. Please contact support.",
         variant: "destructive"
       });
     } finally {
@@ -168,7 +192,22 @@ export const PaymentSelector = ({ orderId, orderAmount, productId, productIds, o
 
     setIsVerifyingBinance(true);
     setVerificationFailed(false);
+    
     try {
+      // Check if transaction exists in SMS records first
+      const smsExists = await PaymentService.checkSMSTransaction(transactionId);
+      
+      if (!smsExists) {
+        setVerificationFailed(true);
+        setFailedTransactionId(transactionId);
+        toast({
+          title: "Transaction Not Found",
+          description: "We couldn't find this transaction ID. Please contact support.",
+          variant: "destructive"
+        });
+        return;
+      }
+
       const verified = await PaymentService.verifyBinancePayment(transactionId, orderId, 100);
       
       if (verified) {
@@ -302,8 +341,18 @@ export const PaymentSelector = ({ orderId, orderAmount, productId, productIds, o
             >
               {isVerifyingBinance ? 'Verifying...' : isSubmitting ? 'Submitting...' : 
                selectedGateway.name === 'binance_pay' ? 'Auto Verify Payment' : 
-               selectedGateway.name === 'cod' ? 'Submit Order' : 'Verify Payment'}
+               selectedGateway.name === 'cod' ? 'Submit Order' : 'Submit Order'}
             </Button>
+
+            {showContactSupport && (
+              <Button 
+                variant="default"
+                onClick={handleContactSupport}
+                className="w-full bg-green-600 hover:bg-green-700"
+              >
+                Contact Support via WhatsApp
+              </Button>
+            )}
           </div>
         )}
 

@@ -10,7 +10,7 @@ interface OTPVerificationModalProps {
   isOpen: boolean;
   onClose: () => void;
   phoneNumber: string;
-  onVerificationSuccess: (userId: string) => void;
+  onVerificationSuccess: (phoneNumber: string, otpCode: string) => void;
   orderData: any;
 }
 
@@ -66,10 +66,10 @@ export const OTPVerificationModal = ({
 
       toast({
         title: "Verification Successful!",
-        description: "Please proceed with payment."
+        description: "Creating your order..."
       });
       
-      onVerificationSuccess('verified');
+      onVerificationSuccess(phoneNumber, otp);
     } catch (error: any) {
       console.error('OTP verification error:', error);
       toast({

@@ -48,33 +48,22 @@ const Checkout = () => {
   const deliveryCharge = selectedPaymentIsCOD ? 100 : 0;
   const total = subtotal + deliveryCharge;
 
-  const handleOTPVerified = () => {
+  const handleOTPVerified = async (phoneNumber: string, otpCode: string) => {
     setShowOTPModal(false);
-    setShowPaymentSection(true);
-    
-    toast({
-      title: "Phone Verified!",
-      description: "Please complete payment to place your order.",
-    });
-  };
-
-  const handleCODSelected = () => {
-    setSelectedPaymentIsCOD(true);
-  };
-
-  const handlePaymentSubmitted = async () => {
-    // Create order after payment is successful
     setIsProcessing(true);
+    
+    // Create order immediately after OTP verification
     try {
       const { data, error } = await supabase.functions.invoke('verify-otp-and-create-order', {
         body: {
-          phoneNumber: formData.whatsappNumber,
-          otpCode: 'verified', // OTP already verified
+          phoneNumber,
+          otpCode,
           orderData: {
             ...formData,
             items: cart.items,
             subtotal,
-            deliveryCharge,
+            tax: 0,
+            shipping: 0,
             total,
             email: user?.email || ''
           }
@@ -84,8 +73,13 @@ const Checkout = () => {
       if (error) throw error;
 
       if (data.success && data.orderId) {
-        clearCart();
-        navigate(`/order-success/${data.orderId}`);
+        setCreatedOrderId(data.orderId);
+        setShowPaymentSection(true);
+        
+        toast({
+          title: "Order Created!",
+          description: "Please complete payment to confirm your order.",
+        });
       } else {
         throw new Error('Failed to create order');
       }
@@ -93,12 +87,22 @@ const Checkout = () => {
       console.error('Order creation error:', error);
       toast({
         title: "Order Creation Failed",
-        description: "Failed to create order after payment. Please contact support.",
+        description: "Failed to create order. Please try again.",
         variant: "destructive"
       });
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const handleCODSelected = () => {
+    setSelectedPaymentIsCOD(true);
+  };
+
+  const handlePaymentSubmitted = async () => {
+    // Payment verified, complete the order
+    clearCart();
+    navigate(`/order-success/${createdOrderId}`);
   };
 
   const handleInputChange = (field: keyof CheckoutFormData, value: string) => {
@@ -214,7 +218,7 @@ const Checkout = () => {
             </Card>
 
             <PaymentSelector
-              orderId="pending"
+              orderId={createdOrderId || ''}
               orderAmount={total}
               productIds={cart.items.map(item => item.productId)}
               onPaymentSubmitted={handlePaymentSubmitted}
