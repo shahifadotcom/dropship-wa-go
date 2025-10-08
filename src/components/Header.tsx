@@ -30,14 +30,16 @@ const Header = () => {
               <img 
                 src={settings.store_logo} 
                 alt={settings.store_name || 'Store Logo'} 
-                className="h-8 w-8 object-contain"
+                className="h-10 max-w-[120px] object-contain"
               />
             ) : (
               <Package className="h-8 w-8 text-navigation-foreground" />
             )}
-            <span className="text-lg font-bold text-navigation-foreground">
-              {settings?.store_name || 'Shahifa'}
-            </span>
+            {settings?.store_name && (
+              <span className="text-lg font-bold text-navigation-foreground">
+                {settings.store_name}
+              </span>
+            )}
           </a>
 
           {/* Mobile Search Box */}
@@ -68,14 +70,16 @@ const Header = () => {
                 <img 
                   src={settings.store_logo} 
                   alt={settings.store_name || 'Store Logo'} 
-                  className="h-8 w-8 object-contain"
+                  className="h-12 max-w-[200px] object-contain"
                 />
               ) : (
-                <Package className="h-8 w-8 text-navigation-foreground" />
+                <Package className="h-10 w-10 text-navigation-foreground" />
               )}
-              <span className="text-xl font-bold text-navigation-foreground">
-                {settings?.store_name || 'Shahifa'}
-              </span>
+              {settings?.store_name && (
+                <span className="text-xl font-bold text-navigation-foreground">
+                  {settings.store_name}
+                </span>
+              )}
             </a>
           </div>
 
