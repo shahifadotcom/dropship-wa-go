@@ -27,12 +27,13 @@ export const useStoreSettings = () => {
       // Use anon access for public store settings
       const { data, error } = await supabase
         .from('store_settings')
-        .select('id, store_name, store_tagline, store_description, store_logo, site_title, currency')
-        .single();
+        .select('id, store_name, store_tagline, store_description, store_logo, site_title, currency, contact_email, contact_phone, contact_address, email_notifications, whatsapp_notifications, inventory_alerts, maintenance_mode')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
       if (error && error.code !== 'PGRST116') {
         console.error('Error fetching store settings:', error);
-        // Set default values if fetch fails
         setSettings({
           id: 'default',
           store_name: 'DropshipPro',
@@ -46,19 +47,41 @@ export const useStoreSettings = () => {
           email_notifications: false,
           whatsapp_notifications: false,
           inventory_alerts: false,
-          maintenance_mode: false
+          maintenance_mode: false,
         });
-      } else {
+      } else if (!data) {
+        // No settings found, use safe defaults
         setSettings({
-          ...data,
-          id: data.id || 'default',
+          id: 'default',
+          store_name: 'DropshipPro',
+          store_tagline: 'Your One-Stop Shop',
+          store_description: 'Quality products at affordable prices',
+          site_title: 'DropshipPro - Online Store',
+          currency: 'BDT',
           contact_email: '',
           contact_phone: '',
           contact_address: '',
           email_notifications: false,
           whatsapp_notifications: false,
           inventory_alerts: false,
-          maintenance_mode: false
+          maintenance_mode: false,
+        });
+      } else {
+        setSettings({
+          id: data.id || 'default',
+          store_name: data.store_name || 'DropshipPro',
+          store_tagline: data.store_tagline || 'Your One-Stop Shop',
+          store_description: data.store_description || 'Quality products at affordable prices',
+          store_logo: data.store_logo,
+          site_title: data.site_title || 'DropshipPro - Online Store',
+          currency: data.currency || 'BDT',
+          contact_email: data.contact_email || '',
+          contact_phone: data.contact_phone || '',
+          contact_address: data.contact_address || '',
+          email_notifications: data.email_notifications ?? false,
+          whatsapp_notifications: data.whatsapp_notifications ?? false,
+          inventory_alerts: data.inventory_alerts ?? false,
+          maintenance_mode: data.maintenance_mode ?? false,
         });
       }
     } catch (error) {
