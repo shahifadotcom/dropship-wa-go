@@ -202,21 +202,28 @@ export default function AndroidApp() {
     return {};
   };
 
-  const sendTransactionToServer = async (transactionId: string, gateway: string, amount: string) => {
+  const sendTransactionToServer = async (transactionId: string, gateway: string, amount: string, sender: string, message: string) => {
     try {
-      const { error } = await supabase
-        .from('transaction_verifications')
-        .insert({
-          transaction_id: transactionId,
-          payment_gateway: gateway,
-          amount: parseFloat(amount.replace(/[,]/g, '')),
-          status: 'pending'
-        });
+      // Use edge function for proper handling with service role
+      const { data, error } = await supabase.functions.invoke('sms-transaction-handler', {
+        body: {
+          smsData: {
+            transaction_id: transactionId,
+            sender_number: sender,
+            message_content: message,
+            wallet_type: gateway,
+            amount: parseFloat(amount.replace(/[,]/g, '')),
+            timestamp: Date.now()
+          }
+        }
+      });
 
       if (error) throw error;
       
       setProcessingCount(prev => prev + 1);
       toast.success(`Transaction ${transactionId} sent to server`);
+      
+      console.log('Server response:', data);
     } catch (error) {
       console.error('Failed to send transaction:', error);
       toast.error('Failed to send transaction to server');
