@@ -10,6 +10,7 @@ import { Settings as SettingsIcon, Store, Mail, Phone, Globe, Upload, Image } fr
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import AdminLayout from '@/layouts/AdminLayout';
+import { useAuth } from '@/hooks/useAuth';
 
 interface StoreSettings {
   id: string;
@@ -30,14 +31,18 @@ interface StoreSettings {
 }
 
 const Settings = () => {
+  const { session } = useAuth();
   const [settings, setSettings] = useState<StoreSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [logoUploading, setLogoUploading] = useState(false);
 
   useEffect(() => {
-    fetchSettings();
-  }, []);
+    // Only fetch settings once we have a valid session
+    if (session) {
+      fetchSettings();
+    }
+  }, [session]);
 
   const fetchSettings = async () => {
     try {
