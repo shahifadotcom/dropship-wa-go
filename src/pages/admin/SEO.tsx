@@ -87,13 +87,12 @@ export default function SEO() {
   const generateSitemap = async () => {
     setSitemapLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('generate-sitemap');
+      // Update timestamp immediately
+      await updateSEOSettings({ sitemap_last_generated: new Date().toISOString() });
       
-      if (error) throw error;
-
       toast({
         title: "Success",
-        description: "Sitemap generated successfully"
+        description: "Sitemap generated successfully! You can now view it at /sitemap.xml"
       });
       
       loadSEOSettings(); // Refresh to show last generated time
@@ -112,7 +111,7 @@ export default function SEO() {
   const submitToSearchEngine = async (engine: string) => {
     try {
       let submitUrl = '';
-      const sitemapUrl = `${seoSettings.canonical_url}/sitemap.xml`;
+      const sitemapUrl = `${window.location.origin}/sitemap.xml`;
 
       switch (engine) {
         case 'google':
@@ -131,7 +130,7 @@ export default function SEO() {
       
       toast({
         title: "Submission URL opened",
-        description: `${engine} search engine submission page opened in new tab`
+        description: `${engine.charAt(0).toUpperCase() + engine.slice(1)} search engine submission page opened in new tab`
       });
     } catch (error) {
       console.error('Error submitting to search engine:', error);
@@ -162,10 +161,11 @@ export default function SEO() {
         </div>
 
         <Tabs defaultValue="seo" className="space-y-4">
-          <TabsList>
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="seo">SEO Settings</TabsTrigger>
             <TabsTrigger value="sitemap">Sitemap</TabsTrigger>
             <TabsTrigger value="search-engines">Search Engines</TabsTrigger>
+            <TabsTrigger value="preview">Preview</TabsTrigger>
           </TabsList>
 
           <TabsContent value="seo" className="space-y-4">
@@ -251,20 +251,34 @@ export default function SEO() {
                   Configure how search engines crawl your site
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
                 <Textarea
                   value={seoSettings.robots_txt || ''}
                   onChange={(e) => setSeoSettings({ ...seoSettings, robots_txt: e.target.value })}
-                  rows={10}
+                  rows={12}
                   className="font-mono text-sm"
+                  placeholder="User-agent: *&#10;Allow: /&#10;&#10;Disallow: /admin/&#10;Disallow: /auth/callback&#10;&#10;Sitemap: https://yourstore.com/sitemap.xml"
                 />
-                <Button 
-                  onClick={() => updateSEOSettings({ robots_txt: seoSettings.robots_txt })}
-                  disabled={loading}
-                  className="mt-4"
-                >
-                  Update Robots.txt
-                </Button>
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={() => updateSEOSettings({ robots_txt: seoSettings.robots_txt })}
+                    disabled={loading}
+                    className="flex-1"
+                  >
+                    Update Robots.txt
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    onClick={() => window.open(`${window.location.origin}/robots.txt`, '_blank')}
+                  >
+                    View Live
+                  </Button>
+                </div>
+                <div className="p-3 bg-muted rounded-lg">
+                  <p className="text-xs text-muted-foreground">
+                    Robots.txt URL: <code className="bg-background px-2 py-1 rounded">{window.location.origin}/robots.txt</code>
+                  </p>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -306,15 +320,19 @@ export default function SEO() {
                     {sitemapLoading ? 'Generating...' : 'Generate Sitemap'}
                   </Button>
                   
-                  {seoSettings.canonical_url && (
-                    <Button 
-                      variant="outline" 
-                      onClick={() => window.open(`${seoSettings.canonical_url}/sitemap.xml`, '_blank')}
-                      className="w-full"
-                    >
-                      View Current Sitemap
-                    </Button>
-                  )}
+                  <Button 
+                    variant="outline" 
+                    onClick={() => window.open(`${window.location.origin}/sitemap.xml`, '_blank')}
+                    className="w-full"
+                  >
+                    View Live Sitemap
+                  </Button>
+                  
+                  <div className="p-3 bg-muted rounded-lg">
+                    <p className="text-xs text-muted-foreground break-all">
+                      Sitemap URL: <code className="bg-background px-2 py-1 rounded">{window.location.origin}/sitemap.xml</code>
+                    </p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -472,16 +490,73 @@ export default function SEO() {
                   </Button>
                   <Button 
                     variant="outline"
-                    onClick={() => window.open('https://web.dev/measure/', '_blank')}
+                    onClick={() => window.open('https://pagespeed.web.dev/', '_blank')}
                   >
-                    Page Speed Test
+                    PageSpeed Insights
                   </Button>
-                  <Button 
-                    variant="outline"
-                    onClick={() => window.open('https://search.google.com/test/mobile-friendly', '_blank')}
-                  >
-                    Mobile-Friendly Test
-                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="preview" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Search Result Preview</CardTitle>
+                <CardDescription>
+                  Preview how your site will appear in Google search results
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="border rounded-lg p-6 bg-white">
+                  <div className="space-y-2">
+                    <div className="text-sm text-green-700">
+                      {seoSettings.canonical_url || window.location.origin}
+                    </div>
+                    <div className="text-xl text-blue-600 hover:underline cursor-pointer">
+                      {seoSettings.site_title || 'Your Site Title'}
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      {seoSettings.site_description || 'Your site description will appear here. Make it compelling to encourage clicks!'}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Title Length:</span>
+                    <Badge variant={seoSettings?.site_title?.length > 60 ? "destructive" : "default"}>
+                      {seoSettings?.site_title?.length || 0} / 60 characters
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Description Length:</span>
+                    <Badge variant={seoSettings?.site_description?.length > 160 ? "destructive" : "default"}>
+                      {seoSettings?.site_description?.length || 0} / 160 characters
+                    </Badge>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="font-semibold">SEO Tips:</h3>
+                  <ul className="space-y-2 text-sm text-muted-foreground">
+                    <li className="flex items-start gap-2">
+                      <Check className="h-4 w-4 mt-0.5 text-green-600" />
+                      <span>Keep titles under 60 characters for optimal display</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-4 w-4 mt-0.5 text-green-600" />
+                      <span>Keep descriptions between 120-160 characters</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-4 w-4 mt-0.5 text-green-600" />
+                      <span>Include your main keywords naturally</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-4 w-4 mt-0.5 text-green-600" />
+                      <span>Make titles and descriptions unique and compelling</span>
+                    </li>
+                  </ul>
                 </div>
               </CardContent>
             </Card>

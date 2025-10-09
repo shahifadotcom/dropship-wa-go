@@ -8,6 +8,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { useEffect } from "react";
 import { initializeAndroidAuth } from "./utils/androidAuthBridge";
 import { FaviconUpdater } from "@/components/FaviconUpdater";
+import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import { CallButton } from "@/components/calling/CallButton";
 import Index from "./pages/Index";
 import Home from "./pages/Home";
@@ -51,6 +52,8 @@ import VirtualTrial from "./pages/admin/VirtualTrial";
 import ProductDetail from "./pages/ProductDetail";
 import Calling from "./pages/Calling";
 import CallingSubscriptions from "./pages/admin/CallingSubscriptions";
+import Sitemap from "./pages/Sitemap";
+import RobotsTxt from "./pages/RobotsTxt";
 
 const queryClient = new QueryClient();
 
@@ -67,6 +70,7 @@ const App = () => {
         <CartProvider>
           <ErrorLogger />
           <FaviconUpdater />
+          <GoogleAnalytics />
           <Toaster />
           <Sonner />
           <BrowserRouter>
@@ -118,6 +122,11 @@ const App = () => {
               <Route path="/orders" element={<Orders />} />
               <Route path="/android-app" element={<AndroidApp />} />
               <Route path="/calling" element={<Calling />} />
+              
+              {/* SEO Routes */}
+              <Route path="/sitemap.xml" element={<Sitemap />} />
+              <Route path="/robots.txt" element={<RobotsTxt />} />
+              
         <Route path="/wc-auth/v1/authorize" element={<WCAuth />} />
         <Route path="/wp-json/*" element={<WCAuth />} />
         <Route path="/wc/v3/*" element={<WCAuth />} />
