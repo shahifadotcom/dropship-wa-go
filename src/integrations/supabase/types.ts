@@ -1454,6 +1454,7 @@ export type Database = {
           created_at: string
           currency: string | null
           email_notifications: boolean | null
+          favicon_url: string | null
           id: string
           inventory_alerts: boolean | null
           maintenance_mode: boolean | null
@@ -1473,6 +1474,7 @@ export type Database = {
           created_at?: string
           currency?: string | null
           email_notifications?: boolean | null
+          favicon_url?: string | null
           id?: string
           inventory_alerts?: boolean | null
           maintenance_mode?: boolean | null
@@ -1492,6 +1494,7 @@ export type Database = {
           created_at?: string
           currency?: string | null
           email_notifications?: boolean | null
+          favicon_url?: string | null
           id?: string
           inventory_alerts?: boolean | null
           maintenance_mode?: boolean | null

@@ -7,6 +7,7 @@ export interface StoreSettings {
   store_tagline: string;
   store_description: string;
   store_logo?: string;
+  favicon_url?: string;
   contact_email: string;
   contact_phone: string;
   contact_address: string;
@@ -27,7 +28,7 @@ export const useStoreSettings = () => {
       // Use anon access for public store settings
       const { data, error } = await supabase
         .from('store_settings')
-        .select('id, store_name, store_tagline, store_description, store_logo, site_title, currency, contact_email, contact_phone, contact_address, email_notifications, whatsapp_notifications, inventory_alerts, maintenance_mode')
+        .select('id, store_name, store_tagline, store_description, store_logo, favicon_url, site_title, currency, contact_email, contact_phone, contact_address, email_notifications, whatsapp_notifications, inventory_alerts, maintenance_mode')
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -73,6 +74,7 @@ export const useStoreSettings = () => {
           store_tagline: data.store_tagline || '',
           store_description: data.store_description || '',
           store_logo: data.store_logo,
+          favicon_url: data.favicon_url,
           site_title: data.site_title || 'Online Store',
           currency: data.currency || 'BDT',
           contact_email: data.contact_email || '',

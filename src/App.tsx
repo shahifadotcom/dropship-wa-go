@@ -7,6 +7,7 @@ import { CartProvider } from "@/contexts/CartContext";
 import { AuthProvider } from "@/hooks/useAuth";
 import { useEffect } from "react";
 import { initializeAndroidAuth } from "./utils/androidAuthBridge";
+import { FaviconUpdater } from "@/components/FaviconUpdater";
 import Index from "./pages/Index";
 import Home from "./pages/Home";
 
@@ -62,6 +63,7 @@ const App = () => {
       <AuthProvider>
         <CartProvider>
           <ErrorLogger />
+          <FaviconUpdater />
           <Toaster />
           <Sonner />
           <BrowserRouter>
