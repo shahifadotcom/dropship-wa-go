@@ -33,6 +33,7 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
   const [countries, setCountries] = useState([]);
   const [vendors, setVendors] = useState([]);
   const [paymentGateways, setPaymentGateways] = useState<any[]>([]);
+  const [binanceEnabled, setBinanceEnabled] = useState(false);
   const [formData, setFormData] = useState({
     // Basic Info
     name: '',
@@ -102,6 +103,16 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
       
       if (!gatewayError && gatewayData) {
         setPaymentGateways(gatewayData);
+      }
+
+      // Check if Binance Pay is configured
+      const { data: binanceData, error: binanceError } = await supabase
+        .from('binance_config')
+        .select('is_active')
+        .single();
+      
+      if (!binanceError && binanceData) {
+        setBinanceEnabled(binanceData.is_active);
       }
     };
     if (isOpen) {
@@ -532,6 +543,32 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
                           </Label>
                         </div>
                       ))}
+                      {binanceEnabled && (
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id="gateway-binance"
+                            checked={formData.allowed_payment_gateways.includes('binance_pay')}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setFormData({
+                                  ...formData,
+                                  allowed_payment_gateways: [...formData.allowed_payment_gateways, 'binance_pay']
+                                });
+                              } else {
+                                setFormData({
+                                  ...formData,
+                                  allowed_payment_gateways: formData.allowed_payment_gateways.filter(g => g !== 'binance_pay')
+                                });
+                              }
+                            }}
+                            className="rounded border-gray-300"
+                          />
+                          <Label htmlFor="gateway-binance" className="text-sm">
+                            Binance Pay
+                          </Label>
+                        </div>
+                      )}
                       <div className="flex items-center space-x-2">
                         <input
                           type="checkbox"
