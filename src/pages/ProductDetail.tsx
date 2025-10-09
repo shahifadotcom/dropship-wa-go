@@ -260,7 +260,7 @@ const ProductDetail = () => {
               </div>
             )}
 
-            <div className="flex gap-4 pt-4">
+            <div className="flex gap-4 pt-4 pb-24 md:pb-4">
               <Button
                 onClick={handleAddToCart}
                 disabled={!product.inStock}
