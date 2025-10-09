@@ -9,7 +9,24 @@ import { PaymentService, PaymentGateway } from '@/services/paymentService';
 import { supabase } from '@/integrations/supabase/client';
 import { useCountryDetection } from '@/hooks/useCountryDetection';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Wallet, Bitcoin, Banknote, CreditCard, Smartphone } from 'lucide-react';
+
+const getPaymentIcon = (gatewayName: string) => {
+  const name = gatewayName.toLowerCase();
+  if (name.includes('bkash') || name.includes('nagad') || name.includes('rocket')) {
+    return Smartphone;
+  }
+  if (name.includes('binance') || name.includes('crypto')) {
+    return Bitcoin;
+  }
+  if (name.includes('cod') || name.includes('cash')) {
+    return Banknote;
+  }
+  if (name.includes('wallet')) {
+    return Wallet;
+  }
+  return CreditCard;
+};
 
 interface PaymentSelectorProps {
   orderAmount: number;
@@ -223,25 +240,44 @@ export const PaymentSelector = ({
             setShowAdvancePayment(gateway?.name === 'cod');
             onCODSelected(gateway?.name === 'cod');
           }}
+          className="gap-3"
         >
-          {paymentGateways.map((gateway) => (
-            <div key={gateway.id} className="flex items-center space-x-2">
-              <RadioGroupItem value={gateway.id} id={gateway.id} />
-              <Label htmlFor={gateway.id} className="flex-1 cursor-pointer">
-                <div className="font-medium">{gateway.display_name}</div>
-                {gateway.wallet_number && (
-                  <div className="text-sm text-muted-foreground">
-                    Number: {gateway.wallet_number}
+          {paymentGateways.map((gateway) => {
+            const PaymentIcon = getPaymentIcon(gateway.name);
+            const isSelected = selectedGateway?.id === gateway.id;
+            
+            return (
+              <div key={gateway.id} className="relative">
+                <div className={`flex items-start gap-4 rounded-lg border-2 p-4 transition-all cursor-pointer hover:border-primary/50 ${
+                  isSelected ? 'border-primary bg-primary/5' : 'border-border'
+                }`}>
+                  <RadioGroupItem value={gateway.id} id={gateway.id} className="mt-1" />
+                  <div className="flex-1">
+                    <Label htmlFor={gateway.id} className="cursor-pointer">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className={`flex items-center justify-center w-10 h-10 rounded-lg ${
+                          isSelected ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                        }`}>
+                          <PaymentIcon className="h-5 w-5" />
+                        </div>
+                        <div className="font-semibold text-base">{gateway.display_name}</div>
+                      </div>
+                      {gateway.wallet_number && (
+                        <div className="text-sm text-muted-foreground font-mono bg-muted px-3 py-1.5 rounded inline-block mb-2">
+                          {gateway.wallet_number}
+                        </div>
+                      )}
+                      {gateway.instructions && (
+                        <div className="text-sm text-muted-foreground mt-2 leading-relaxed">
+                          {gateway.instructions}
+                        </div>
+                      )}
+                    </Label>
                   </div>
-                )}
-                {gateway.instructions && (
-                  <div className="text-sm text-muted-foreground mt-1">
-                    {gateway.instructions}
-                  </div>
-                )}
-              </Label>
-            </div>
-          ))}
+                </div>
+              </div>
+            );
+          })}
         </RadioGroup>
 
         {selectedGateway && !showAdvancePayment && (
