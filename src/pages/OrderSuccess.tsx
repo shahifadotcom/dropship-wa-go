@@ -216,8 +216,21 @@ const OrderSuccess = () => {
                 <Separator />
                 <div className="flex justify-between font-semibold">
                   <span>Total</span>
-                  <span>{order.total.toFixed(2)} {currency}</span>
+                  <span>{order.subtotal.toFixed(2)} {currency}</span>
                 </div>
+                {order.paymentStatus === 'pending' && (
+                  <>
+                    <Separator />
+                    <div className="flex justify-between text-sm text-green-600">
+                      <span>Advance Paid (Confirmation Fee)</span>
+                      <span>-100.00 {currency}</span>
+                    </div>
+                    <div className="flex justify-between font-semibold text-orange-600">
+                      <span>Remaining (Pay on Delivery)</span>
+                      <span>{(order.subtotal - 100).toFixed(2)} {currency}</span>
+                    </div>
+                  </>
+                )}
               </div>
             </CardContent>
           </Card>
