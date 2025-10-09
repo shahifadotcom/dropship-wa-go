@@ -6,7 +6,17 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { ContactsList } from './ContactsList';
 import { ChatInterface } from './ChatInterface';
-import { Capacitor } from '@capacitor/core';
+
+// Safe check for Capacitor platform
+const isNativePlatform = () => {
+  try {
+    // Check if running in Capacitor native app
+    return typeof window !== 'undefined' && 
+           (window as any).Capacitor?.isNativePlatform?.() === true;
+  } catch {
+    return false;
+  }
+};
 
 export const CallButton = () => {
   const { user } = useAuth();
@@ -19,7 +29,7 @@ export const CallButton = () => {
   const [chatContactName, setChatContactName] = useState('');
 
   // Only show calling feature in native mobile app
-  const isNativeApp = Capacitor.isNativePlatform();
+  const isNativeApp = isNativePlatform();
 
   useEffect(() => {
     if (!user || !isNativeApp) return;
