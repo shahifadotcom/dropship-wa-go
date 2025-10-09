@@ -63,4 +63,4 @@ npm start
 
 ## Default Port
 
-3001 (configurable via `CALLING_SERVER_PORT` environment variable)
+3003 (configurable via `CALLING_SERVER_PORT` environment variable)

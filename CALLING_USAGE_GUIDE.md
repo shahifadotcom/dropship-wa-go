@@ -72,7 +72,7 @@ The calling feature enables registered users to make audio and video calls to ot
 The calling feature requires three servers to be running:
 1. Main application (port 3000)
 2. WhatsApp bridge (port 3001)
-3. Calling server (port 3001)
+3. Calling server (port 3003)
 
 All servers start automatically with `./start.sh`
 

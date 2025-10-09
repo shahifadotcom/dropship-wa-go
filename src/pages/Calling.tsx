@@ -8,7 +8,7 @@ import { Phone, Video, PhoneOff, Mic, MicOff, VideoOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import io from 'socket.io-client';
 
-const CALLING_SERVER_URL = 'http://localhost:3001';
+const CALLING_SERVER_URL = 'http://localhost:3003';
 
 export default function Calling() {
   const { user } = useAuth();

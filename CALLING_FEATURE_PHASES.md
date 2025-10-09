@@ -79,7 +79,7 @@
 
 **WebRTC Calling:**
 - Full audio and video calling between users
-- Signaling server on port 3001
+- Signaling server on port 3003
 - STUN server configuration for NAT traversal
 - Real-time connection management
 

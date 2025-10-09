@@ -267,7 +267,7 @@ io.on('connection', (socket) => {
   });
 });
 
-const PORT = process.env.CALLING_SERVER_PORT || 3001;
+const PORT = process.env.CALLING_SERVER_PORT || 3003;
 
 httpServer.listen(PORT, () => {
   console.log(`WebRTC signaling server running on port ${PORT}`);

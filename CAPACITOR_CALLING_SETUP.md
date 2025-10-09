@@ -94,7 +94,7 @@ The app will automatically request permissions when:
 ### Requirements:
 - Both users must have active calling subscriptions
 - Both users need internet connection
-- Calling server must be running on `localhost:3001` (or update the URL in `src/pages/Calling.tsx`)
+- Calling server must be running on `localhost:3003` (configured in `src/pages/Calling.tsx`)
 
 ## Signaling Server
 
