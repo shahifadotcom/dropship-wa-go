@@ -24,7 +24,8 @@ import {
   Sparkles,
   Phone,
   Wallet,
-  Target
+  Target,
+  ShoppingBag
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -45,6 +46,7 @@ const AdminSidebar = () => {
     { icon: MapPin, label: "IP Ranges", href: "/admin/ip-ranges" },
     { icon: Building2, label: "Vendors", href: "/admin/vendors" },
     { icon: Package, label: "CJ Dropshipping", href: "/admin/cj-dropshipping" },
+    { icon: ShoppingBag, label: "WooCommerce Keys", href: "/admin/woocommerce-keys" },
     { icon: Key, label: "OAuth Clients", href: "/admin/oauth-clients" },
     { icon: Bot, label: "Order Automation", href: "/admin/order-automation" },
     { icon: CreditCard, label: "Payment Methods", href: "/admin/payment-methods" },

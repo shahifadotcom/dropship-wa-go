@@ -58,6 +58,7 @@ import Sitemap from "./pages/Sitemap";
 import RobotsTxt from "./pages/RobotsTxt";
 import AdminBlog from "./pages/admin/Blog";
 import AISettings from "./pages/admin/AISettings";
+import WooCommerceKeys from "./pages/admin/WooCommerceKeys";
 import AdPlatforms from "./pages/admin/AdPlatforms";
 import AIAdsManager from "./pages/admin/AIAdsManager";
 import BinancePay from "./pages/admin/BinancePay";
@@ -116,6 +117,7 @@ const App = () => {
               <Route path="/admin/payment-gateways" element={<PaymentGateways />} />
               <Route path="/admin/vendors" element={<Vendors />} />
               <Route path="/admin/oauth-clients" element={<OAuthClients />} />
+              <Route path="/admin/woocommerce-keys" element={<WooCommerceKeys />} />
               <Route path="/admin/payment-methods" element={<PaymentMethods />} />
               <Route path="/admin/order-automation" element={<OrderAutomation />} />
               <Route path="/admin/google-services" element={<GoogleServices />} />
