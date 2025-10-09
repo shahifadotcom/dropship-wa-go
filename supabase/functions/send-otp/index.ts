@@ -31,50 +31,7 @@ serve(async (req) => {
     const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Check rate limiting first
-    const { data: rateLimit, error: rateLimitError } = await supabase
-      .from('otp_rate_limits')
-      .select('*')
-      .eq('phone_number', phoneNumber)
-      .gte('window_start', new Date(Date.now() - 60 * 60 * 1000).toISOString()) // Last hour
-      .maybeSingle();
-
-    if (rateLimitError && rateLimitError.code !== 'PGRST116') {
-      console.error('Rate limit check error:', rateLimitError);
-      return new Response(
-        JSON.stringify({ 
-          error: 'Rate limit check failed',
-          details: rateLimitError.message 
-        }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // If rate limit exists and count >= 3, deny request
-    if (rateLimit && rateLimit.request_count >= 3) {
-      return new Response(
-        JSON.stringify({ 
-          error: 'Too many OTP requests. Please wait an hour before trying again.' 
-        }),
-        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Update or create rate limit record
-    if (rateLimit) {
-      await supabase
-        .from('otp_rate_limits')
-        .update({ request_count: rateLimit.request_count + 1 })
-        .eq('id', rateLimit.id);
-    } else {
-      await supabase
-        .from('otp_rate_limits')
-        .insert({
-          phone_number: phoneNumber,
-          request_count: 1,
-          window_start: new Date().toISOString()
-        });
-    }
+    // Rate limiting disabled - unlimited OTP requests allowed
 
     // Generate secure OTP using database function
     const { data: otpData, error: otpError } = await supabase
