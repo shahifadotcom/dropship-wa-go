@@ -244,6 +244,18 @@ export const PaymentSelector = ({ orderAmount, productId, productIds, onPaymentS
         throw new Error('Failed to create advance payment record');
       }
 
+      // Create transaction verification record for admin review
+      const transactionSubmitted = await PaymentService.submitTransaction(
+        newOrderId,
+        selectedGateway?.name || 'cod',
+        transactionId,
+        100
+      );
+
+      if (!transactionSubmitted) {
+        console.error('Failed to create transaction verification record');
+      }
+
       // Verify the advance payment
       const verified = await PaymentService.verifyBinancePayment(transactionId, newOrderId, 100);
       
