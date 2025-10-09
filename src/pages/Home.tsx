@@ -126,8 +126,8 @@ const Home = () => {
               <ImageSlider />
             </div>
 
-            {/* Top Selling Products - Auto Scrolling Carousel */}
-            <div className="mb-8">
+            {/* Top Selling Products - Auto Scrolling Carousel - Desktop Only */}
+            <div className="mb-8 hidden md:block">
               <h2 className="text-2xl font-bold text-foreground mb-6">Top Selling Products</h2>
               {loadingTopDeals ? (
                 <div className="flex justify-center py-8">
