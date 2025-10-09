@@ -15,6 +15,8 @@ import { useCountryDetection } from "@/hooks/useCountryDetection";
 import { CountrySelectionModal } from "@/components/CountrySelectionModal";
 import { CountryService } from "@/services/countryService";
 import { useNavigate } from "react-router-dom";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay";
 
 const Home = () => {
   const { 
@@ -124,23 +126,41 @@ const Home = () => {
               <ImageSlider />
             </div>
 
-            {/* Top Deals - Most Ordered Products */}
+            {/* Top Selling Products - Auto Scrolling Carousel */}
             <div className="mb-8">
-              <h2 className="text-2xl font-bold text-foreground mb-6">Top Deals - Most Ordered</h2>
+              <h2 className="text-2xl font-bold text-foreground mb-6">Top Selling Products</h2>
               {loadingTopDeals ? (
                 <div className="flex justify-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-                  {topDeals.map((product) => (
-                    <ProductCard
-                      key={product.id}
-                      product={product}
-                      onQuickView={handleProductClick}
-                    />
-                  ))}
-                </div>
+                <Carousel
+                  opts={{
+                    align: "start",
+                    loop: true,
+                  }}
+                  plugins={[
+                    Autoplay({
+                      delay: 3000,
+                    }),
+                  ]}
+                  className="w-full"
+                >
+                  <CarouselContent>
+                    {topDeals.map((product) => (
+                      <CarouselItem key={product.id} className="md:basis-1/2 lg:basis-1/3">
+                        <div className="p-1">
+                          <ProductCard
+                            product={product}
+                            onQuickView={handleProductClick}
+                          />
+                        </div>
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  <CarouselPrevious />
+                  <CarouselNext />
+                </Carousel>
               )}
             </div>
 
