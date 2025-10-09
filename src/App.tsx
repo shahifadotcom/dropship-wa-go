@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { CartProvider } from "@/contexts/CartContext";
 import { AuthProvider } from "@/hooks/useAuth";
+import { useEffect } from "react";
+import { initializeAndroidAuth } from "./utils/androidAuthBridge";
 import Index from "./pages/Index";
 import Home from "./pages/Home";
 
@@ -48,7 +50,13 @@ import ProductDetail from "./pages/ProductDetail";
 
 const queryClient = new QueryClient();
 
-const App = () => (
+const App = () => {
+  useEffect(() => {
+    // Initialize Android auth bridge if running in WebView
+    initializeAndroidAuth();
+  }, []);
+
+  return (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AuthProvider>
@@ -108,6 +116,7 @@ const App = () => (
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
-);
+  );
+};
 
 export default App;

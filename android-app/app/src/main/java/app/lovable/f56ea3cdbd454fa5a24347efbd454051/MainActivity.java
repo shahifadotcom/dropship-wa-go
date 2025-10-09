@@ -19,6 +19,12 @@ public class MainActivity extends BridgeActivity {
         
         Log.d(TAG, "MainActivity created");
         
+        // Add JavaScript interface for auth token management
+        getBridge().getWebView().addJavascriptInterface(
+            new AuthTokenManager(this), 
+            "Android"
+        );
+        
         // Request SMS permissions on startup
         requestSMSPermissions();
         

@@ -106,26 +106,35 @@ export const useAndroidSMS = () => {
 
   const sendTransactionToServer = async (transactionData: TransactionData) => {
     try {
-      // Store in sms_transactions table with new balance
-      const { error } = await supabase
-        .from('sms_transactions')
-        .insert({
-          transaction_id: transactionData.transactionId,
-          sender_number: 'wallet',
-          message_content: `Transaction: ${transactionData.transactionId}, Amount: ${transactionData.amount}, Balance: ${transactionData.newBalance}`,
-          wallet_type: 'unknown',
-          amount: parseFloat(transactionData.amount.replace(/[,]/g, '')),
-          new_balance: parseFloat(transactionData.newBalance.replace(/[,]/g, ''))
-        });
+      // Get current session for authentication
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error('No active session - please log in');
+      }
+
+      // Call the authenticated edge function
+      const { data, error } = await supabase.functions.invoke('sms-transaction-handler', {
+        body: {
+          smsData: {
+            transaction_id: transactionData.transactionId,
+            sender_number: 'wallet',
+            message_content: `Transaction: ${transactionData.transactionId}, Amount: ${transactionData.amount}, Balance: ${transactionData.newBalance}`,
+            amount: parseFloat(transactionData.amount.replace(/[,]/g, '')),
+            new_balance: parseFloat(transactionData.newBalance.replace(/[,]/g, '')),
+            timestamp: transactionData.timestamp
+          }
+        }
+      });
 
       if (error) throw error;
 
-      console.log('Transaction sent to server:', transactionData);
+      console.log('Transaction sent to server:', data);
       toast.success(`Transaction ${transactionData.transactionId} (Amount: ${transactionData.amount}, Balance: ${transactionData.newBalance}) detected and sent to server`);
       
     } catch (error) {
       console.error('Failed to send transaction to server:', error);
-      toast.error('Failed to send transaction to server');
+      toast.error(error instanceof Error ? error.message : 'Failed to send transaction to server');
     }
   };
 

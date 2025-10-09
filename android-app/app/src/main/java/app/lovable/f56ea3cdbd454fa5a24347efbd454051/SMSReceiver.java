@@ -85,13 +85,21 @@ public class SMSReceiver extends BroadcastReceiver {
 
     private void sendTransactionToServer(Context context, TransactionData transaction, String sender, String message) {
         try {
+            // Get stored auth token
+            String authToken = getStoredAuthToken(context);
+            if (authToken == null) {
+                Log.e(TAG, "No auth token found - user must log in first");
+                showNotification(context, "Authentication Required", "Please log in to the app to send transactions");
+                return;
+            }
+
             java.net.URL url = new java.net.URL(API_ENDPOINT);
             javax.net.ssl.HttpsURLConnection conn = (javax.net.ssl.HttpsURLConnection) url.openConnection();
             
             conn.setRequestMethod("POST");
             conn.setRequestProperty("Content-Type", "application/json");
             conn.setRequestProperty("apikey", ANON_KEY);
-            conn.setRequestProperty("Authorization", "Bearer " + ANON_KEY);
+            conn.setRequestProperty("Authorization", "Bearer " + authToken);
             conn.setDoOutput(true);
             
             // Build JSON payload with new balance
@@ -180,5 +188,10 @@ public class SMSReceiver extends BroadcastReceiver {
             this.amount = amount;
             this.newBalance = newBalance;
         }
+    }
+
+    // Helper method to retrieve stored auth token
+    private String getStoredAuthToken(Context context) {
+        return AuthTokenManager.getAccessToken(context);
     }
 }
