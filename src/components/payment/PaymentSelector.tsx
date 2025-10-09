@@ -32,6 +32,7 @@ interface PaymentSelectorProps {
   orderAmount: number;
   productId?: string;
   productIds?: string[];
+  countryId?: string;
   onPaymentSubmitted: (orderId: string) => void;
   onCODSelected: (isCOD: boolean) => void;
   customerData?: {
@@ -47,6 +48,7 @@ export const PaymentSelector = ({
   orderAmount, 
   productId, 
   productIds, 
+  countryId: overrideCountryId,
   onPaymentSubmitted,
   onCODSelected,
   customerData,
@@ -58,20 +60,20 @@ export const PaymentSelector = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAdvancePayment, setShowAdvancePayment] = useState(false);
   const [isBinancePay, setIsBinancePay] = useState(false);
-  const { selectedCountry, countryId } = useCountryDetection();
-
+  const { countryId: detectedCountryId } = useCountryDetection();
+  const effectiveCountryId = overrideCountryId || detectedCountryId;
   useEffect(() => {
     const loadPaymentMethods = async () => {
       try {
         let gateways: PaymentGateway[] = [];
         
-        if (countryId) {
+        if (effectiveCountryId) {
           if (productId) {
-            gateways = await PaymentService.getProductPaymentGateways(productId, countryId);
+            gateways = await PaymentService.getProductPaymentGateways(productId, effectiveCountryId);
           } else if (productIds && productIds.length > 0) {
-            gateways = await PaymentService.getMultipleProductsPaymentGateways(productIds, countryId);
+            gateways = await PaymentService.getMultipleProductsPaymentGateways(productIds, effectiveCountryId);
           } else {
-            gateways = await PaymentService.getPaymentGateways(countryId);
+            gateways = await PaymentService.getPaymentGateways(effectiveCountryId);
           }
         }
 
@@ -83,7 +85,7 @@ export const PaymentSelector = ({
     };
 
     loadPaymentMethods();
-  }, [productId, productIds, countryId]);
+  }, [productId, productIds, overrideCountryId, detectedCountryId]);
 
   const handleBinancePayment = async () => {
     if (!selectedGateway) return;

@@ -29,7 +29,7 @@ const Checkout = () => {
   const { cart, clearCart } = useCart();
   const { user } = useAuth();
   const { toast } = useToast();
-  const { selectedCountry, currency, countryName } = useCountryDetection();
+  const { selectedCountry, currency, allCountries } = useCountryDetection();
   
   const [formData, setFormData] = useState<CheckoutFormData>({
     country: selectedCountry?.name || 'Bangladesh',
@@ -208,6 +208,7 @@ const Checkout = () => {
             <PaymentSelector
               orderAmount={total}
               productIds={cart.items.map(item => item.productId)}
+              countryId={allCountries.find(c => c.name === formData.country)?.id || selectedCountry?.id || ''}
               onPaymentSubmitted={handlePaymentSubmitted}
               onCODSelected={handleCODSelected}
               customerData={formData}
