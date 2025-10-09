@@ -222,17 +222,17 @@ const OrderSuccess = () => {
                   <>
                     <Separator />
                     <div className="flex justify-between text-sm text-green-600">
-                      <span>Advance Paid (Confirmation Fee)</span>
+                      <span>✅ Confirmation Fee Paid</span>
                       <span>-100.00 {currency}</span>
                     </div>
                     <div className="flex justify-between font-semibold text-orange-600">
-                      <span>Remaining (Pay on Delivery)</span>
+                      <span>💰 Pay on Delivery</span>
                       <span>{(order.total - 100).toFixed(2)} {currency}</span>
                     </div>
                     <Separator />
                     <div className="bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg p-3 mt-2">
                       <p className="text-xs text-amber-800 dark:text-amber-200">
-                        ⚠️ <strong>Note:</strong> If you do not receive the products, the 100 {currency} confirmation fee is non-refundable.
+                        📦 <strong>Delivery:</strong> FREE • The 100 {currency} is a confirmation fee only (non-refundable if products not received)
                       </p>
                     </div>
                   </>

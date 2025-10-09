@@ -44,8 +44,7 @@ const Checkout = () => {
   const [selectedPaymentIsCOD, setSelectedPaymentIsCOD] = useState(false);
 
   const subtotal = cart.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const deliveryCharge = selectedPaymentIsCOD ? 100 : 0;
-  const total = subtotal + deliveryCharge;
+  const total = subtotal; // Shipping is always free for COD
 
   const handleOTPVerified = async (phoneNumber: string, otpCode: string) => {
     setShowOTPModal(false);
@@ -337,17 +336,22 @@ const Checkout = () => {
                     <span>Subtotal</span>
                     <span>{subtotal.toFixed(2)} {currency}</span>
                   </div>
-                  {selectedPaymentIsCOD && (
-                    <div className="flex justify-between text-sm">
-                      <span>Delivery Charge</span>
-                      <span>{deliveryCharge.toFixed(2)} {currency}</span>
-                    </div>
-                  )}
+                  <div className="flex justify-between text-sm text-green-600">
+                    <span>Delivery Charge</span>
+                    <span>FREE</span>
+                  </div>
                   <Separator />
                   <div className="flex justify-between font-semibold">
                     <span>Total</span>
                     <span>{total.toFixed(2)} {currency}</span>
                   </div>
+                  {selectedPaymentIsCOD && (
+                    <div className="mt-3 p-3 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg">
+                      <p className="text-xs text-amber-800 dark:text-amber-200">
+                        ℹ️ For COD orders: Pay 100 {currency} as confirmation fee (non-refundable if products not received)
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 <Button
@@ -381,7 +385,6 @@ const Checkout = () => {
             ...formData,
             items: cart.items,
             subtotal,
-            deliveryCharge,
             total,
             email: user?.email || ''
           }}
