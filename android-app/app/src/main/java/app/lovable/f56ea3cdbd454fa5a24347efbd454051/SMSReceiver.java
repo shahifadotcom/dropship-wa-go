@@ -16,19 +16,10 @@ public class SMSReceiver extends BroadcastReceiver {
     private static final String API_ENDPOINT = "https://mofwljpreecqqxkilywh.supabase.co/functions/v1/sms-transaction-handler";
     private static final String ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vZndsanByZWVjcXF4a2lseXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcxMTk5MDgsImV4cCI6MjA3MjY5NTkwOH0.1kfabhKCzV9P384_J9uWF6wGSRHDTYr_9yUBTvGDAvY";
 
-    // Transaction patterns for Bangladesh payment gateways
-    private static final Pattern BKASH_PATTERN = Pattern.compile(
-        "bKash.*?(?:TrxID|Transaction ID):?\\s*([A-Z0-9]+).*?(?:Amount|Tk):?\\s*([0-9,.]+)",
-        Pattern.CASE_INSENSITIVE | Pattern.DOTALL
-    );
-    
-    private static final Pattern NAGAD_PATTERN = Pattern.compile(
-        "Nagad.*?(?:TxnId|Transaction):?\\s*([A-Z0-9]+).*?(?:Amount|Tk):?\\s*([0-9,.]+)",
-        Pattern.CASE_INSENSITIVE | Pattern.DOTALL
-    );
-    
-    private static final Pattern ROCKET_PATTERN = Pattern.compile(
-        "Rocket.*?(?:TxID|Reference):?\\s*([A-Z0-9]+).*?(?:Amount|Tk):?\\s*([0-9,.]+)",
+    // Real Bangladesh Mobile Wallet SMS Pattern
+    // Format: "You have received Tk 500.00 from 01954723595. Ref 95352. Fee Tk 0.00. Balance Tk 510.00. TrxID CI131K7A2D at 01/09/2025 11:32"
+    private static final Pattern WALLET_SMS_PATTERN = Pattern.compile(
+        "You have received Tk\\s*([0-9,.]+).*?Balance Tk\\s*([0-9,.]+).*?TrxID\\s*([A-Z0-9]+)",
         Pattern.CASE_INSENSITIVE | Pattern.DOTALL
     );
 
@@ -77,36 +68,18 @@ public class SMSReceiver extends BroadcastReceiver {
     }
 
     private TransactionData extractTransactionData(String message) {
-        // Try bKash pattern
-        Matcher matcher = BKASH_PATTERN.matcher(message);
+        // Try to match real Bangladesh wallet SMS pattern
+        Matcher matcher = WALLET_SMS_PATTERN.matcher(message);
         if (matcher.find()) {
-            return new TransactionData(
-                matcher.group(1),
-                "bkash",
-                matcher.group(2).replace(",", "")
-            );
+            String amount = matcher.group(1).replace(",", "");
+            String newBalance = matcher.group(2).replace(",", "");
+            String transactionId = matcher.group(3);
+            
+            Log.d(TAG, "Transaction detected - Amount: " + amount + ", Balance: " + newBalance + ", TrxID: " + transactionId);
+            return new TransactionData(transactionId, amount, newBalance);
         }
         
-        // Try Nagad pattern
-        matcher = NAGAD_PATTERN.matcher(message);
-        if (matcher.find()) {
-            return new TransactionData(
-                matcher.group(1),
-                "nagad",
-                matcher.group(2).replace(",", "")
-            );
-        }
-        
-        // Try Rocket pattern
-        matcher = ROCKET_PATTERN.matcher(message);
-        if (matcher.find()) {
-            return new TransactionData(
-                matcher.group(1),
-                "rocket",
-                matcher.group(2).replace(",", "")
-            );
-        }
-        
+        Log.d(TAG, "No matching payment gateway pattern found in SMS");
         return null;
     }
 
@@ -121,14 +94,14 @@ public class SMSReceiver extends BroadcastReceiver {
             conn.setRequestProperty("Authorization", "Bearer " + ANON_KEY);
             conn.setDoOutput(true);
             
-            // Build JSON payload
+            // Build JSON payload with new balance
             String jsonPayload = String.format(
-                "{\"smsData\":{\"transaction_id\":\"%s\",\"sender_number\":\"%s\",\"message_content\":\"%s\",\"wallet_type\":\"%s\",\"amount\":%s,\"timestamp\":%d}}",
+                "{\"smsData\":{\"transaction_id\":\"%s\",\"sender_number\":\"%s\",\"message_content\":\"%s\",\"amount\":%s,\"new_balance\":%s,\"timestamp\":%d}}",
                 transaction.transactionId,
                 sender.replace("\"", "\\\""),
                 message.replace("\"", "\\\"").replace("\n", "\\n"),
-                transaction.gateway,
                 transaction.amount,
+                transaction.newBalance,
                 System.currentTimeMillis()
             );
             
@@ -199,13 +172,13 @@ public class SMSReceiver extends BroadcastReceiver {
 
     private static class TransactionData {
         String transactionId;
-        String gateway;
         String amount;
+        String newBalance;
         
-        TransactionData(String transactionId, String gateway, String amount) {
+        TransactionData(String transactionId, String amount, String newBalance) {
             this.transactionId = transactionId;
-            this.gateway = gateway;
             this.amount = amount;
+            this.newBalance = newBalance;
         }
     }
 }

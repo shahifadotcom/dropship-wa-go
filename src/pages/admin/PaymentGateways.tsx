@@ -47,7 +47,8 @@ export default function PaymentGateways() {
     wallet_number: '',
     country_id: '',
     instructions: '',
-    is_active: true
+    is_active: true,
+    balance: 0
   });
 
   useEffect(() => {
@@ -109,7 +110,8 @@ export default function PaymentGateways() {
         wallet_number: '',
         country_id: '',
         instructions: '',
-        is_active: true
+        is_active: true,
+        balance: 0
       });
       loadData();
     } catch (error: any) {
@@ -352,6 +354,21 @@ export default function PaymentGateways() {
                             </SelectContent>
                           </Select>
                         </div>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="balance">Current Balance (BDT)</Label>
+                        <Input
+                          id="balance"
+                          type="number"
+                          step="0.01"
+                          value={newGateway.balance || ''}
+                          onChange={(e) => setNewGateway(prev => ({ ...prev, balance: parseFloat(e.target.value) || 0 }))}
+                          placeholder="1000.00"
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Enter the current balance in your wallet for balance verification
+                        </p>
                       </div>
 
                       <div>

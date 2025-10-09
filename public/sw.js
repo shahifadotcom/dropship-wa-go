@@ -56,35 +56,34 @@ async function processPendingSMS() {
 
 async function handleSMSMessage(smsData) {
   try {
-    // Extract transaction patterns
-    const patterns = {
-      bkash: /bKash.*?(?:TrxID|Transaction ID):?\s*([A-Z0-9]+)/i,
-      nagad: /Nagad.*?(?:TxnId|Transaction):?\s*([A-Z0-9]+)/i,
-      rocket: /Rocket.*?(?:TxID|Reference):?\s*([A-Z0-9]+)/i,
-    };
+    // Real Bangladesh Mobile Wallet SMS Pattern
+    // Format: "You have received Tk 500.00 from 01954723595. Ref 95352. Fee Tk 0.00. Balance Tk 510.00. TrxID CI131K7A2D at 01/09/2025 11:32"
+    const walletPattern = /You have received Tk\s*([0-9,.]+).*?Balance Tk\s*([0-9,.]+).*?TrxID\s*([A-Z0-9]+)/i;
 
     const message = smsData.message;
-    let transactionFound = false;
+    const match = message.match(walletPattern);
 
-    for (const [gateway, pattern] of Object.entries(patterns)) {
-      const match = message.match(pattern);
-      if (match) {
-        const transactionId = match[1];
-        
-        // Send to server
-        await sendTransactionToServer(transactionId, gateway, smsData);
-        transactionFound = true;
-        break;
-      }
-    }
-
-    if (transactionFound) {
+    if (match) {
+      const amount = match[1];
+      const newBalance = match[2];
+      const transactionId = match[3];
+      
+      console.log('Transaction found:', { transactionId, amount, newBalance });
+      
+      // Send to server with balance
+      await sendTransactionToServer(transactionId, amount, newBalance, smsData);
+      
       // Notify main app
       self.clients.matchAll().then(clients => {
         clients.forEach(client => {
           client.postMessage({
             type: 'TRANSACTION_FOUND',
-            data: smsData
+            data: {
+              transactionId,
+              amount,
+              newBalance,
+              timestamp: smsData.timestamp
+            }
           });
         });
       });
@@ -94,12 +93,13 @@ async function handleSMSMessage(smsData) {
   }
 }
 
-async function sendTransactionToServer(transactionId, gateway, smsData) {
+async function sendTransactionToServer(transactionId, amount, newBalance, smsData) {
   try {
     // In a real implementation, this would send to Supabase
     console.log('Sending transaction to server:', {
       transactionId,
-      gateway,
+      amount,
+      newBalance,
       timestamp: Date.now()
     });
 

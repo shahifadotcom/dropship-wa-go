@@ -26,62 +26,56 @@ serve(async (req) => {
       transaction_id, 
       sender_number, 
       message_content, 
-      wallet_type, 
       amount,
+      new_balance,
       timestamp 
     } = smsData
 
-    // First, store in sms_transactions table for audit trail
+    // Store SMS data with new balance for audit trail
     const { error: smsError } = await supabase
       .from('sms_transactions')
       .insert({
         transaction_id,
         sender_number,
         message_content,
-        wallet_type,
+        wallet_type: 'unknown', // Will be determined during matching
         amount,
+        new_balance,
         transaction_date: new Date(timestamp),
         is_processed: false
       })
 
     if (smsError) {
       console.error('Failed to store SMS:', smsError)
-      // Continue anyway to try matching with orders
+      // Continue anyway
     }
 
-    // Try to match with existing pending orders
-    const { data: matchedOrderId } = await supabase
-      .rpc('match_sms_transaction_with_order', {
-        p_transaction_id: transaction_id,
-        p_wallet_type: wallet_type
+    console.log('SMS transaction stored with balance:', new_balance)
+
+    // Store in transaction_verifications for manual review with balance data
+    const { error: verificationError } = await supabase
+      .from('transaction_verifications')
+      .insert({
+        transaction_id,
+        amount,
+        new_balance,
+        payment_gateway: 'pending_match', // Admin will assign wallet type
+        status: 'pending'
       })
+
+    if (verificationError) {
+      console.error('Error storing verification:', verificationError)
+    } else {
+      console.log('Transaction stored for manual verification with balance:', new_balance)
+    }
 
     let transactionData = {
       transactionId: transaction_id,
-      gateway: wallet_type,
       amount,
+      newBalance: new_balance,
       sender: sender_number,
       message: message_content,
-      timestamp,
-      matched: !!matchedOrderId
-    }
-
-    // If no match found, store in transaction_verifications for manual review
-    if (!matchedOrderId) {
-      // This will fail due to RLS but we can catch it
-      const { error: txError } = await supabase
-        .from('transaction_verifications')
-        .insert({
-          transaction_id,
-          payment_gateway: wallet_type,
-          amount,
-          status: 'pending'
-        })
-
-      if (txError) {
-        console.log('Transaction verification insert failed (expected):', txError)
-        // This is expected - will be manually matched by admin
-      }
+      timestamp
     }
 
     console.log('Transaction processed:', transactionData)
@@ -89,9 +83,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: matchedOrderId ? 'Transaction matched and order updated' : 'Transaction stored for manual matching',
-        data: transactionData,
-        orderId: matchedOrderId
+        message: 'Transaction stored for manual matching',
+        data: transactionData
       }),
       { 
         headers: { 

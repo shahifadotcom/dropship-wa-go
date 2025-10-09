@@ -918,6 +918,7 @@ export type Database = {
       }
       payment_gateways: {
         Row: {
+          balance: number | null
           country_id: string | null
           created_at: string | null
           display_name: string
@@ -929,6 +930,7 @@ export type Database = {
           wallet_number: string
         }
         Insert: {
+          balance?: number | null
           country_id?: string | null
           created_at?: string | null
           display_name: string
@@ -940,6 +942,7 @@ export type Database = {
           wallet_number: string
         }
         Update: {
+          balance?: number | null
           country_id?: string | null
           created_at?: string | null
           display_name?: string
@@ -1406,6 +1409,7 @@ export type Database = {
           is_processed: boolean
           matched_order_id: string | null
           message_content: string
+          new_balance: number | null
           sender_number: string
           transaction_date: string | null
           transaction_id: string
@@ -1419,6 +1423,7 @@ export type Database = {
           is_processed?: boolean
           matched_order_id?: string | null
           message_content: string
+          new_balance?: number | null
           sender_number: string
           transaction_date?: string | null
           transaction_id: string
@@ -1432,6 +1437,7 @@ export type Database = {
           is_processed?: boolean
           matched_order_id?: string | null
           message_content?: string
+          new_balance?: number | null
           sender_number?: string
           transaction_date?: string | null
           transaction_id?: string
@@ -1541,8 +1547,12 @@ export type Database = {
       transaction_verifications: {
         Row: {
           amount: number
+          amount_sent: number | null
+          balance_verified: boolean | null
           created_at: string | null
           id: string
+          new_balance: number | null
+          old_balance: number | null
           order_id: string | null
           payment_gateway: string
           status: string | null
@@ -1551,8 +1561,12 @@ export type Database = {
         }
         Insert: {
           amount: number
+          amount_sent?: number | null
+          balance_verified?: boolean | null
           created_at?: string | null
           id?: string
+          new_balance?: number | null
+          old_balance?: number | null
           order_id?: string | null
           payment_gateway: string
           status?: string | null
@@ -1561,8 +1575,12 @@ export type Database = {
         }
         Update: {
           amount?: number
+          amount_sent?: number | null
+          balance_verified?: boolean | null
           created_at?: string | null
           id?: string
+          new_balance?: number | null
+          old_balance?: number | null
           order_id?: string | null
           payment_gateway?: string
           status?: string | null

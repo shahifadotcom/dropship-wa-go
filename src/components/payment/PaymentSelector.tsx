@@ -1,242 +1,192 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { AlertCircle, CreditCard, Smartphone } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { toast } from 'sonner';
 import { PaymentService, PaymentGateway } from '@/services/paymentService';
-import { useCountryDetection } from '@/hooks/useCountryDetection';
-import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useCountryDetection } from '@/hooks/useCountryDetection';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Loader2 } from 'lucide-react';
 
 interface PaymentSelectorProps {
   orderAmount: number;
   productId?: string;
   productIds?: string[];
-  onPaymentSubmitted?: (orderId: string) => void;
-  onCODSelected?: () => void;
-  orderData: any;
+  onPaymentSubmitted: (orderId: string) => void;
+  onCODSelected: (isCOD: boolean) => void;
 }
 
-export const PaymentSelector = ({ orderAmount, productId, productIds, onPaymentSubmitted, onCODSelected, orderData }: PaymentSelectorProps) => {
+export const PaymentSelector = ({ 
+  orderAmount, 
+  productId, 
+  productIds, 
+  onPaymentSubmitted,
+  onCODSelected 
+}: PaymentSelectorProps) => {
   const [paymentGateways, setPaymentGateways] = useState<PaymentGateway[]>([]);
   const [selectedGateway, setSelectedGateway] = useState<PaymentGateway | null>(null);
   const [transactionId, setTransactionId] = useState('');
+  const [amount, setAmount] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAdvancePayment, setShowAdvancePayment] = useState(false);
   const [isVerifyingBinance, setIsVerifyingBinance] = useState(false);
-  const [verificationFailed, setVerificationFailed] = useState(false);
-  const [failedTransactionId, setFailedTransactionId] = useState('');
-  const [showContactSupport, setShowContactSupport] = useState(false);
-  const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
-  const { effectiveCountry } = useCountryDetection();
-  const { toast } = useToast();
+  const { detectedCountry } = useCountryDetection();
 
   useEffect(() => {
-    const loadPaymentGateways = async () => {
-      const currentProductIds = productIds || (productId ? [productId] : []);
-      
-      // Always get Bangladesh country ID first
-      const bangladeshCountryId = await PaymentService.getBangladeshCountryId();
-      const targetCountryId = effectiveCountry?.id || bangladeshCountryId;
-      
-      if (!targetCountryId) {
-        console.error('No country ID available');
-        return;
-      }
-      
-      if (currentProductIds.length > 0) {
-        // Get intersection of all products' allowed gateways
-        const allProductGateways = await Promise.all(
-          currentProductIds.map(id => PaymentService.getProductPaymentGateways(id, targetCountryId))
-        );
-        // Find common gateways across all products
-        let intersectionGateways = allProductGateways[0] || [];
-        for (let i = 1; i < allProductGateways.length; i++) {
-          intersectionGateways = intersectionGateways.filter(gateway => 
-            allProductGateways[i].some(g => g.id === gateway.id)
-          );
+    const loadPaymentMethods = async () => {
+      try {
+        let gateways: PaymentGateway[] = [];
+        
+        if (detectedCountry?.id) {
+          if (productId) {
+            gateways = await PaymentService.getProductPaymentGateways(productId, detectedCountry.id);
+          } else if (productIds && productIds.length > 0) {
+            gateways = await PaymentService.getPaymentGateways(detectedCountry.id);
+          } else {
+            gateways = await PaymentService.getPaymentGateways(detectedCountry.id);
+          }
         }
-        setPaymentGateways(intersectionGateways);
-      } else {
-        const gateways = await PaymentService.getPaymentGateways(targetCountryId);
+
         setPaymentGateways(gateways);
+      } catch (error) {
+        console.error('Failed to load payment methods:', error);
+        toast.error('Failed to load payment methods');
       }
     };
 
-    loadPaymentGateways();
-  }, [effectiveCountry, productId, productIds]);
+    loadPaymentMethods();
+  }, [productId, productIds, detectedCountry]);
 
   const handleSubmitPayment = async () => {
-    if (!selectedGateway || !transactionId.trim()) {
-      toast({
-        title: "Missing Information",
-        description: "Please select a payment method and enter transaction ID",
-        variant: "destructive"
-      });
+    if (!selectedGateway || !transactionId.trim() || !amount.trim()) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    const parsedAmount = parseFloat(amount);
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+      toast.error('Please enter a valid amount');
       return;
     }
 
     setIsSubmitting(true);
-    setShowContactSupport(false);
-    
+
     try {
-      // Handle COD advance payment
-      if (selectedGateway.name === 'cod') {
-        onCODSelected?.();
-        setShowAdvancePayment(true);
-        toast({
-          title: "COD Selected",
-          description: "Please pay 100 BDT delivery charge to confirm your order.",
-        });
+      // Check if transaction already exists
+      const existingTx = await PaymentService.checkSMSTransaction(transactionId);
+      if (existingTx) {
+        toast.error('This transaction ID has already been used');
+        setIsSubmitting(false);
         return;
       }
 
-      // Check if transaction ID exists in SMS transactions first
-      const smsExists = await PaymentService.checkSMSTransaction(transactionId);
-      
-      if (!smsExists) {
-        setFailedTransactionId(transactionId);
-        setShowContactSupport(true);
-        toast({
-          title: "Transaction Not Found",
-          description: "We couldn't find this transaction ID in our records. Please contact support.",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      // Create order after payment verified
-      const { data: orderResponse, error: orderError } = await supabase.functions.invoke('verify-otp-and-create-order', {
+      // Create order first
+      const { data: orderData, error: orderError } = await supabase.functions.invoke('verify-otp-and-create-order', {
         body: {
-          phoneNumber: orderData.phoneNumber,
-          otpCode: 'verified', // OTP already verified
-          skipOTPVerification: true,
+          skipOTP: true,
           orderData: {
-            ...orderData,
-            paymentMethod: selectedGateway.name,
-            transactionId: transactionId
+            items: [],
+            subtotal: orderAmount,
+            total: orderAmount,
+            paymentMethod: selectedGateway.name
           }
         }
       });
 
-      if (orderError) throw orderError;
-      if (!orderResponse.success || !orderResponse.orderId) {
+      if (orderError || !orderData?.orderId) {
         throw new Error('Failed to create order');
       }
 
-      const newOrderId = orderResponse.orderId;
-      setCreatedOrderId(newOrderId);
+      const newOrderId = orderData.orderId;
 
-      // Handle Binance auto-verification
+      // Handle Binance Pay differently - auto verify
       if (selectedGateway.name === 'binance_pay') {
         setIsVerifyingBinance(true);
-        const verified = await PaymentService.verifyBinancePayment(transactionId, newOrderId, orderAmount);
         
+        const verified = await PaymentService.verifyBinancePayment(
+          transactionId,
+          newOrderId,
+          parsedAmount
+        );
+
+        setIsVerifyingBinance(false);
+
         if (verified) {
-          toast({
-            title: "Payment Verified",
-            description: "Your Binance payment has been automatically verified!",
-          });
-          onPaymentSubmitted?.(newOrderId);
-          return;
+          toast.success('Payment verified! Your order has been confirmed.');
+          onPaymentSubmitted(newOrderId);
         } else {
-          setFailedTransactionId(transactionId);
-          setShowContactSupport(true);
-          toast({
-            title: "Verification Failed",
-            description: "Payment verification failed. Please contact support.",
-            variant: "destructive"
-          });
-          return;
+          toast.error('Payment verification failed. Please contact support.');
         }
+        return;
       }
 
-      // Handle other payment methods - submit for manual verification
-      const success = await PaymentService.submitTransaction(
+      // For other payment methods, submit for manual verification
+      const submitted = await PaymentService.submitTransaction(
         newOrderId,
         selectedGateway.name,
         transactionId,
-        orderAmount
+        parsedAmount
       );
 
-      if (success) {
-        toast({
-          title: "Payment Verified",
-          description: "Your payment has been confirmed! Completing your order...",
-        });
-        onPaymentSubmitted?.(newOrderId);
+      if (submitted) {
+        toast.success('Transaction submitted for verification. You will be notified once verified.');
+        onPaymentSubmitted(newOrderId);
       } else {
-        setFailedTransactionId(transactionId);
-        setShowContactSupport(true);
-        throw new Error('Failed to submit payment');
+        throw new Error('Failed to submit transaction');
       }
+
     } catch (error) {
-      setFailedTransactionId(transactionId);
-      setShowContactSupport(true);
-      toast({
-        title: "Submission Failed",
-        description: "Failed to submit payment. Please contact support.",
-        variant: "destructive"
-      });
+      console.error('Payment submission error:', error);
+      toast.error('Failed to process payment. Please try again.');
     } finally {
       setIsSubmitting(false);
-      setIsVerifyingBinance(false);
     }
   };
 
   const handleAdvancePayment = async () => {
-    if (!transactionId.trim()) {
-      toast({
-        title: "Missing Transaction ID",
-        description: "Please enter your transaction ID",
-        variant: "destructive"
-      });
+    if (!transactionId.trim() || !amount.trim()) {
+      toast.error('Please enter transaction ID and amount');
       return;
     }
 
-    setIsVerifyingBinance(true);
-    setVerificationFailed(false);
-    
+    const parsedAmount = parseFloat(amount);
+    if (isNaN(parsedAmount) || parsedAmount !== 100) {
+      toast.error('Advance payment must be exactly 100 BDT');
+      return;
+    }
+
+    setIsSubmitting(true);
+
     try {
-      // Check if transaction exists in SMS records first
-      const smsExists = await PaymentService.checkSMSTransaction(transactionId);
-      
-      if (!smsExists) {
-        setVerificationFailed(true);
-        setFailedTransactionId(transactionId);
-        toast({
-          title: "Transaction Not Found",
-          description: "We couldn't find this transaction ID. Please contact support.",
-          variant: "destructive"
-        });
+      // Check if transaction already exists
+      const existingTx = await PaymentService.checkSMSTransaction(transactionId);
+      if (existingTx) {
+        toast.error('This transaction ID has already been used');
+        setIsSubmitting(false);
         return;
       }
 
-      // Create order first with COD
-      const { data: orderResponse, error: orderError } = await supabase.functions.invoke('verify-otp-and-create-order', {
+      // Create COD order
+      const { data: orderData, error: orderError } = await supabase.functions.invoke('verify-otp-and-create-order', {
         body: {
-          phoneNumber: orderData.phoneNumber,
-          otpCode: 'verified',
-          skipOTPVerification: true,
+          skipOTP: true,
           orderData: {
-            ...orderData,
-            paymentMethod: 'cod',
-            advanceAmount: 100,
-            transactionId: transactionId
+            items: [],
+            subtotal: orderAmount,
+            total: orderAmount,
+            paymentMethod: 'cod'
           }
         }
       });
 
-      if (orderError) throw orderError;
-      if (!orderResponse.success || !orderResponse.orderId) {
+      if (orderError || !orderData?.orderId) {
         throw new Error('Failed to create order');
       }
 
-      const newOrderId = orderResponse.orderId;
-      setCreatedOrderId(newOrderId);
+      const newOrderId = orderData.orderId;
 
       // Create advance payment record
       const advancePaymentId = await PaymentService.createAdvancePayment(newOrderId, 100, 'binance_pay');
@@ -260,48 +210,33 @@ export const PaymentSelector = ({ orderAmount, productId, productIds, onPaymentS
       const verified = await PaymentService.verifyBinancePayment(transactionId, newOrderId, 100);
       
       if (verified) {
-        toast({
-          title: "Advance Payment Verified",
-          description: "Your order is confirmed! You'll pay the remaining amount on delivery.",
-        });
-        setShowAdvancePayment(false);
-        onPaymentSubmitted?.(newOrderId);
+        toast.success('Confirmation fee verified! Your COD order has been placed.');
+        onPaymentSubmitted(newOrderId);
       } else {
-        setVerificationFailed(true);
-        setFailedTransactionId(transactionId);
-        toast({
-          title: "Verification Failed",
-          description: "Payment verification failed. Please contact support.",
-          variant: "destructive"
-        });
+        toast.error('Verification failed. Please contact support.');
       }
+
     } catch (error) {
-      setVerificationFailed(true);
-      setFailedTransactionId(transactionId);
-      toast({
-        title: "Verification Error",
-        description: "Failed to verify payment. Please contact support.",
-        variant: "destructive"
-      });
+      console.error('Advance payment error:', error);
+      toast.error('Failed to process advance payment. Please try again.');
     } finally {
-      setIsVerifyingBinance(false);
+      setIsSubmitting(false);
     }
   };
 
-  const handleContactSupport = () => {
-    const message = encodeURIComponent(`I have sent 100BDT but order not submitted, kindly check and confirm my order thank you. Transaction ID: ${failedTransactionId}`);
-    window.open(`https://wa.me/+8801775777308?text=${message}`, '_blank');
-  };
-
-  if (paymentGateways.length === 0) {
+  if (!paymentGateways || paymentGateways.length === 0) {
     return (
       <Card>
-        <CardContent className="p-6 text-center">
-          <CreditCard className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">No Payment Methods Available</h3>
-          <p className="text-muted-foreground">
-            Payment methods are not available for your country yet.
-          </p>
+        <CardHeader>
+          <CardTitle>Payment Method</CardTitle>
+          <CardDescription>No payment methods available for your country</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Alert>
+            <AlertDescription>
+              Please contact support for payment options in your region.
+            </AlertDescription>
+          </Alert>
         </CardContent>
       </Card>
     );
@@ -310,156 +245,143 @@ export const PaymentSelector = ({ orderAmount, productId, productIds, onPaymentS
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Smartphone className="h-5 w-5" />
-          Mobile Payment
-        </CardTitle>
+        <CardTitle>Payment Method</CardTitle>
+        <CardDescription>Select your payment method and enter transaction details</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-3">
-          <Label>Select Payment Method</Label>
-          <div className="grid gap-3">
-            {paymentGateways.map((gateway) => (
-              <Card
-                key={gateway.id}
-                className={`cursor-pointer transition-colors ${
-                  selectedGateway?.id === gateway.id 
-                    ? 'border-primary bg-primary/5' 
-                    : 'hover:border-primary/50'
-                }`}
-                onClick={() => setSelectedGateway(gateway)}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-semibold">{gateway.display_name}</h4>
-                      <p className="text-sm text-muted-foreground">
-                        {gateway.wallet_number}
-                      </p>
-                    </div>
-                    <Badge variant="secondary">Mobile</Badge>
+      <CardContent className="space-y-4">
+        <RadioGroup
+          value={selectedGateway?.id || ''}
+          onValueChange={(value) => {
+            const gateway = paymentGateways.find(g => g.id === value);
+            setSelectedGateway(gateway || null);
+            setShowAdvancePayment(gateway?.name === 'cod');
+            onCODSelected(gateway?.name === 'cod');
+          }}
+        >
+          {paymentGateways.map((gateway) => (
+            <div key={gateway.id} className="flex items-center space-x-2">
+              <RadioGroupItem value={gateway.id} id={gateway.id} />
+              <Label htmlFor={gateway.id} className="flex-1 cursor-pointer">
+                <div className="font-medium">{gateway.display_name}</div>
+                {gateway.wallet_number && (
+                  <div className="text-sm text-muted-foreground">
+                    Number: {gateway.wallet_number}
                   </div>
-                  {selectedGateway?.id === gateway.id && (
-                    <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-md">
-                      <p className="text-sm text-blue-700 dark:text-blue-300">
-                        {gateway.instructions}
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
+                )}
+                {gateway.instructions && (
+                  <div className="text-sm text-muted-foreground mt-1">
+                    {gateway.instructions}
+                  </div>
+                )}
+              </Label>
+            </div>
+          ))}
+        </RadioGroup>
 
         {selectedGateway && !showAdvancePayment && (
-          <div className="space-y-4">
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                {selectedGateway.name === 'cod' ? (
-                  <>Pay <strong>100 BDT delivery charge</strong> to confirm your order. Remaining <strong>৳{orderAmount - 100}</strong> will be collected on delivery.</>
-                ) : selectedGateway.name === 'binance_pay' ? (
-                  <>Send <strong>৳{orderAmount}</strong> using Binance Pay, then enter your transaction ID below for automatic verification.</>
-                ) : (
-                  <>Send <strong>৳{orderAmount}</strong> to <strong>{selectedGateway.wallet_number}</strong> using {selectedGateway.display_name}, then enter your transaction ID below.</>
-                )}
-              </AlertDescription>
-            </Alert>
+          <div className="space-y-4 pt-4 border-t">
+            <div className="space-y-2">
+              <Label htmlFor="amount">Amount Sent (BDT)</Label>
+              <Input
+                id="amount"
+                type="number"
+                step="0.01"
+                placeholder="Enter amount you sent"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                disabled={isSubmitting || isVerifyingBinance}
+              />
+            </div>
 
             <div className="space-y-2">
               <Label htmlFor="transactionId">Transaction ID</Label>
               <Input
                 id="transactionId"
-                placeholder={selectedGateway.name === 'binance_pay' ? "Enter Binance Pay transaction ID" : "Enter your transaction ID"}
+                placeholder="Enter your transaction ID"
                 value={transactionId}
                 onChange={(e) => setTransactionId(e.target.value)}
+                disabled={isSubmitting || isVerifyingBinance}
               />
-              <p className="text-xs text-muted-foreground">
-                {selectedGateway.name === 'binance_pay' 
-                  ? "Payment will be automatically verified within 5 minutes"
-                  : "You will receive this ID via SMS after completing the payment"
-                }
-              </p>
             </div>
 
             <Button 
-              onClick={handleSubmitPayment}
-              disabled={isSubmitting || isVerifyingBinance || !transactionId.trim()}
+              onClick={handleSubmitPayment} 
               className="w-full"
+              disabled={isSubmitting || isVerifyingBinance || !transactionId.trim() || !amount.trim()}
             >
-              {isVerifyingBinance ? 'Verifying...' : isSubmitting ? 'Submitting...' : 
-               selectedGateway.name === 'binance_pay' ? 'Auto Verify Payment' : 
-               selectedGateway.name === 'cod' ? 'Submit Order' : 'Submit Order'}
+              {isSubmitting || isVerifyingBinance ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {isVerifyingBinance ? 'Verifying...' : 'Processing...'}
+                </>
+              ) : (
+                'Submit Payment'
+              )}
             </Button>
-
-            {showContactSupport && (
-              <Button 
-                variant="default"
-                onClick={handleContactSupport}
-                className="w-full bg-green-600 hover:bg-green-700"
-              >
-                Contact Support via WhatsApp
-              </Button>
-            )}
           </div>
         )}
 
         {showAdvancePayment && (
-          <div className="space-y-4">
+          <div className="space-y-4 pt-4 border-t">
             <Alert>
-              <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                Pay <strong>100 BDT delivery charge</strong> to confirm your Cash on Delivery order.
-                Remaining <strong>৳{orderAmount - 100}</strong> will be collected when your order is delivered.
+                For Cash on Delivery orders, please pay 100 BDT as a confirmation fee. The remaining amount will be paid to the delivery person.
               </AlertDescription>
             </Alert>
 
             <div className="space-y-2">
-              <Label htmlFor="advanceTransactionId">Transaction ID</Label>
+              <Label htmlFor="cod-amount">Confirmation Fee Amount (BDT)</Label>
               <Input
-                id="advanceTransactionId"
-                placeholder="Enter transaction ID for 100 BDT"
+                id="cod-amount"
+                type="number"
+                placeholder="100"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                disabled={isSubmitting}
+              />
+              <p className="text-xs text-muted-foreground">Must be exactly 100 BDT</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="cod-transactionId">Transaction ID</Label>
+              <Input
+                id="cod-transactionId"
+                placeholder="Enter confirmation fee transaction ID"
                 value={transactionId}
                 onChange={(e) => setTransactionId(e.target.value)}
+                disabled={isSubmitting}
               />
-              <p className="text-xs text-muted-foreground">
-                Pay exactly 100 BDT and enter the transaction ID
-              </p>
             </div>
 
             <Button 
-              onClick={handleAdvancePayment}
-              disabled={isVerifyingBinance || !transactionId.trim()}
+              onClick={handleAdvancePayment} 
               className="w-full"
+              disabled={isSubmitting || !transactionId.trim() || !amount.trim()}
             >
-              {isVerifyingBinance ? 'Verifying...' : 'Submit Order'}
-            </Button>
-
-            {verificationFailed && (
-              <Button 
-                variant="default"
-                onClick={handleContactSupport}
-                className="w-full bg-green-600 hover:bg-green-700"
-              >
-                Contact Support via WhatsApp
-              </Button>
-            )}
-
-            <Button 
-              variant="outline"
-              onClick={() => {
-                setShowAdvancePayment(false);
-                setSelectedGateway(null);
-                setTransactionId('');
-                setVerificationFailed(false);
-                setFailedTransactionId('');
-              }}
-              className="w-full"
-            >
-              Cancel COD Order
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                'Submit Confirmation Fee'
+              )}
             </Button>
           </div>
+        )}
+
+        {selectedGateway && (
+          <Alert>
+            <AlertDescription>
+              Please make the payment to the provided wallet number, then enter your transaction details above.
+              
+              {selectedGateway.name !== 'binance_pay' && (
+                <div className="mt-2">
+                  <strong>Note:</strong> Your order will be processed after manual verification.
+                </div>
+              )}
+            </AlertDescription>
+          </Alert>
         )}
       </CardContent>
     </Card>
