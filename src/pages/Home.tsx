@@ -275,38 +275,6 @@ const Home = () => {
                 <CarouselNext />
               </Carousel>
             </div>
-
-            {/* Mobile All Products - Carousel */}
-            <div>
-              <h2 className="text-xl font-bold text-foreground mb-4">All Products</h2>
-              <Carousel
-                opts={{
-                  align: "start",
-                  loop: true,
-                }}
-                plugins={[
-                  Autoplay({
-                    delay: 3000,
-                  }),
-                ]}
-                className="w-full"
-              >
-                <CarouselContent>
-                  {products.slice(16, 32).map((product) => (
-                    <CarouselItem key={product.id} className="basis-1/2">
-                      <div className="p-1">
-                        <ProductCard
-                          product={product}
-                          onQuickView={handleProductClick}
-                        />
-                      </div>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-                <CarouselPrevious />
-                <CarouselNext />
-              </Carousel>
-            </div>
           </div>
         </div>
 
