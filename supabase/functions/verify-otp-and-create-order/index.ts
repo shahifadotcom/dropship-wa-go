@@ -228,8 +228,8 @@ serve(async (req) => {
         tax: orderData.tax ?? 0,
         shipping: orderData.shipping ?? 0,
         total: orderData.total,
-        billing_address: orderData.billingAddress ?? null,
-        shipping_address: orderData.shippingAddress ?? null
+        billing_address: orderData.billingAddress ?? '',
+        shipping_address: orderData.shippingAddress ?? ''
       })
       .select()
       .single();

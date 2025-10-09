@@ -29,7 +29,7 @@ serve(async (req: Request) => {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const { orderId, transactionId, paymentGateway } = body ?? {};
+    const { orderId, transactionId } = body ?? {};
 
     // Basic validation
     if (!transactionId || typeof transactionId !== "string") {
@@ -39,56 +39,51 @@ serve(async (req: Request) => {
       );
     }
 
-    const wallet = String(paymentGateway || "").toLowerCase();
-    const localWallets = new Set(["bkash", "nagad", "rocket", "cod"]);
+    const tx = transactionId.trim();
 
-    if (!localWallets.has(wallet)) {
+    // Check sms_transactions table by transaction_id only (no wallet filtering)
+    const { data: smsTx, error: smsErr } = await supabase
+      .from("sms_transactions")
+      .select("id")
+      .eq("transaction_id", tx)
+      .limit(1)
+      .maybeSingle();
+
+    if (smsErr) {
+      console.error("sms_transactions lookup error:", smsErr);
       return new Response(
-        JSON.stringify({ success: false, error: "Not a local wallet payment" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 },
-      );
-    }
-
-    // Ensure a pending transaction_verifications row exists for this order + tx (best-effort check)
-    if (orderId) {
-      const { data: tvRow, error: tvErr } = await supabase
-        .from("transaction_verifications")
-        .select("id")
-        .eq("order_id", orderId)
-        .eq("transaction_id", transactionId.trim())
-        .eq("payment_gateway", wallet)
-        .eq("status", "pending")
-        .maybeSingle();
-
-      if (tvErr) {
-        // Log but continue to attempt matching via RPC
-        console.log("transaction_verifications lookup error:", tvErr);
-      }
-
-      if (!tvRow) {
-        console.log("No pending transaction_verifications row found for provided order/tx/gateway; RPC will still attempt match by tx.");
-      }
-    }
-
-    // Attempt to match via secure RPC that also updates order/payment status when matched
-    const { data: matchedOrderId, error: rpcError } = await supabase
-      .rpc("match_sms_transaction_with_order", {
-        p_transaction_id: transactionId.trim(),
-        p_wallet_type: wallet,
-      });
-
-    if (rpcError) {
-      console.error("RPC match_sms_transaction_with_order error:", rpcError);
-      return new Response(
-        JSON.stringify({ success: false, error: "RPC error" }),
+        JSON.stringify({ success: false, error: "Lookup error" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 },
       );
     }
 
-    const success = !!matchedOrderId && (!orderId || matchedOrderId === orderId);
+    if (!smsTx) {
+      return new Response(
+        JSON.stringify({ success: false, matchedOrderId: null }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 },
+      );
+    }
+
+    // If we have an orderId, best-effort update verification + mark order paid
+    if (orderId) {
+      try {
+        await supabase
+          .from("transaction_verifications")
+          .update({ status: "verified", verified_at: new Date().toISOString() })
+          .eq("order_id", orderId)
+          .eq("transaction_id", tx);
+
+        await supabase
+          .from("orders")
+          .update({ payment_status: "paid", updated_at: new Date().toISOString() })
+          .eq("id", orderId);
+      } catch (e) {
+        console.log("Non-fatal update error:", e);
+      }
+    }
 
     return new Response(
-      JSON.stringify({ success, matchedOrderId }),
+      JSON.stringify({ success: true, matchedOrderId: orderId ?? null }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 },
     );
   } catch (err) {
