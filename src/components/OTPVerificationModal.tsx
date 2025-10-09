@@ -37,44 +37,14 @@ export const OTPVerificationModal = ({
     }
 
     setIsVerifying(true);
-    
     try {
-      // Just verify OTP (don't create order yet)
-      const { data: verificationData, error: verifyError } = await supabase
-        .from('otp_verifications')
-        .select('*')
-        .eq('phone_number', phoneNumber)
-        .eq('otp_code', otp)
-        .eq('is_verified', false)
-        .gt('expires_at', new Date().toISOString())
-        .single();
-
-      if (verifyError || !verificationData) {
-        toast({
-          title: "Invalid OTP",
-          description: "The OTP you entered is incorrect or expired.",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      // Mark OTP as verified
-      await supabase
-        .from('otp_verifications')
-        .update({ is_verified: true })
-        .eq('id', verificationData.id);
-
-      toast({
-        title: "Verification Successful!",
-        description: "Creating your order..."
-      });
-      
+      // Delegate verification to the secure Edge Function via parent handler
       onVerificationSuccess(phoneNumber, otp);
     } catch (error: any) {
-      console.error('OTP verification error:', error);
+      console.error('OTP verification trigger error:', error);
       toast({
         title: "Verification Failed",
-        description: "An error occurred while verifying OTP. Please try again.",
+        description: "An error occurred while starting verification. Please try again.",
         variant: "destructive"
       });
     } finally {
