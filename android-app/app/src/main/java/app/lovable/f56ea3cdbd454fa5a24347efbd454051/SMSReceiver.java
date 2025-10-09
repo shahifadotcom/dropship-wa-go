@@ -16,9 +16,10 @@ public class SMSReceiver extends BroadcastReceiver {
     private static final String API_ENDPOINT = "https://mofwljpreecqqxkilywh.supabase.co/functions/v1/sms-transaction-handler";
     private static final String ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vZndsanByZWVjcXF4a2lseXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcxMTk5MDgsImV4cCI6MjA3MjY5NTkwOH0.1kfabhKCzV9P384_J9uWF6wGSRHDTYr_9yUBTvGDAvY";
 
-    // Simplified pattern to extract transaction ID only
+    // Enhanced pattern to extract transaction ID from bKash, Nagad, Rocket SMS
+    // Matches patterns like: "TrxID CI131K7A2D", "Transaction ID: ABC123XYZ", "Trx ID BK12345ABC"
     private static final Pattern TRANSACTION_PATTERN = Pattern.compile(
-        "(?:TrxID|TrxId|Trx ID|Transaction ID|Trans ID|ID)[:\\s]+([A-Za-z0-9]+)",
+        "(?:TrxID|Trx\\s*ID|Transaction\\s*ID|Trans\\s*ID)[:\\s]+([A-Z0-9]{8,15})",
         Pattern.CASE_INSENSITIVE
     );
 
