@@ -8,6 +8,7 @@ export interface PaymentGateway {
   country_id: string;
   instructions: string;
   is_active: boolean;
+  balance?: number;
 }
 
 export interface AdvancePayment {

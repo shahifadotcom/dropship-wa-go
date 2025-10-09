@@ -130,7 +130,8 @@ export default function PaymentGateways() {
           display_name: editingGateway.display_name,
           wallet_number: editingGateway.wallet_number,
           instructions: editingGateway.instructions,
-          is_active: editingGateway.is_active
+          is_active: editingGateway.is_active,
+          balance: editingGateway.balance
         })
         .eq('id', editingGateway.id);
 
@@ -409,6 +410,7 @@ export default function PaymentGateways() {
                     <TableHead>Gateway</TableHead>
                     <TableHead>Wallet Number</TableHead>
                     <TableHead>Country</TableHead>
+                    <TableHead>Balance</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
@@ -427,6 +429,7 @@ export default function PaymentGateways() {
                       </TableCell>
                       <TableCell className="font-mono">{gateway.wallet_number}</TableCell>
                       <TableCell>{(gateway as any).countries?.name}</TableCell>
+                      <TableCell className="font-medium">৳{gateway.balance?.toFixed(2) || '0.00'}</TableCell>
                       <TableCell>
                         <Badge variant={gateway.is_active ? "default" : "secondary"}>
                           {gateway.is_active ? "Active" : "Inactive"}
@@ -555,6 +558,23 @@ export default function PaymentGateways() {
                     prev ? ({ ...prev, wallet_number: e.target.value }) : null
                   )}
                 />
+              </div>
+
+              <div>
+                <Label htmlFor="edit_balance">Current Balance (BDT)</Label>
+                <Input
+                  id="edit_balance"
+                  type="number"
+                  step="0.01"
+                  value={editingGateway.balance || ''}
+                  onChange={(e) => setEditingGateway(prev => 
+                    prev ? ({ ...prev, balance: parseFloat(e.target.value) || 0 }) : null
+                  )}
+                  placeholder="1000.00"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Update the current balance in your wallet
+                </p>
               </div>
 
               <div>
