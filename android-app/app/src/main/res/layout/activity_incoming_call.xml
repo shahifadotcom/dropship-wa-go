@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#1a1a1a"
+    android:padding="24dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <!-- Caller Icon -->
+        <ImageView
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:layout_marginBottom="32dp"
+            android:src="@android:drawable/ic_menu_call"
+            android:tint="#4CAF50" />
+
+        <!-- Caller Info -->
+        <TextView
+            android:id="@+id/caller_info"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="48dp"
+            android:text="Incoming Call"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <!-- Action Buttons -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <!-- Decline Button -->
+            <Button
+                android:id="@+id/decline_button"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:layout_marginEnd="48dp"
+                android:background="@android:drawable/ic_delete"
+                android:backgroundTint="#F44336"
+                android:contentDescription="Decline Call"
+                android:padding="16dp" />
+
+            <!-- Answer Button -->
+            <Button
+                android:id="@+id/answer_button"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:background="@android:drawable/ic_menu_call"
+                android:backgroundTint="#4CAF50"
+                android:contentDescription="Answer Call"
+                android:padding="16dp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</RelativeLayout>
