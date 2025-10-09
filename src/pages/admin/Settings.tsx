@@ -18,6 +18,7 @@ interface StoreSettings {
   store_tagline: string;
   store_description: string;
   store_logo?: string;
+  favicon_url?: string;
   contact_email: string;
   contact_phone: string;
   contact_address: string;
@@ -36,6 +37,7 @@ const Settings = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [logoUploading, setLogoUploading] = useState(false);
+  const [faviconUploading, setFaviconUploading] = useState(false);
 
   useEffect(() => {
     // Only fetch settings once we have a valid session
@@ -170,6 +172,38 @@ const Settings = () => {
     }
   };
 
+  const handleFaviconUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !settings) return;
+
+    setFaviconUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `favicon-${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('product-images')
+        .upload(fileName, file);
+
+      if (uploadError) {
+        toast.error('Failed to upload favicon');
+        return;
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('product-images')
+        .getPublicUrl(fileName);
+
+      await updateSettings({ favicon_url: publicUrl });
+      toast.success('Favicon uploaded successfully. Please refresh the page to see changes.');
+    } catch (error) {
+      console.error('Error uploading favicon:', error);
+      toast.error('Failed to upload favicon');
+    } finally {
+      setFaviconUploading(false);
+    }
+  };
+
   const handleContactInfoSave = () => {
     if (!settings) return;
     updateSettings({
@@ -195,6 +229,7 @@ const Settings = () => {
       site_title: settings.site_title,
       currency: settings.currency,
       maintenance_mode: settings.maintenance_mode,
+      favicon_url: settings.favicon_url,
     });
   };
 
@@ -421,6 +456,39 @@ const Settings = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Favicon Upload Section */}
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Website Favicon</Label>
+                  <div className="flex items-center gap-4">
+                    {settings.favicon_url && (
+                      <img 
+                        src={settings.favicon_url} 
+                        alt="Favicon" 
+                        className="w-8 h-8 object-contain rounded border border-border"
+                      />
+                    )}
+                    <div className="flex-1">
+                      <Input
+                        type="file"
+                        accept="image/x-icon,image/png,image/svg+xml,image/jpeg"
+                        onChange={handleFaviconUpload}
+                        disabled={faviconUploading}
+                        className="cursor-pointer"
+                      />
+                      {faviconUploading && (
+                        <p className="text-sm text-muted-foreground mt-1">Uploading...</p>
+                      )}
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Recommended: 32x32px or 16x16px .ico, .png, or .svg file
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <Separator />
+              
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="site-title">Site Title</Label>
