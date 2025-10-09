@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import ImageSlider from "@/components/ImageSlider";
@@ -14,7 +14,7 @@ import { Product } from "@/lib/types";
 import { useCountryDetection } from "@/hooks/useCountryDetection";
 import { CountrySelectionModal } from "@/components/CountrySelectionModal";
 import { CountryService } from "@/services/countryService";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
 
@@ -36,6 +36,20 @@ const Home = () => {
   const [topDeals, setTopDeals] = useState<Product[]>([]);
   const [loadingTopDeals, setLoadingTopDeals] = useState(true);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const searchQuery = searchParams.get('search') || '';
+
+  // Filter products based on search query
+  const filteredProducts = useMemo(() => {
+    if (!searchQuery.trim()) return products;
+    
+    const query = searchQuery.toLowerCase();
+    return products.filter(product => 
+      product.name.toLowerCase().includes(query) ||
+      product.description?.toLowerCase().includes(query) ||
+      product.tags?.some(tag => tag.toLowerCase().includes(query))
+    );
+  }, [products, searchQuery]);
 
   // Load most ordered products for Top Deals
   useEffect(() => {
@@ -61,11 +75,11 @@ const Home = () => {
     setIsProductModalOpen(true);
   };
 
-  // Get latest products (first 16)
-  const latestProducts = products.slice(0, 16);
+  // Get latest products (first 16) from filtered results
+  const latestProducts = filteredProducts.slice(0, 16);
   
-  // Get featured products for 2-column sections
-  const featuredProducts1 = products.slice(0, 2);
+  // Get featured products for 2-column sections from filtered results
+  const featuredProducts1 = filteredProducts.slice(0, 2);
 
   // Show country selection modal if needed
   if (needsSelection && !countryLoading) {
@@ -94,6 +108,15 @@ const Home = () => {
       <Header />
       
       <main className="pb-20 md:pb-0">
+        {/* Search Results Header */}
+        {searchQuery && (
+          <div className="container mx-auto px-4 py-4">
+            <h2 className="text-xl font-semibold text-foreground">
+              Search results for "{searchQuery}" ({filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'})
+            </h2>
+          </div>
+        )}
+
         {/* Desktop and Tablet Layout */}
         <div className="hidden md:block">
           <div className="container mx-auto px-4 py-8">
@@ -246,34 +269,42 @@ const Home = () => {
 
             {/* Mobile Latest Products - Carousel */}
             <div>
-              <h2 className="text-xl font-bold text-foreground mb-4">Latest Products</h2>
-              <Carousel
-                opts={{
-                  align: "start",
-                  loop: true,
-                }}
-                plugins={[
-                  Autoplay({
-                    delay: 3000,
-                  }),
-                ]}
-                className="w-full"
-              >
-                <CarouselContent>
-                  {products.slice(0, 16).map((product) => (
-                    <CarouselItem key={product.id} className="basis-1/2">
-                      <div className="p-1">
-                        <ProductCard
-                          product={product}
-                          onQuickView={handleProductClick}
-                        />
-                      </div>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-                <CarouselPrevious />
-                <CarouselNext />
-              </Carousel>
+              <h2 className="text-xl font-bold text-foreground mb-4">
+                {searchQuery ? 'Search Results' : 'Latest Products'}
+              </h2>
+              {latestProducts.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground">No products found matching your search.</p>
+                </div>
+              ) : (
+                <Carousel
+                  opts={{
+                    align: "start",
+                    loop: true,
+                  }}
+                  plugins={[
+                    Autoplay({
+                      delay: 3000,
+                    }),
+                  ]}
+                  className="w-full"
+                >
+                  <CarouselContent>
+                    {latestProducts.map((product) => (
+                      <CarouselItem key={product.id} className="basis-1/2">
+                        <div className="p-1">
+                          <ProductCard
+                            product={product}
+                            onQuickView={handleProductClick}
+                          />
+                        </div>
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  <CarouselPrevious />
+                  <CarouselNext />
+                </Carousel>
+              )}
             </div>
           </div>
         </div>

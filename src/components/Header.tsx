@@ -3,12 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
 import { useCategories } from "@/hooks/useCategories";
 import CartDrawer from "./CartDrawer";
 import { CountrySelectorDropdown } from "./CountrySelectorDropdown";
+import { useState, useEffect } from "react";
 
 const Header = () => {
   const { user, signOut } = useAuth();
@@ -16,11 +17,26 @@ const Header = () => {
   const { settings } = useStoreSettings();
   const { categories } = useCategories();
   const { countryCode = 'bd' } = useParams<{ countryCode: string }>();
+  const [searchParams] = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
+
+  useEffect(() => {
+    setSearchQuery(searchParams.get('search') || '');
+  }, [searchParams]);
 
   const handleSignOut = async () => {
     await signOut();
     toast.success('Signed out successfully');
     navigate('/');
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/?search=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+      navigate('/');
+    }
   };
 
   return (
@@ -47,15 +63,17 @@ const Header = () => {
           </a>
 
           {/* Mobile Search Box */}
-          <div className="flex-1 max-w-sm mx-2">
+          <form onSubmit={handleSearch} className="flex-1 max-w-sm mx-2">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-navigation-foreground/70" />
               <Input
                 placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 pr-4 py-2 bg-background/10 border border-navigation-foreground/20 rounded-lg text-navigation-foreground placeholder:text-navigation-foreground/70 text-sm h-10"
               />
             </div>
-          </div>
+          </form>
 
           {/* Cart Icon */}
           <CartDrawer>
@@ -88,15 +106,17 @@ const Header = () => {
           </div>
 
           {/* Desktop Search Bar */}
-          <div className="flex flex-1 max-w-md mx-8">
+          <form onSubmit={handleSearch} className="flex flex-1 max-w-md mx-8">
             <div className="relative w-full">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-navigation-foreground/70" />
               <Input
                 placeholder="Search products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 bg-background/10 border-navigation-foreground/20 text-navigation-foreground placeholder:text-navigation-foreground/70"
               />
             </div>
-          </div>
+          </form>
 
           {/* Desktop User Actions */}
           <div className="flex items-center space-x-2">
