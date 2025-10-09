@@ -7,6 +7,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/hooks/use-toast';
 import { useCountryDetection } from '@/hooks/useCountryDetection';
 import { VirtualTryOn } from '@/components/VirtualTryOn';
+import { SuggestedProducts } from '@/components/SuggestedProducts';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import MobileBottomNav from '@/components/MobileBottomNav';
@@ -333,6 +334,15 @@ const ProductDetail = () => {
               </Button>
             </div>
           </div>
+        </div>
+
+        {/* Suggested Products Section */}
+        <div className="mt-12">
+          <SuggestedProducts 
+            currentProductIds={[product.id]}
+            categoryId={product.category}
+            limit={8}
+          />
         </div>
       </main>
 
