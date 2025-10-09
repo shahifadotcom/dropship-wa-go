@@ -153,6 +153,81 @@ export type Database = {
         }
         Relationships: []
       }
+      call_logs: {
+        Row: {
+          call_type: string
+          caller_id: string
+          created_at: string
+          duration_seconds: number | null
+          ended_at: string | null
+          id: string
+          receiver_id: string
+          started_at: string
+          status: Database["public"]["Enums"]["call_status"]
+        }
+        Insert: {
+          call_type: string
+          caller_id: string
+          created_at?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          receiver_id: string
+          started_at?: string
+          status?: Database["public"]["Enums"]["call_status"]
+        }
+        Update: {
+          call_type?: string
+          caller_id?: string
+          created_at?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          receiver_id?: string
+          started_at?: string
+          status?: Database["public"]["Enums"]["call_status"]
+        }
+        Relationships: []
+      }
+      calling_subscriptions: {
+        Row: {
+          created_at: string
+          currency: string
+          expires_at: string | null
+          id: string
+          plan_duration: number
+          price: number
+          starts_at: string | null
+          status: Database["public"]["Enums"]["subscription_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          expires_at?: string | null
+          id?: string
+          plan_duration: number
+          price: number
+          starts_at?: string | null
+          status?: Database["public"]["Enums"]["subscription_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          expires_at?: string | null
+          id?: string
+          plan_duration?: number
+          price?: number
+          starts_at?: string | null
+          status?: Database["public"]["Enums"]["subscription_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           created_at: string | null
@@ -196,6 +271,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      chat_messages: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          receiver_id: string
+          sender_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          receiver_id: string
+          sender_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          receiver_id?: string
+          sender_id?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       cj_credentials: {
         Row: {
@@ -1606,6 +1711,30 @@ export type Database = {
           },
         ]
       }
+      user_contacts: {
+        Row: {
+          contact_id: string
+          created_at: string
+          id: string
+          is_favorite: boolean
+          user_id: string
+        }
+        Insert: {
+          contact_id: string
+          created_at?: string
+          id?: string
+          is_favorite?: boolean
+          user_id: string
+        }
+        Update: {
+          contact_id?: string
+          created_at?: string
+          id?: string
+          is_favorite?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           assigned_at: string | null
@@ -2370,6 +2499,10 @@ export type Database = {
           role: Database["public"]["Enums"]["app_role"]
         }[]
       }
+      has_active_subscription: {
+        Args: { user_uuid: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -2412,6 +2545,14 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      call_status:
+        | "initiated"
+        | "ringing"
+        | "answered"
+        | "ended"
+        | "missed"
+        | "declined"
+      subscription_status: "active" | "expired" | "cancelled" | "pending"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2540,6 +2681,15 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      call_status: [
+        "initiated",
+        "ringing",
+        "answered",
+        "ended",
+        "missed",
+        "declined",
+      ],
+      subscription_status: ["active", "expired", "cancelled", "pending"],
     },
   },
 } as const

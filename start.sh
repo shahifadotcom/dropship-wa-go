@@ -206,6 +206,21 @@ else
     echo -e "${GREEN}✓ WhatsApp bridge dependencies already installed${NC}"
 fi
 
+# Install calling server dependencies
+echo -e "${YELLOW}Checking calling server dependencies...${NC}"
+if [ ! -d "calling-server/node_modules" ]; then
+    echo -e "${YELLOW}Installing calling server dependencies...${NC}"
+    cd calling-server
+    npm install || {
+        echo -e "${RED}Failed to install calling server dependencies${NC}"
+        exit 1
+    }
+    cd ..
+    echo -e "${GREEN}✓ Calling server dependencies installed${NC}"
+else
+    echo -e "${GREEN}✓ Calling server dependencies already installed${NC}"
+fi
+
 # Create WhatsApp bridge .env file if it doesn't exist
 if [ ! -f "whatsapp-bridge/.env" ]; then
     echo -e "${YELLOW}Creating WhatsApp bridge .env file...${NC}"
@@ -306,13 +321,24 @@ else
     cd ..
     
     echo -e "${GREEN}WhatsApp bridge started with PID: $WHATSAPP_PID${NC}"
+    
+    echo -e "${YELLOW}Starting calling server in background...${NC}"
+    
+    # Start calling server in background
+    cd calling-server
+    npm start &
+    CALLING_PID=$!
+    cd ..
+    
+    echo -e "${GREEN}Calling server started with PID: $CALLING_PID${NC}"
     echo -e "${YELLOW}Starting main application...${NC}"
-    echo -e "${YELLOW}Press Ctrl+C to stop both servers${NC}"
+    echo -e "${YELLOW}Press Ctrl+C to stop all servers${NC}"
     
     # Function to cleanup on exit
     cleanup() {
         echo -e "\n${YELLOW}Stopping servers...${NC}"
         kill $WHATSAPP_PID 2>/dev/null || true
+        kill $CALLING_PID 2>/dev/null || true
         exit 0
     }
     

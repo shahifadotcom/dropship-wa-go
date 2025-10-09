@@ -8,6 +8,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { useEffect } from "react";
 import { initializeAndroidAuth } from "./utils/androidAuthBridge";
 import { FaviconUpdater } from "@/components/FaviconUpdater";
+import { CallButton } from "@/components/calling/CallButton";
 import Index from "./pages/Index";
 import Home from "./pages/Home";
 
@@ -48,6 +49,7 @@ import VendorAutomation from "./pages/admin/VendorAutomation";
 import StorefrontSlider from "./pages/admin/StorefrontSlider";
 import VirtualTrial from "./pages/admin/VirtualTrial";
 import ProductDetail from "./pages/ProductDetail";
+import Calling from "./pages/Calling";
 
 const queryClient = new QueryClient();
 
@@ -64,6 +66,7 @@ const App = () => {
         <CartProvider>
           <ErrorLogger />
           <FaviconUpdater />
+          <CallButton />
           <Toaster />
           <Sonner />
           <BrowserRouter>
@@ -106,6 +109,7 @@ const App = () => {
               <Route path="/profile" element={<Profile />} />
               <Route path="/orders" element={<Orders />} />
               <Route path="/android-app" element={<AndroidApp />} />
+              <Route path="/calling" element={<Calling />} />
         <Route path="/wc-auth/v1/authorize" element={<WCAuth />} />
         <Route path="/wp-json/*" element={<WCAuth />} />
         <Route path="/wc/v3/*" element={<WCAuth />} />
