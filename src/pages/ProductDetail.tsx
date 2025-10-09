@@ -241,11 +241,11 @@ const ProductDetail = () => {
             </p>
 
             {product.tags && product.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2">
+              <div className="sr-only">
                 {product.tags.map((tag, index) => (
-                  <Badge key={index} variant="secondary">
+                  <span key={index}>
                     {tag}
-                  </Badge>
+                  </span>
                 ))}
               </div>
             )}
