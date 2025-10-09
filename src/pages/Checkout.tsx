@@ -40,7 +40,6 @@ const Checkout = () => {
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [showOTPModal, setShowOTPModal] = useState(false);
-  const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
   const [showPaymentSection, setShowPaymentSection] = useState(false);
   const [selectedPaymentIsCOD, setSelectedPaymentIsCOD] = useState(false);
 
@@ -52,52 +51,32 @@ const Checkout = () => {
     setShowOTPModal(false);
     setIsProcessing(true);
     
-    // Create order immediately after OTP verification
+    // Just verify OTP - order will be created after payment
     try {
-      const { data, error } = await supabase.functions.invoke('verify-otp-and-create-order', {
-        body: {
+      const { data, error } = await supabase.functions.invoke('send-otp', {
+        body: { 
           phoneNumber,
-          otpCode,
-          orderData: {
-            ...formData,
-            items: cart.items,
-            subtotal,
-            tax: 0,
-            shipping: 0,
-            total,
-            email: user?.email || ''
-          }
+          verifyOnly: true,
+          otpCode
         }
       });
 
       if (error) throw error;
 
-      // Check if the response indicates a failure with a specific message
-      if (!data.success && data.message) {
-        toast({
-          title: "Verification Failed",
-          description: data.message,
-          variant: "destructive"
-        });
-        return;
-      }
-
-      if (data.success && data.orderId) {
-        setCreatedOrderId(data.orderId);
+      if (data.success) {
         setShowPaymentSection(true);
-        
         toast({
-          title: "Order Created!",
-          description: "Please complete payment to confirm your order.",
+          title: "Phone Verified!",
+          description: "Please complete payment to place your order.",
         });
       } else {
-        throw new Error('Failed to create order');
+        throw new Error(data.message || 'OTP verification failed');
       }
     } catch (error: any) {
-      console.error('Order creation error:', error);
+      console.error('OTP verification error:', error);
       toast({
-        title: "Order Creation Failed",
-        description: error.message || "Failed to create order. Please try again.",
+        title: "Verification Failed",
+        description: error.message || "Failed to verify OTP. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -109,10 +88,10 @@ const Checkout = () => {
     setSelectedPaymentIsCOD(true);
   };
 
-  const handlePaymentSubmitted = async () => {
-    // Payment verified, complete the order
+  const handlePaymentSubmitted = async (orderId: string) => {
+    // Payment verified and order created, complete the checkout
     clearCart();
-    navigate(`/order-success/${createdOrderId}`);
+    navigate(`/order-success/${orderId}`);
   };
 
   const handleInputChange = (field: keyof CheckoutFormData, value: string) => {
@@ -228,11 +207,20 @@ const Checkout = () => {
             </Card>
 
             <PaymentSelector
-              orderId={createdOrderId || ''}
               orderAmount={total}
               productIds={cart.items.map(item => item.productId)}
               onPaymentSubmitted={handlePaymentSubmitted}
               onCODSelected={handleCODSelected}
+              orderData={{
+                ...formData,
+                items: cart.items,
+                subtotal,
+                tax: 0,
+                shipping: 0,
+                total,
+                email: user?.email || '',
+                phoneNumber: formData.whatsappNumber
+              }}
             />
           </div>
         ) : (

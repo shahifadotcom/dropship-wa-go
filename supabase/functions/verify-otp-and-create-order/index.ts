@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { phoneNumber, otpCode, orderData } = await req.json();
+    const { phoneNumber, otpCode, orderData, skipOTPVerification } = await req.json();
     
     if (!phoneNumber || !otpCode || !orderData) {
       return new Response(
@@ -31,106 +31,110 @@ serve(async (req) => {
     const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Verify OTP with timing-safe comparison
-    console.log('Verifying OTP for phone:', phoneNumber);
-    
-    const { data: otpRecords, error: otpError } = await supabase
-      .from('otp_verifications')
-      .select('*')
-      .eq('phone_number', phoneNumber)
-      .eq('is_verified', false)
-      .gt('expires_at', new Date().toISOString())
-      .order('created_at', { ascending: false });
+    // Verify OTP only if not skipping (when called after payment)
+    if (!skipOTPVerification) {
+      console.log('Verifying OTP for phone:', phoneNumber);
+      
+      const { data: otpRecords, error: otpError } = await supabase
+        .from('otp_verifications')
+        .select('*')
+        .eq('phone_number', phoneNumber)
+        .eq('is_verified', false)
+        .gt('expires_at', new Date().toISOString())
+        .order('created_at', { ascending: false });
 
-    console.log(`Found ${otpRecords?.length || 0} unverified OTP records for this phone number`);
+      console.log(`Found ${otpRecords?.length || 0} unverified OTP records for this phone number`);
 
-    // Find matching OTP with constant-time comparison to prevent timing attacks
-    let otpVerification = null;
-    if (otpRecords && otpRecords.length > 0) {
-      for (const record of otpRecords) {
-        // Simple timing-safe comparison
-        if (record.otp_code.length === otpCode.length) {
-          let isMatch = true;
-          for (let i = 0; i < record.otp_code.length; i++) {
-            if (record.otp_code.charCodeAt(i) !== otpCode.charCodeAt(i)) {
-              isMatch = false;
+      // Find matching OTP with constant-time comparison to prevent timing attacks
+      let otpVerification = null;
+      if (otpRecords && otpRecords.length > 0) {
+        for (const record of otpRecords) {
+          // Simple timing-safe comparison
+          if (record.otp_code.length === otpCode.length) {
+            let isMatch = true;
+            for (let i = 0; i < record.otp_code.length; i++) {
+              if (record.otp_code.charCodeAt(i) !== otpCode.charCodeAt(i)) {
+                isMatch = false;
+              }
+            }
+            if (isMatch) {
+              otpVerification = record;
+              console.log('OTP matched successfully');
+              break;
             }
           }
-          if (isMatch) {
-            otpVerification = record;
-            console.log('OTP matched successfully');
-            break;
-          }
         }
       }
-    }
 
-    if (otpError) {
-      console.error('Error verifying OTP:', otpError);
-      throw otpError;
-    }
+      if (otpError) {
+        console.error('Error verifying OTP:', otpError);
+        throw otpError;
+      }
 
-    if (!otpVerification) {
-      console.error('No matching OTP found');
-      
-      // Check if OTP was already verified
-      const { data: verifiedOTP } = await supabase
-        .from('otp_verifications')
-        .select('*')
-        .eq('phone_number', phoneNumber)
-        .eq('otp_code', otpCode)
-        .eq('is_verified', true)
-        .maybeSingle();
-      
-      if (verifiedOTP) {
+      if (!otpVerification) {
+        console.error('No matching OTP found');
+        
+        // Check if OTP was already verified
+        const { data: verifiedOTP } = await supabase
+          .from('otp_verifications')
+          .select('*')
+          .eq('phone_number', phoneNumber)
+          .eq('otp_code', otpCode)
+          .eq('is_verified', true)
+          .maybeSingle();
+        
+        if (verifiedOTP) {
+          return new Response(
+            JSON.stringify({ 
+              success: false, 
+              message: 'This OTP has already been used. Please request a new OTP.' 
+            }),
+            { 
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+            }
+          );
+        }
+        
+        // Check if OTP expired
+        const { data: expiredOTP } = await supabase
+          .from('otp_verifications')
+          .select('*')
+          .eq('phone_number', phoneNumber)
+          .eq('otp_code', otpCode)
+          .lte('expires_at', new Date().toISOString())
+          .maybeSingle();
+        
+        if (expiredOTP) {
+          return new Response(
+            JSON.stringify({ 
+              success: false, 
+              message: 'This OTP has expired. Please request a new OTP.' 
+            }),
+            { 
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+            }
+          );
+        }
+        
         return new Response(
           JSON.stringify({ 
             success: false, 
-            message: 'This OTP has already been used. Please request a new OTP.' 
+            message: 'Invalid OTP code. Please check and try again.' 
           }),
           { 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
           }
         );
       }
-      
-      // Check if OTP expired
-      const { data: expiredOTP } = await supabase
-        .from('otp_verifications')
-        .select('*')
-        .eq('phone_number', phoneNumber)
-        .eq('otp_code', otpCode)
-        .lte('expires_at', new Date().toISOString())
-        .maybeSingle();
-      
-      if (expiredOTP) {
-        return new Response(
-          JSON.stringify({ 
-            success: false, 
-            message: 'This OTP has expired. Please request a new OTP.' 
-          }),
-          { 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-          }
-        );
-      }
-      
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          message: 'Invalid OTP code. Please check and try again.' 
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
-    }
 
-    // Mark OTP as verified
-    await supabase
-      .from('otp_verifications')
-      .update({ is_verified: true })
-      .eq('id', otpVerification.id);
+      // Mark OTP as verified
+      await supabase
+        .from('otp_verifications')
+        .update({ is_verified: true })
+        .eq('id', otpVerification.id);
+    } else {
+      console.log('Skipping OTP verification - creating order after payment verification');
+    }
 
     // Check if user exists or create new user
     let userId;

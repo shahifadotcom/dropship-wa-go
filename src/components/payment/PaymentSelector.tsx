@@ -9,17 +9,18 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { PaymentService, PaymentGateway } from '@/services/paymentService';
 import { useCountryDetection } from '@/hooks/useCountryDetection';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PaymentSelectorProps {
-  orderId: string;
   orderAmount: number;
   productId?: string;
   productIds?: string[];
-  onPaymentSubmitted?: () => void;
+  onPaymentSubmitted?: (orderId: string) => void;
   onCODSelected?: () => void;
+  orderData: any;
 }
 
-export const PaymentSelector = ({ orderId, orderAmount, productId, productIds, onPaymentSubmitted, onCODSelected }: PaymentSelectorProps) => {
+export const PaymentSelector = ({ orderAmount, productId, productIds, onPaymentSubmitted, onCODSelected, orderData }: PaymentSelectorProps) => {
   const [paymentGateways, setPaymentGateways] = useState<PaymentGateway[]>([]);
   const [selectedGateway, setSelectedGateway] = useState<PaymentGateway | null>(null);
   const [transactionId, setTransactionId] = useState('');
@@ -29,6 +30,7 @@ export const PaymentSelector = ({ orderId, orderAmount, productId, productIds, o
   const [verificationFailed, setVerificationFailed] = useState(false);
   const [failedTransactionId, setFailedTransactionId] = useState('');
   const [showContactSupport, setShowContactSupport] = useState(false);
+  const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
   const { effectiveCountry } = useCountryDetection();
   const { toast } = useToast();
 
@@ -36,43 +38,31 @@ export const PaymentSelector = ({ orderId, orderAmount, productId, productIds, o
     const loadPaymentGateways = async () => {
       const currentProductIds = productIds || (productId ? [productId] : []);
       
-      if (!effectiveCountry?.id) {
-        // Fallback to Bangladesh payment gateways
-        if (currentProductIds.length > 0) {
-          // Get intersection of all products' allowed gateways
-          const allProductGateways = await Promise.all(
-            currentProductIds.map(id => PaymentService.getProductPaymentGateways(id, 'bangladesh-default'))
+      // Always get Bangladesh country ID first
+      const bangladeshCountryId = await PaymentService.getBangladeshCountryId();
+      const targetCountryId = effectiveCountry?.id || bangladeshCountryId;
+      
+      if (!targetCountryId) {
+        console.error('No country ID available');
+        return;
+      }
+      
+      if (currentProductIds.length > 0) {
+        // Get intersection of all products' allowed gateways
+        const allProductGateways = await Promise.all(
+          currentProductIds.map(id => PaymentService.getProductPaymentGateways(id, targetCountryId))
+        );
+        // Find common gateways across all products
+        let intersectionGateways = allProductGateways[0] || [];
+        for (let i = 1; i < allProductGateways.length; i++) {
+          intersectionGateways = intersectionGateways.filter(gateway => 
+            allProductGateways[i].some(g => g.id === gateway.id)
           );
-          // Find common gateways across all products
-          let intersectionGateways = allProductGateways[0] || [];
-          for (let i = 1; i < allProductGateways.length; i++) {
-            intersectionGateways = intersectionGateways.filter(gateway => 
-              allProductGateways[i].some(g => g.id === gateway.id)
-            );
-          }
-          setPaymentGateways(intersectionGateways);
-        } else {
-          const gateways = await PaymentService.getBangladeshPaymentGateways();
-          setPaymentGateways(gateways);
         }
+        setPaymentGateways(intersectionGateways);
       } else {
-        if (currentProductIds.length > 0) {
-          // Get intersection of all products' allowed gateways
-          const allProductGateways = await Promise.all(
-            currentProductIds.map(id => PaymentService.getProductPaymentGateways(id, effectiveCountry.id))
-          );
-          // Find common gateways across all products
-          let intersectionGateways = allProductGateways[0] || [];
-          for (let i = 1; i < allProductGateways.length; i++) {
-            intersectionGateways = intersectionGateways.filter(gateway => 
-              allProductGateways[i].some(g => g.id === gateway.id)
-            );
-          }
-          setPaymentGateways(intersectionGateways);
-        } else {
-          const gateways = await PaymentService.getPaymentGateways(effectiveCountry.id);
-          setPaymentGateways(gateways);
-        }
+        const gateways = await PaymentService.getPaymentGateways(targetCountryId);
+        setPaymentGateways(gateways);
       }
     };
 
@@ -96,16 +86,11 @@ export const PaymentSelector = ({ orderId, orderAmount, productId, productIds, o
       // Handle COD advance payment
       if (selectedGateway.name === 'cod') {
         onCODSelected?.();
-        const advancePaymentId = await PaymentService.createAdvancePayment(orderId, 100, 'binance_pay');
-        if (advancePaymentId) {
-          setShowAdvancePayment(true);
-          toast({
-            title: "COD Selected",
-            description: "Please pay 100 BDT delivery charge to confirm your order.",
-          });
-        } else {
-          throw new Error('Failed to create advance payment');
-        }
+        setShowAdvancePayment(true);
+        toast({
+          title: "COD Selected",
+          description: "Please pay 100 BDT delivery charge to confirm your order.",
+        });
         return;
       }
 
@@ -123,17 +108,39 @@ export const PaymentSelector = ({ orderId, orderAmount, productId, productIds, o
         return;
       }
 
+      // Create order after payment verified
+      const { data: orderResponse, error: orderError } = await supabase.functions.invoke('verify-otp-and-create-order', {
+        body: {
+          phoneNumber: orderData.phoneNumber,
+          otpCode: 'verified', // OTP already verified
+          skipOTPVerification: true,
+          orderData: {
+            ...orderData,
+            paymentMethod: selectedGateway.name,
+            transactionId: transactionId
+          }
+        }
+      });
+
+      if (orderError) throw orderError;
+      if (!orderResponse.success || !orderResponse.orderId) {
+        throw new Error('Failed to create order');
+      }
+
+      const newOrderId = orderResponse.orderId;
+      setCreatedOrderId(newOrderId);
+
       // Handle Binance auto-verification
       if (selectedGateway.name === 'binance_pay') {
         setIsVerifyingBinance(true);
-        const verified = await PaymentService.verifyBinancePayment(transactionId, orderId, orderAmount);
+        const verified = await PaymentService.verifyBinancePayment(transactionId, newOrderId, orderAmount);
         
         if (verified) {
           toast({
             title: "Payment Verified",
             description: "Your Binance payment has been automatically verified!",
           });
-          onPaymentSubmitted?.();
+          onPaymentSubmitted?.(newOrderId);
           return;
         } else {
           setFailedTransactionId(transactionId);
@@ -149,7 +156,7 @@ export const PaymentSelector = ({ orderId, orderAmount, productId, productIds, o
 
       // Handle other payment methods - submit for manual verification
       const success = await PaymentService.submitTransaction(
-        orderId,
+        newOrderId,
         selectedGateway.name,
         transactionId,
         orderAmount
@@ -160,7 +167,7 @@ export const PaymentSelector = ({ orderId, orderAmount, productId, productIds, o
           title: "Payment Verified",
           description: "Your payment has been confirmed! Completing your order...",
         });
-        onPaymentSubmitted?.();
+        onPaymentSubmitted?.(newOrderId);
       } else {
         setFailedTransactionId(transactionId);
         setShowContactSupport(true);
@@ -208,7 +215,37 @@ export const PaymentSelector = ({ orderId, orderAmount, productId, productIds, o
         return;
       }
 
-      const verified = await PaymentService.verifyBinancePayment(transactionId, orderId, 100);
+      // Create order first with COD
+      const { data: orderResponse, error: orderError } = await supabase.functions.invoke('verify-otp-and-create-order', {
+        body: {
+          phoneNumber: orderData.phoneNumber,
+          otpCode: 'verified',
+          skipOTPVerification: true,
+          orderData: {
+            ...orderData,
+            paymentMethod: 'cod',
+            advanceAmount: 100,
+            transactionId: transactionId
+          }
+        }
+      });
+
+      if (orderError) throw orderError;
+      if (!orderResponse.success || !orderResponse.orderId) {
+        throw new Error('Failed to create order');
+      }
+
+      const newOrderId = orderResponse.orderId;
+      setCreatedOrderId(newOrderId);
+
+      // Create advance payment record
+      const advancePaymentId = await PaymentService.createAdvancePayment(newOrderId, 100, 'binance_pay');
+      if (!advancePaymentId) {
+        throw new Error('Failed to create advance payment record');
+      }
+
+      // Verify the advance payment
+      const verified = await PaymentService.verifyBinancePayment(transactionId, newOrderId, 100);
       
       if (verified) {
         toast({
@@ -216,7 +253,7 @@ export const PaymentSelector = ({ orderId, orderAmount, productId, productIds, o
           description: "Your order is confirmed! You'll pay the remaining amount on delivery.",
         });
         setShowAdvancePayment(false);
-        onPaymentSubmitted?.();
+        onPaymentSubmitted?.(newOrderId);
       } else {
         setVerificationFailed(true);
         setFailedTransactionId(transactionId);

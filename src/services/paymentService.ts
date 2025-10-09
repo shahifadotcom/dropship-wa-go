@@ -254,18 +254,29 @@ export class PaymentService {
     }
   }
 
-  // Get Bangladesh payment gateways (default)
-  static async getBangladeshPaymentGateways(): Promise<PaymentGateway[]> {
+  // Get Bangladesh country ID
+  static async getBangladeshCountryId(): Promise<string | null> {
     try {
       const { data: country } = await supabase
         .from('countries')
         .select('id')
         .eq('code', 'BD')
-        .single();
+        .maybeSingle();
 
-      if (!country) return [];
+      return country?.id || null;
+    } catch (error) {
+      console.error('Error fetching Bangladesh country ID:', error);
+      return null;
+    }
+  }
 
-      return await this.getPaymentGateways(country.id);
+  // Get Bangladesh payment gateways (default)
+  static async getBangladeshPaymentGateways(): Promise<PaymentGateway[]> {
+    try {
+      const countryId = await this.getBangladeshCountryId();
+      if (!countryId) return [];
+
+      return await this.getPaymentGateways(countryId);
     } catch (error) {
       console.error('Error fetching Bangladesh payment gateways:', error);
       return [];
