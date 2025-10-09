@@ -2977,6 +2977,42 @@ export type Database = {
           },
         ]
       }
+      store_settings_public: {
+        Row: {
+          created_at: string | null
+          currency: string | null
+          favicon_url: string | null
+          id: string | null
+          store_description: string | null
+          store_logo: string | null
+          store_name: string | null
+          store_tagline: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          currency?: string | null
+          favicon_url?: string | null
+          id?: string | null
+          store_description?: string | null
+          store_logo?: string | null
+          store_name?: string | null
+          store_tagline?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          currency?: string | null
+          favicon_url?: string | null
+          id?: string | null
+          store_description?: string | null
+          store_logo?: string | null
+          store_name?: string | null
+          store_tagline?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       assign_user_role: {
