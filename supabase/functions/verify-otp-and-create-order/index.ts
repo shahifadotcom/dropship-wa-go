@@ -12,11 +12,25 @@ serve(async (req) => {
   }
 
   try {
-    const { phoneNumber, otpCode, orderData, skipOTPVerification } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const phoneNumber = body?.phoneNumber ?? null;
+    const otpCode = body?.otpCode ?? null;
+    const orderData = body?.orderData ?? body ?? null;
+    const skipOTPVerification = body?.skipOTPVerification ?? body?.skipOTP ?? false;
     
-    if (!phoneNumber || !otpCode || !orderData) {
+    if (!orderData) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields' }),
+        JSON.stringify({ error: 'Missing orderData' }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+    
+    if (!skipOTPVerification && (!phoneNumber || !otpCode)) {
+      return new Response(
+        JSON.stringify({ error: 'Missing phoneNumber or otpCode' }),
         { 
           status: 400, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -136,43 +150,45 @@ serve(async (req) => {
       console.log('Skipping OTP verification - creating order after payment verification');
     }
 
-    // Check if user exists or create new user
-    let userId;
-    const { data: existingProfile } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('phone', phoneNumber)
-      .maybeSingle();
-
-    if (existingProfile) {
-      userId = existingProfile.id;
-    } else {
-      // Create new user account
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        phone: phoneNumber,
-        phone_confirm: true,
-        user_metadata: {
-          full_name: orderData.fullName,
-          phone: phoneNumber
-        }
-      });
-
-      if (authError) {
-        console.error('Error creating user:', authError);
-        throw authError;
-      }
-
-      userId = authData.user.id;
-
-      // Create profile
-      await supabase
+    // Check if user exists or create new user (optional when skipping OTP)
+    let userId: string | null = null;
+    if (phoneNumber) {
+      const { data: existingProfile } = await supabase
         .from('profiles')
-        .insert({
-          id: userId,
-          first_name: orderData.fullName.split(' ')[0] || '',
-          last_name: orderData.fullName.split(' ').slice(1).join(' ') || '',
-          phone: phoneNumber
+        .select('id')
+        .eq('phone', phoneNumber)
+        .maybeSingle();
+
+      if (existingProfile) {
+        userId = existingProfile.id;
+      } else {
+        // Create new user account
+        const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+          phone: phoneNumber,
+          phone_confirm: true,
+          user_metadata: {
+            full_name: orderData.fullName,
+            phone: phoneNumber
+          }
         });
+
+        if (authError) {
+          console.error('Error creating user:', authError);
+          throw authError;
+        }
+
+        userId = authData.user.id;
+
+        // Create profile
+        await supabase
+          .from('profiles')
+          .insert({
+            id: userId,
+            first_name: (orderData.fullName || '').split(' ')[0] || '',
+            last_name: (orderData.fullName || '').split(' ').slice(1).join(' ') || '',
+            phone: phoneNumber
+          });
+      }
     }
 
     // Generate order number starting from 1001
@@ -209,21 +225,11 @@ serve(async (req) => {
         payment_status: paymentStatus,
         payment_method: orderData.paymentMethod || 'COD',
         subtotal: orderData.subtotal,
-        tax: orderData.tax,
-        shipping: orderData.shipping,
+        tax: orderData.tax ?? 0,
+        shipping: orderData.shipping ?? 0,
         total: orderData.total,
-        billing_address: {
-          country: orderData.country,
-          fullName: orderData.fullName,
-          fullAddress: orderData.fullAddress,
-          whatsappNumber: phoneNumber
-        },
-        shipping_address: {
-          country: orderData.country,
-          fullName: orderData.fullName,
-          fullAddress: orderData.fullAddress,
-          whatsappNumber: phoneNumber
-        }
+        billing_address: orderData.billingAddress ?? null,
+        shipping_address: orderData.shippingAddress ?? null
       })
       .select()
       .single();
@@ -233,24 +239,27 @@ serve(async (req) => {
       throw orderError;
     }
 
-    // Create order items
-    const orderItemsData = orderData.items.map((item: any) => ({
-      order_id: order.id,
-      product_id: item.productId,
-      product_name: item.product.name,
-      product_image: item.product.images[0],
-      quantity: item.quantity,
-      price: item.price,
-      variant_data: item.variant || null
-    }));
+    // Create order items (optional)
+    const items = Array.isArray(orderData.items) ? orderData.items : [];
+    if (items.length > 0) {
+      const orderItemsData = items.map((item: any) => ({
+        order_id: order.id,
+        product_id: item.productId,
+        product_name: item.product?.name,
+        product_image: item.product?.images?.[0] ?? null,
+        quantity: item.quantity,
+        price: item.price,
+        variant_data: item.variant || null
+      }));
 
-    const { error: itemsError } = await supabase
-      .from('order_items')
-      .insert(orderItemsData);
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(orderItemsData);
 
-    if (itemsError) {
-      console.error('Error creating order items:', itemsError);
-      throw itemsError;
+      if (itemsError) {
+        console.error('Error creating order items:', itemsError);
+        throw itemsError;
+      }
     }
 
     // Send order confirmation notification

@@ -261,19 +261,19 @@ export class PaymentService {
   static async checkSMSTransaction(transactionId: string): Promise<boolean> {
     try {
       // Only check transaction_verifications table - this is where used transactions are stored
-      const { data: txData, error: txError } = await supabase
+      const { data, error } = await supabase
         .from('transaction_verifications')
         .select('id')
         .eq('transaction_id', transactionId.trim())
-        .maybeSingle();
+        .limit(1);
 
-      if (txError) {
-        console.error('Error checking transaction verifications:', txError);
+      if (error) {
+        console.error('Error checking transaction verifications:', error);
         return false;
       }
 
       // Return true only if found in transaction_verifications (already used)
-      return !!txData;
+      return Array.isArray(data) && data.length > 0;
     } catch (error) {
       console.error('Error checking SMS transaction:', error);
       return false;
