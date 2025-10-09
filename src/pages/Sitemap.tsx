@@ -105,6 +105,20 @@ export default function Sitemap() {
     }
   };
 
+  useEffect(() => {
+    // Set content type for sitemap
+    if (!loading && sitemapXML) {
+      const meta = document.createElement('meta');
+      meta.httpEquiv = 'Content-Type';
+      meta.content = 'application/xml; charset=utf-8';
+      document.head.appendChild(meta);
+      
+      return () => {
+        document.head.removeChild(meta);
+      };
+    }
+  }, [loading, sitemapXML]);
+
   if (loading) {
     return <div>Loading sitemap...</div>;
   }
