@@ -138,30 +138,41 @@ serve(async (req) => {
 
     // Send product images separately
     if (order.order_items && order.order_items.length > 0) {
+      console.log(`Sending ${order.order_items.length} product images to customer`);
       for (const item of order.order_items) {
         if (item.product_image) {
-          const imageCaption = `${item.product_name}\nQty: ${item.quantity} × ৳${item.price}`;
-          await supabase.functions.invoke('send-whatsapp-message', {
+          console.log(`Sending product image: ${item.product_name} - ${item.product_image}`);
+          const imageCaption = `🖼️ ${item.product_name}\nQty: ${item.quantity} × ৳${item.price}`;
+          const { error: imageError } = await supabase.functions.invoke('send-whatsapp-message', {
             body: {
               phoneNumber,
               message: imageCaption,
               mediaUrl: item.product_image
             }
           });
+          if (imageError) {
+            console.error(`Failed to send image for ${item.product_name}:`, imageError);
+          }
         }
       }
     }
 
     // Send notification to admin with full order details
-    const { data: storeSettings } = await supabase
+    const { data: storeSettings, error: settingsError } = await supabase
       .from('store_settings')
       .select('admin_whatsapp, contact_phone')
       .single();
+
+    console.log('Store settings:', { 
+      admin_whatsapp: storeSettings?.admin_whatsapp, 
+      contact_phone: storeSettings?.contact_phone 
+    });
 
     // Use admin_whatsapp if set, otherwise fall back to contact_phone
     const adminPhone = storeSettings?.admin_whatsapp || storeSettings?.contact_phone;
 
     if (adminPhone) {
+      console.log(`Sending admin notification to: ${adminPhone}`);
       let adminProductList = '';
       if (order.order_items && order.order_items.length > 0) {
         adminProductList = '\n📦 Items:\n';
@@ -196,15 +207,20 @@ serve(async (req) => {
 
       // Send product images to admin
       if (order.order_items && order.order_items.length > 0) {
+        console.log(`Sending ${order.order_items.length} product images to admin`);
         for (const item of order.order_items) {
           if (item.product_image) {
-            await supabase.functions.invoke('send-whatsapp-message', {
+            console.log(`Sending admin product image: ${item.product_name} - ${item.product_image}`);
+            const { error: adminImageError } = await supabase.functions.invoke('send-whatsapp-message', {
               body: {
                 phoneNumber: adminPhone,
-                message: `Product: ${item.product_name}`,
+                message: `🖼️ Product: ${item.product_name}`,
                 mediaUrl: item.product_image
               }
             });
+            if (adminImageError) {
+              console.error(`Failed to send admin image for ${item.product_name}:`, adminImageError);
+            }
           }
         }
       }

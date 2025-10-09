@@ -32,17 +32,21 @@ serve(async (req) => {
     const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log(`Attempting to send WhatsApp message to ${phoneNumber}`);
+    console.log(`Attempting to send WhatsApp message to ${phoneNumber}${mediaUrl ? ' WITH IMAGE: ' + mediaUrl : ''}`);
 
     let messageSent = false;
     let errorMessage = '';
 
     try {
+      // Prepare payload
+      const payload = { phoneNumber, message, mediaUrl };
+      console.log('Bridge payload:', JSON.stringify(payload));
+      
       // Send message through WhatsApp bridge
       const bridgeResponse = await fetch(`${whatsappBridgeUrl}/send-message`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phoneNumber, message, mediaUrl })
+        body: JSON.stringify(payload)
       });
 
       const bridgeData = await bridgeResponse.json().catch(() => ({}));
