@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
 import CartDrawer from "./CartDrawer";
@@ -13,6 +13,7 @@ const Header = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { settings } = useStoreSettings();
+  const { countryCode = 'bd' } = useParams<{ countryCode: string }>();
 
   const handleSignOut = async () => {
     await signOut();
@@ -133,8 +134,11 @@ const Header = () => {
         {/* Desktop Navigation Menu */}
         <div className="hidden md:block">
           <nav className="flex items-center justify-center space-x-8 py-3 border-t border-navigation-foreground/20">
-            <a href="/" className="text-navigation-foreground hover:text-navigation-foreground/80 transition-colors font-medium">
+            <a href={`/${countryCode}`} className="text-navigation-foreground hover:text-navigation-foreground/80 transition-colors font-medium">
               Home
+            </a>
+            <a href={`/${countryCode}/blog`} className="text-navigation-foreground hover:text-navigation-foreground/80 transition-colors font-medium">
+              Blog
             </a>
             <a href="/categories" className="text-navigation-foreground hover:text-navigation-foreground/80 transition-colors font-medium">
               Categories

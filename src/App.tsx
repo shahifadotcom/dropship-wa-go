@@ -54,8 +54,10 @@ import Calling from "./pages/Calling";
 import CallingSubscriptions from "./pages/admin/CallingSubscriptions";
 import Sitemap from "./pages/Sitemap";
 import RobotsTxt from "./pages/RobotsTxt";
-import Blog from "./pages/admin/Blog";
+import AdminBlog from "./pages/admin/Blog";
 import AISettings from "./pages/admin/AISettings";
+import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
 
 const queryClient = new QueryClient();
 
@@ -80,6 +82,8 @@ const App = () => {
             <Routes>
               {/* Country-based routes */}
               <Route path="/:countryCode" element={<Home />} />
+              <Route path="/:countryCode/blog" element={<Blog />} />
+              <Route path="/:countryCode/blog/:slug" element={<BlogPost />} />
               <Route path="/:countryCode/products/:slug" element={<ProductDetail />} />
               <Route path="/:countryCode/checkout" element={<Checkout />} />
               
@@ -118,7 +122,7 @@ const App = () => {
               <Route path="/admin/storefront-slider" element={<StorefrontSlider />} />
               <Route path="/admin/virtual-trial" element={<VirtualTrial />} />
               <Route path="/admin/calling-subscriptions" element={<CallingSubscriptions />} />
-              <Route path="/admin/blog" element={<Blog />} />
+              <Route path="/admin/blog" element={<AdminBlog />} />
               <Route path="/admin/ai-settings" element={<AISettings />} />
               
               <Route path="/dashboard" element={<UserDashboard />} />
