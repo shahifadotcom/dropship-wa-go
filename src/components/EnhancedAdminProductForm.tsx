@@ -120,55 +120,68 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
     }
   }, [isOpen]);
 
-  // Load product data for editing
+  // Load product data for editing (fetch fresh to ensure persisted fields like country_id)
   useEffect(() => {
-    if (isOpen && product) {
-      setFormData({
-        name: product.name || '',
-        description: product.description || '',
-        slug: product.slug || '',
-        price: product.price?.toString() || '',
-        original_price: product.original_price?.toString() || '',
-        cost_price: product.cost_price?.toString() || '',
-        shipping_cost: product.shipping_cost?.toString() || '',
-        tax_rate: product.tax_rate?.toString() || '',
-        images: product.images && product.images.length > 0 ? product.images : [''],
-        category_id: product.category_id || '',
-        country_id: product.country_id || 'all-countries',
-        vendor_id: product.vendor_id || 'none',
-        auto_order_enabled: product.auto_order_enabled || false,
-        allowed_payment_gateways: product.allowed_payment_gateways || [],
-        cash_on_delivery_enabled: product.cash_on_delivery_enabled || false,
-        virtual_trial_enabled: product.virtual_trial_enabled || false,
-        is_digital: product.is_digital || false,
-        download_url: product.download_url || '',
-        brand: product.brand || '',
-        tags: product.tags ? product.tags.join(', ') : '',
-        stock_quantity: product.stock_quantity?.toString() || '',
-        sku: product.sku || '',
-        weight: product.weight?.toString() || '',
-        dimensions: {
-          length: product.dimensions?.length?.toString() || '',
-          width: product.dimensions?.width?.toString() || '',
-          height: product.dimensions?.height?.toString() || ''
-        },
-        meta_title: product.meta_title || '',
-        meta_description: product.meta_description || '',
-        social_preview_image: product.social_preview_image || ''
-      });
-    } else if (isOpen && !product) {
-      // Reset form for new product
-      setFormData({
-        name: '', description: '', slug: '', price: '', original_price: '', cost_price: '', 
-        shipping_cost: '', tax_rate: '', images: [''], category_id: '', country_id: 'all-countries', 
-        vendor_id: 'none', auto_order_enabled: false,
-        allowed_payment_gateways: [] as string[], cash_on_delivery_enabled: false,
-        virtual_trial_enabled: false, is_digital: false, download_url: '',
-        brand: '', tags: '', stock_quantity: '', sku: '', weight: '',
-        dimensions: { length: '', width: '', height: '' },
-        meta_title: '', meta_description: '', social_preview_image: ''
-      });
-    }
+    const init = async () => {
+      if (isOpen && product) {
+        // Try to fetch latest product from DB to avoid stale props
+        const { data: fresh, error: freshError } = await supabase
+          .from('products')
+          .select('*')
+          .eq('id', product.id)
+          .single();
+
+        const p = !freshError && fresh ? fresh : product;
+
+        setFormData({
+          name: p.name || '',
+          description: p.description || '',
+          slug: p.slug || '',
+          price: p.price?.toString() || '',
+          original_price: p.original_price?.toString() || '',
+          cost_price: p.cost_price?.toString() || '',
+          shipping_cost: p.shipping_cost?.toString() || '',
+          tax_rate: p.tax_rate?.toString() || '',
+          images: p.images && p.images.length > 0 ? p.images : [''],
+          category_id: p.category_id || '',
+          country_id: p.country_id || 'all-countries',
+          vendor_id: p.vendor_id || 'none',
+          auto_order_enabled: p.auto_order_enabled || false,
+          allowed_payment_gateways: p.allowed_payment_gateways || [],
+          cash_on_delivery_enabled: p.cash_on_delivery_enabled || false,
+          virtual_trial_enabled: p.virtual_trial_enabled || false,
+          is_digital: p.is_digital || false,
+          download_url: p.download_url || '',
+          brand: p.brand || '',
+          tags: p.tags ? p.tags.join(', ') : '',
+          stock_quantity: p.stock_quantity?.toString() || '',
+          sku: p.sku || '',
+          weight: p.weight?.toString() || '',
+          dimensions: {
+            length: p.dimensions?.length?.toString() || '',
+            width: p.dimensions?.width?.toString() || '',
+            height: p.dimensions?.height?.toString() || ''
+          },
+          meta_title: p.meta_title || '',
+          meta_description: p.meta_description || '',
+          social_preview_image: p.social_preview_image || ''
+        });
+      } else if (isOpen && !product) {
+        // Reset form for new product
+        setFormData({
+          name: '', description: '', slug: '', price: '', original_price: '', cost_price: '', 
+          shipping_cost: '', tax_rate: '', images: [''], category_id: '', country_id: 'all-countries', 
+          vendor_id: 'none', auto_order_enabled: false,
+          allowed_payment_gateways: [] as string[], cash_on_delivery_enabled: false,
+          virtual_trial_enabled: false, is_digital: false, download_url: '',
+          brand: '', tags: '', stock_quantity: '', sku: '', weight: '',
+          dimensions: { length: '', width: '', height: '' },
+          meta_title: '', meta_description: '', social_preview_image: ''
+        });
+      }
+    };
+
+    init();
   }, [isOpen, product]);
 
   // Auto-generate slug from name
