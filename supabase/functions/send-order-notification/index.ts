@@ -160,16 +160,19 @@ serve(async (req) => {
     // Send notification to admin with full order details
     const { data: storeSettings, error: settingsError } = await supabase
       .from('store_settings')
-      .select('admin_whatsapp, contact_phone')
-      .single();
+      .select('admin_whatsapp, contact_phone, created_at')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
     console.log('Store settings:', { 
       admin_whatsapp: storeSettings?.admin_whatsapp, 
       contact_phone: storeSettings?.contact_phone 
     });
 
-    // Use admin_whatsapp if set, otherwise fall back to contact_phone
-    const adminPhone = storeSettings?.admin_whatsapp || storeSettings?.contact_phone;
+    // Use admin_whatsapp if set, otherwise fall back to contact_phone and normalize spacing
+    const rawAdminPhone = storeSettings?.admin_whatsapp || storeSettings?.contact_phone;
+    const adminPhone = rawAdminPhone ? rawAdminPhone.replace(/\s+/g, '') : undefined;
 
     if (adminPhone) {
       console.log(`Sending admin notification to: ${adminPhone}`);
