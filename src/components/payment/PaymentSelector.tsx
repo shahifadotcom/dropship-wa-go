@@ -87,6 +87,64 @@ export const PaymentSelector = ({
     loadPaymentMethods();
   }, [productId, productIds, overrideCountryId, detectedCountryId]);
 
+  const handleSSLCommerzPayment = async () => {
+    if (!selectedGateway) return;
+    
+    setIsSubmitting(true);
+    
+    try {
+      // Create order first for SSLCommerz
+      const { data: orderData, error: orderError } = await supabase.functions.invoke('verify-otp-and-create-order', {
+        body: {
+          skipOTP: true,
+          orderData: {
+            fullName: customerData?.fullName || '',
+            fullAddress: customerData?.fullAddress || '',
+            whatsappNumber: customerData?.whatsappNumber || '',
+            country: customerData?.country || '',
+            items: cartItems,
+            subtotal: orderAmount,
+            total: orderAmount,
+            paymentMethod: 'sslcommerz'
+          }
+        }
+      });
+
+      if (orderError || !orderData?.orderId) {
+        throw new Error('Failed to create order');
+      }
+
+      const orderId = orderData.orderId;
+
+      // Initialize SSLCommerz payment
+      const { data: sslData, error: sslError } = await supabase.functions.invoke('sslcommerz-init', {
+        body: {
+          orderId,
+          amount: orderAmount,
+          customerInfo: {
+            name: customerData?.fullName || 'Customer',
+            email: '',
+            phone: customerData?.whatsappNumber || '01700000000',
+            address: customerData?.fullAddress || 'Dhaka',
+            city: customerData?.country || 'Dhaka',
+          }
+        }
+      });
+
+      if (sslError || !sslData?.success) {
+        throw new Error(sslData?.error || 'Failed to initialize payment');
+      }
+
+      // Redirect to SSLCommerz gateway
+      window.location.href = sslData.gatewayUrl;
+      
+    } catch (error) {
+      console.error('SSLCommerz payment error:', error);
+      toast.error('Failed to initialize SSLCommerz payment');
+      setIsSubmitting(false);
+    }
+  };
+
   const handleBinancePayment = async () => {
     if (!selectedGateway) return;
     
@@ -338,15 +396,22 @@ export const PaymentSelector = ({
             setSelectedGateway(gateway || null);
             const isCOD = gateway?.name === 'cod';
             const isBinance = gateway?.name.toLowerCase().includes('binance');
+            const isSSL = gateway?.name.toLowerCase().includes('sslcommerz');
             setShowAdvancePayment(isCOD);
             setIsBinancePay(isBinance);
             onCODSelected(isCOD);
+            
+            // Auto-trigger SSLCommerz payment
+            if (isSSL) {
+              setTimeout(() => handleSSLCommerzPayment(), 100);
+            }
           }}
           className="gap-3"
         >
           {paymentGateways.map((gateway) => {
             const PaymentIcon = getPaymentIcon(gateway.name);
             const isSelected = selectedGateway?.id === gateway.id;
+            const isSSLCommerz = gateway.name.toLowerCase().includes('sslcommerz');
             
             return (
               <div key={gateway.id} className="relative">

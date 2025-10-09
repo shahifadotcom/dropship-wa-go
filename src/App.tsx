@@ -52,6 +52,7 @@ import VirtualTrial from "./pages/admin/VirtualTrial";
 import ProductDetail from "./pages/ProductDetail";
 import Calling from "./pages/Calling";
 import CallingSubscriptions from "./pages/admin/CallingSubscriptions";
+import SSLCommerz from "./pages/admin/SSLCommerz";
 import Sitemap from "./pages/Sitemap";
 import RobotsTxt from "./pages/RobotsTxt";
 import AdminBlog from "./pages/admin/Blog";
@@ -126,6 +127,7 @@ const App = () => {
               <Route path="/admin/blog" element={<AdminBlog />} />
               <Route path="/admin/ai-settings" element={<AISettings />} />
               <Route path="/admin/binance-pay" element={<BinancePay />} />
+              <Route path="/admin/sslcommerz" element={<SSLCommerz />} />
               
               <Route path="/dashboard" element={<UserDashboard />} />
               <Route path="/profile" element={<Profile />} />

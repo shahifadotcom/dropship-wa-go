@@ -1667,6 +1667,95 @@ export type Database = {
         }
         Relationships: []
       }
+      sslcommerz_config: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          is_sandbox: boolean
+          store_id: string
+          store_password: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_sandbox?: boolean
+          store_id: string
+          store_password: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_sandbox?: boolean
+          store_id?: string
+          store_password?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      sslcommerz_transactions: {
+        Row: {
+          amount: number
+          bank_transaction_id: string | null
+          card_brand: string | null
+          card_type: string | null
+          created_at: string
+          currency: string
+          id: string
+          order_id: string | null
+          response_data: Json | null
+          session_key: string | null
+          status: string
+          transaction_id: string
+          updated_at: string
+          validation_id: string | null
+        }
+        Insert: {
+          amount: number
+          bank_transaction_id?: string | null
+          card_brand?: string | null
+          card_type?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          order_id?: string | null
+          response_data?: Json | null
+          session_key?: string | null
+          status?: string
+          transaction_id: string
+          updated_at?: string
+          validation_id?: string | null
+        }
+        Update: {
+          amount?: number
+          bank_transaction_id?: string | null
+          card_brand?: string | null
+          card_type?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          order_id?: string | null
+          response_data?: Json | null
+          session_key?: string | null
+          status?: string
+          transaction_id?: string
+          updated_at?: string
+          validation_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sslcommerz_transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       store_settings: {
         Row: {
           admin_whatsapp: string | null
