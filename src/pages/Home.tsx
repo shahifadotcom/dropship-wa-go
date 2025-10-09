@@ -13,6 +13,7 @@ import { useStoreSettings } from "@/hooks/useStoreSettings";
 import { Product } from "@/lib/types";
 import { useCountryDetection } from "@/hooks/useCountryDetection";
 import { CountrySelectionModal } from "@/components/CountrySelectionModal";
+import { CountryService } from "@/services/countryService";
 import { useNavigate } from "react-router-dom";
 
 const Home = () => {
@@ -30,7 +31,21 @@ const Home = () => {
   const { settings } = useStoreSettings();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [topDeals, setTopDeals] = useState<Product[]>([]);
+  const [loadingTopDeals, setLoadingTopDeals] = useState(true);
   const navigate = useNavigate();
+
+  // Load most ordered products for Top Deals
+  useEffect(() => {
+    const loadTopDeals = async () => {
+      setLoadingTopDeals(true);
+      const mostOrdered = await CountryService.getMostOrderedProducts(8, countryId);
+      setTopDeals(mostOrdered);
+      setLoadingTopDeals(false);
+    };
+
+    loadTopDeals();
+  }, [countryId]);
 
   // Update document title when settings load
   useEffect(() => {
@@ -48,8 +63,7 @@ const Home = () => {
   const latestProducts = products.slice(0, 8);
   
   // Get featured products for 2-column sections
-  const featuredProducts1 = products.slice(8, 10);
-  const featuredProducts2 = products.slice(10, 12);
+  const featuredProducts1 = products.slice(0, 2);
 
   // Show country selection modal if needed
   if (needsSelection && !countryLoading) {
@@ -110,29 +124,24 @@ const Home = () => {
               <ImageSlider />
             </div>
 
-            {/* Second 2-column products - Responsive */}
+            {/* Top Deals - Most Ordered Products */}
             <div className="mb-8">
-              <h2 className="text-2xl font-bold text-foreground mb-6">Top Deals</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {featuredProducts2.map((product) => (
-                  <div key={product.id} className="bg-card rounded-lg p-4 border border-navigation/20 hover:shadow-lg transition-shadow">
-                    <img 
-                      src={product.images[0]} 
-                      alt={product.name}
-                      className="w-full h-48 md:h-64 object-cover rounded-lg mb-4"
+              <h2 className="text-2xl font-bold text-foreground mb-6">Top Deals - Most Ordered</h2>
+              {loadingTopDeals ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                  {topDeals.map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      onQuickView={handleProductClick}
                     />
-                    <h3 className="font-semibold text-card-foreground mb-2 line-clamp-2">{product.name}</h3>
-                    <p className="text-primary font-bold text-lg">{product.price.toFixed(2)} {currency}</p>
-                    <Button 
-                      onClick={() => handleProductClick(product)} 
-                      className="w-full mt-3"
-                      variant="outline"
-                    >
-                      Quick View
-                    </Button>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Responsive grid for latest products */}

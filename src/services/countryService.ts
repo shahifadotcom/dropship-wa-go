@@ -204,4 +204,80 @@ export class CountryService {
   static async getDefaultCountry(): Promise<Country | null> {
     return await this.getCountryByCode('BD');
   }
+
+  // Get most ordered products
+  static async getMostOrderedProducts(limit: number = 8, countryId?: string) {
+    try {
+      // Query to get product IDs with their total order quantities
+      const { data: orderData, error: orderError } = await supabase
+        .from('order_items')
+        .select('product_id, quantity');
+
+      if (orderError) throw orderError;
+
+      // Aggregate quantities by product_id
+      const productQuantities = (orderData || []).reduce((acc, item) => {
+        if (item.product_id) {
+          acc[item.product_id] = (acc[item.product_id] || 0) + item.quantity;
+        }
+        return acc;
+      }, {} as Record<string, number>);
+
+      // Sort products by quantity and get top product IDs
+      const topProductIds = Object.entries(productQuantities)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, limit * 2) // Get more to account for country filtering
+        .map(([id]) => id);
+
+      if (topProductIds.length === 0) {
+        // If no orders yet, return products by creation date
+        return await this.getProductsByCountry(countryId);
+      }
+
+      // Fetch product details from catalog
+      let query = supabase
+        .from('products_catalog')
+        .select('*')
+        .in('id', topProductIds);
+
+      if (countryId) {
+        query = query.eq('country_id', countryId);
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      // Map and sort by order quantity
+      const mappedProducts = (data || []).map(item => ({
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        price: Number(item.price),
+        originalPrice: undefined,
+        images: item.images || [],
+        category: '',
+        subcategory: '',
+        brand: item.brand || '',
+        inStock: item.in_stock,
+        stockQuantity: item.stock_quantity || 0,
+        sku: item.sku,
+        slug: item.slug,
+        tags: item.tags || [],
+        variants: [],
+        rating: Number(item.rating) || 0,
+        reviewCount: item.review_count || 0,
+        createdAt: new Date(item.created_at),
+        updatedAt: new Date(item.updated_at),
+        orderCount: productQuantities[item.id] || 0
+      }))
+      .sort((a, b) => (b.orderCount || 0) - (a.orderCount || 0))
+      .slice(0, limit);
+
+      return mappedProducts;
+    } catch (error) {
+      console.error('Error fetching most ordered products:', error);
+      return [];
+    }
+  }
 }
