@@ -67,10 +67,10 @@ const App = () => {
         <CartProvider>
           <ErrorLogger />
           <FaviconUpdater />
-          <CallButton />
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <CallButton />
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/home" element={<Home />} />
