@@ -70,6 +70,12 @@ verify_jwt = false
 [functions.check-gemini-key]
 verify_jwt = false
 
+[functions.generate-blog-content]
+verify_jwt = false
+
+[functions.generate-product-seo]
+verify_jwt = false
+
 [functions.activate-calling-subscription]
 verify_jwt = false
 

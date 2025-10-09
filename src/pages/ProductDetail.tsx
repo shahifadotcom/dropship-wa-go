@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet';
 import { Product } from '@/lib/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useCart } from '@/contexts/CartContext';
@@ -20,6 +21,11 @@ const ProductDetail = () => {
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
   const [virtualTrialEnabled, setVirtualTrialEnabled] = useState(false);
+  const [productMeta, setProductMeta] = useState({
+    metaTitle: '',
+    metaDescription: '',
+    socialPreviewImage: ''
+  });
   const { addToCart } = useCart();
   const { toast } = useToast();
   const { currency, countryId } = useCountryDetection();
@@ -32,7 +38,7 @@ const ProductDetail = () => {
       try {
         const { data, error } = await supabase
           .from('products')
-          .select('*, virtual_trial_enabled')
+          .select('*, virtual_trial_enabled, meta_title, meta_description, social_preview_image')
           .eq('slug', slug)
           .single();
 
@@ -40,6 +46,11 @@ const ProductDetail = () => {
         
         if (data) {
           setVirtualTrialEnabled(data.virtual_trial_enabled || false);
+          setProductMeta({
+            metaTitle: data.meta_title || data.name,
+            metaDescription: data.meta_description || data.description?.substring(0, 160) || '',
+            socialPreviewImage: data.social_preview_image || data.images?.[0] || ''
+          });
           setProduct({
             id: data.id,
             name: data.name,
@@ -130,6 +141,46 @@ const ProductDetail = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <Helmet>
+        <title>{productMeta.metaTitle}</title>
+        <meta name="description" content={productMeta.metaDescription} />
+        
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="product" />
+        <meta property="og:title" content={productMeta.metaTitle} />
+        <meta property="og:description" content={productMeta.metaDescription} />
+        <meta property="og:image" content={productMeta.socialPreviewImage} />
+        <meta property="og:url" content={window.location.href} />
+        
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={productMeta.metaTitle} />
+        <meta name="twitter:description" content={productMeta.metaDescription} />
+        <meta name="twitter:image" content={productMeta.socialPreviewImage} />
+        
+        {/* Product Schema */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org/",
+            "@type": "Product",
+            "name": product.name,
+            "image": product.images,
+            "description": product.description,
+            "brand": product.brand,
+            "offers": {
+              "@type": "Offer",
+              "price": product.price,
+              "priceCurrency": currency,
+              "availability": product.inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
+            },
+            "aggregateRating": product.rating > 0 ? {
+              "@type": "AggregateRating",
+              "ratingValue": product.rating,
+              "reviewCount": product.reviewCount
+            } : undefined
+          })}
+        </script>
+      </Helmet>
       <Header />
       
       <main className="flex-1 container mx-auto px-4 py-8">

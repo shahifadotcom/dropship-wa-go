@@ -54,6 +54,8 @@ import Calling from "./pages/Calling";
 import CallingSubscriptions from "./pages/admin/CallingSubscriptions";
 import Sitemap from "./pages/Sitemap";
 import RobotsTxt from "./pages/RobotsTxt";
+import Blog from "./pages/admin/Blog";
+import AISettings from "./pages/admin/AISettings";
 
 const queryClient = new QueryClient();
 
@@ -116,6 +118,8 @@ const App = () => {
               <Route path="/admin/storefront-slider" element={<StorefrontSlider />} />
               <Route path="/admin/virtual-trial" element={<VirtualTrial />} />
               <Route path="/admin/calling-subscriptions" element={<CallingSubscriptions />} />
+              <Route path="/admin/blog" element={<Blog />} />
+              <Route path="/admin/ai-settings" element={<AISettings />} />
               
               <Route path="/dashboard" element={<UserDashboard />} />
               <Route path="/profile" element={<Profile />} />

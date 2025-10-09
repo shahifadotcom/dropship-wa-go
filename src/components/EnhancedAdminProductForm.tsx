@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { CountryService } from '@/services/countryService';
 import { ProductImageUpload } from '@/components/ProductImageUpload';
+import { Sparkles, Loader2 } from 'lucide-react';
 
 interface Category {
   id: string;
@@ -28,6 +29,7 @@ interface ProductFormProps {
 export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSuccess, product }: ProductFormProps) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
   const [countries, setCountries] = useState([]);
   const [vendors, setVendors] = useState([]);
   const [paymentGateways, setPaymentGateways] = useState<any[]>([]);
@@ -286,6 +288,51 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
     }
   };
 
+  const handleGenerateAI = async (type: string) => {
+    if (!formData.name) {
+      toast({ title: 'Please enter a product name first', variant: 'destructive' });
+      return;
+    }
+
+    setAiLoading(true);
+    try {
+      const categoryName = categories.find(c => c.id === formData.category_id)?.name;
+      
+      const { data, error } = await supabase.functions.invoke('generate-product-seo', {
+        body: {
+          productName: formData.name,
+          description: formData.description,
+          category: categoryName,
+          type
+        }
+      });
+
+      if (error) throw error;
+
+      if (type === 'all') {
+        setFormData(prev => ({
+          ...prev,
+          name: data.result.title || prev.name,
+          description: data.result.description || prev.description,
+          meta_title: data.result.metaTitle || prev.meta_title,
+          meta_description: data.result.metaDescription || prev.meta_description,
+          tags: data.result.tags ? data.result.tags.join(', ') : prev.tags,
+        }));
+        toast({ title: 'All content generated successfully!' });
+      } else if (type === 'tags') {
+        setFormData(prev => ({ ...prev, tags: data.result.join(', ') }));
+        toast({ title: 'Tags generated successfully!' });
+      } else {
+        setFormData(prev => ({ ...prev, [type]: data.result }));
+        toast({ title: `${type.charAt(0).toUpperCase() + type.slice(1)} generated successfully!` });
+      }
+    } catch (error: any) {
+      toast({ title: 'Error generating content', description: error.message, variant: 'destructive' });
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -311,15 +358,25 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
                   <CardDescription>Essential product details</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div>
-                    <Label htmlFor="name">Product Name *</Label>
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="Enter product name"
-                      required
-                    />
+                  <div className="flex items-end gap-2">
+                    <div className="flex-1">
+                      <Label htmlFor="name">Product Name *</Label>
+                      <Input
+                        id="name"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        placeholder="Enter product name"
+                        required
+                      />
+                    </div>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => handleGenerateAI('title')}
+                      disabled={aiLoading}
+                    >
+                      {aiLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                    </Button>
                   </div>
 
                   <div>
@@ -335,17 +392,39 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
                       This will be used in the product URL. Auto-generated from name.
                     </p>
                   </div>
-                  
-                  <div>
-                    <Label htmlFor="description">Description *</Label>
-                    <Textarea
-                      id="description"
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      placeholder="Enter detailed product description"
-                      rows={4}
-                      required
-                    />
+                  <div className="flex items-end gap-2">
+                    <div className="flex-1">
+                      <Label htmlFor="description">Description *</Label>
+                      <Textarea
+                        id="description"
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        placeholder="Enter detailed product description"
+                        rows={4}
+                        required
+                      />
+                    </div>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => handleGenerateAI('description')}
+                      disabled={aiLoading}
+                    >
+                      {aiLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                    </Button>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button 
+                      type="button" 
+                      variant="secondary" 
+                      onClick={() => handleGenerateAI('all')}
+                      disabled={aiLoading}
+                      className="w-full"
+                    >
+                      {aiLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}
+                      Generate All with AI
+                    </Button>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
