@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
 import CartDrawer from "./CartDrawer";
+import { CountrySelectorDropdown } from "./CountrySelectorDropdown";
 
 const Header = () => {
   const { user, signOut } = useAuth();
@@ -96,6 +97,7 @@ const Header = () => {
 
           {/* Desktop User Actions */}
           <div className="flex items-center space-x-2">
+            <CountrySelectorDropdown />
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

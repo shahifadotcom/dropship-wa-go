@@ -57,20 +57,20 @@ export const PaymentSelector = ({
   const [transactionId, setTransactionId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAdvancePayment, setShowAdvancePayment] = useState(false);
-  const { detectedCountry } = useCountryDetection();
+  const { selectedCountry, countryId } = useCountryDetection();
 
   useEffect(() => {
     const loadPaymentMethods = async () => {
       try {
         let gateways: PaymentGateway[] = [];
         
-        if (detectedCountry?.id) {
+        if (countryId) {
           if (productId) {
-            gateways = await PaymentService.getProductPaymentGateways(productId, detectedCountry.id);
+            gateways = await PaymentService.getProductPaymentGateways(productId, countryId);
           } else if (productIds && productIds.length > 0) {
-            gateways = await PaymentService.getPaymentGateways(detectedCountry.id);
+            gateways = await PaymentService.getPaymentGateways(countryId);
           } else {
-            gateways = await PaymentService.getPaymentGateways(detectedCountry.id);
+            gateways = await PaymentService.getPaymentGateways(countryId);
           }
         }
 
@@ -82,7 +82,7 @@ export const PaymentSelector = ({
     };
 
     loadPaymentMethods();
-  }, [productId, productIds, detectedCountry]);
+  }, [productId, productIds, countryId]);
 
   const handleSubmitPayment = async () => {
     if (!selectedGateway || !transactionId.trim()) {

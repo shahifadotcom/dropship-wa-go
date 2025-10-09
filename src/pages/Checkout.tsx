@@ -29,10 +29,10 @@ const Checkout = () => {
   const { cart, clearCart } = useCart();
   const { user } = useAuth();
   const { toast } = useToast();
-  const { effectiveCountry, currency } = useCountryDetection();
+  const { selectedCountry, currency, countryName } = useCountryDetection();
   
   const [formData, setFormData] = useState<CheckoutFormData>({
-    country: effectiveCountry?.name || 'Bangladesh',
+    country: selectedCountry?.name || 'Bangladesh',
     fullName: user?.user_metadata?.full_name || '',
     fullAddress: '',
     whatsappNumber: ''
@@ -176,9 +176,9 @@ const Checkout = () => {
           <h1 className="text-3xl font-bold">
             {showPaymentSection ? 'Complete Payment' : 'Checkout'}
           </h1>
-          {effectiveCountry && (
+          {selectedCountry && (
             <p className="text-muted-foreground">
-              Shopping from {effectiveCountry.name} • Currency: {currency}
+              Shopping from {selectedCountry.name} • Currency: {currency}
             </p>
           )}
         </div>

@@ -16,25 +16,21 @@ interface CountrySelectorProps {
 }
 
 export const CountrySelector = ({ 
-  showDetectedInfo = true, 
+  showDetectedInfo = false, 
   className = "" 
 }: CountrySelectorProps) => {
   const {
-    detectedCountry,
     selectedCountry,
-    effectiveCountry,
     allCountries,
     loading,
     selectCountry,
-    resetToDetected,
-    isCountrySelected
   } = useCountryDetection();
 
   if (loading) {
     return (
       <div className={`flex items-center gap-2 ${className}`}>
         <Globe className="h-4 w-4 animate-spin" />
-        <span className="text-sm text-muted-foreground">Detecting location...</span>
+        <span className="text-sm text-muted-foreground">Loading countries...</span>
       </div>
     );
   }
@@ -44,7 +40,7 @@ export const CountrySelector = ({
       <div className="flex items-center gap-2">
         <MapPin className="h-4 w-4" />
         <Select
-          value={effectiveCountry?.code || ''}
+          value={selectedCountry?.code || ''}
           onValueChange={(value) => {
             const country = allCountries.find(c => c.code === value);
             selectCountry(country || null);
@@ -53,9 +49,9 @@ export const CountrySelector = ({
           <SelectTrigger className="w-48">
             <div className="flex items-center gap-2">
               <SelectValue placeholder="Select country" />
-              {effectiveCountry && (
+              {selectedCountry && (
                 <Badge variant="secondary" className="ml-auto">
-                  {effectiveCountry.currency}
+                  {selectedCountry.currency}
                 </Badge>
               )}
             </div>
@@ -74,42 +70,6 @@ export const CountrySelector = ({
           </SelectContent>
         </Select>
       </div>
-
-      {showDetectedInfo && (
-        <div className="text-sm space-y-1">
-          {detectedCountry && (
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Globe className="h-3 w-3" />
-              <span>
-                Detected: {detectedCountry.name}
-                {isCountrySelected && (
-                  <Button
-                    variant="link"
-                    size="sm"
-                    onClick={resetToDetected}
-                    className="h-auto p-0 ml-2 text-xs"
-                  >
-                    Reset
-                  </Button>
-                )}
-              </span>
-            </div>
-          )}
-          
-          {isCountrySelected && (
-            <div className="flex items-center gap-2 text-blue-600">
-              <ChevronDown className="h-3 w-3" />
-              <span className="text-xs">Manually selected: {selectedCountry?.name}</span>
-            </div>
-          )}
-
-          {!detectedCountry && (
-            <div className="text-xs text-muted-foreground">
-              Location detection failed. Please select your country manually.
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 };

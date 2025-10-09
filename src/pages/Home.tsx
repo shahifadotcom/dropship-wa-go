@@ -11,13 +11,25 @@ import { useProducts } from "@/hooks/useProducts";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
 import { Product } from "@/lib/types";
 import { useCountryDetection } from "@/hooks/useCountryDetection";
+import { CountrySelectionModal } from "@/components/CountrySelectionModal";
+import { useNavigate } from "react-router-dom";
 
 const Home = () => {
-  const { products, loading } = useProducts();
+  const { 
+    selectedCountry, 
+    allCountries, 
+    loading: countryLoading, 
+    needsSelection,
+    selectCountry,
+    currency,
+    countryId 
+  } = useCountryDetection();
+  
+  const { products, loading: productsLoading } = useProducts(undefined, countryId);
   const { settings } = useStoreSettings();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
-  const { currency } = useCountryDetection();
+  const navigate = useNavigate();
 
   // Update document title when settings load
   useEffect(() => {
@@ -38,7 +50,18 @@ const Home = () => {
   const featuredProducts1 = products.slice(8, 10);
   const featuredProducts2 = products.slice(10, 12);
 
-  if (loading) {
+  // Show country selection modal if needed
+  if (needsSelection && !countryLoading) {
+    return (
+      <CountrySelectionModal
+        countries={allCountries}
+        onSelect={selectCountry}
+        open={needsSelection}
+      />
+    );
+  }
+
+  if (countryLoading || productsLoading) {
     return (
       <div className="min-h-screen bg-background">
         <Header />

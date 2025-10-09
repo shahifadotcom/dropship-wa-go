@@ -72,6 +72,12 @@ const App = () => {
           <BrowserRouter>
             <CallButton />
             <Routes>
+              {/* Country-based routes */}
+              <Route path="/:countryCode" element={<Home />} />
+              <Route path="/:countryCode/products/:slug" element={<ProductDetail />} />
+              <Route path="/:countryCode/checkout" element={<Checkout />} />
+              
+              {/* Legacy routes without country code - redirect to country selection */}
               <Route path="/" element={<Home />} />
               <Route path="/home" element={<Home />} />
               <Route path="/products/:slug" element={<ProductDetail />} />

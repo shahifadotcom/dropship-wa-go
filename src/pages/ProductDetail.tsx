@@ -14,7 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Star, ShoppingCart, Heart, ArrowLeft } from 'lucide-react';
 
 const ProductDetail = () => {
-  const { slug } = useParams<{ slug: string }>();
+  const { slug, countryCode } = useParams<{ slug: string; countryCode?: string }>();
   const navigate = useNavigate();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -22,7 +22,7 @@ const ProductDetail = () => {
   const [virtualTrialEnabled, setVirtualTrialEnabled] = useState(false);
   const { addToCart } = useCart();
   const { toast } = useToast();
-  const { currency } = useCountryDetection();
+  const { currency, countryId } = useCountryDetection();
 
   useEffect(() => {
     const fetchProduct = async () => {
