@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { phoneNumber, message } = await req.json();
+    const { phoneNumber, message, mediaUrl } = await req.json();
     
     if (!phoneNumber || !message) {
       return new Response(
@@ -42,14 +42,14 @@ serve(async (req) => {
       const bridgeResponse = await fetch(`${whatsappBridgeUrl}/send-message`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phoneNumber, message })
+        body: JSON.stringify({ phoneNumber, message, mediaUrl })
       });
 
       const bridgeData = await bridgeResponse.json().catch(() => ({}));
       
       if (bridgeResponse.ok && bridgeData.success) {
         messageSent = true;
-        console.log(`✓ WhatsApp message sent successfully to ${phoneNumber}`);
+        console.log(`✓ WhatsApp message sent successfully to ${phoneNumber}${mediaUrl ? ' with media' : ''}`);
       } else {
         errorMessage = bridgeData.error || 'Bridge returned error';
         console.error(`✗ Failed to send WhatsApp message: ${errorMessage}`);

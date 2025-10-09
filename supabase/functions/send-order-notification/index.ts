@@ -86,16 +86,13 @@ serve(async (req) => {
     const isCOD = order.payment_method?.toLowerCase().includes('cod') || 
                   order.payment_method?.toLowerCase().includes('cash');
     
-    // Build product details with images for customer message
+    // Build product details for customer message (without image URLs)
     let productDetails = '';
     if (order.order_items && order.order_items.length > 0) {
       productDetails = '\n\n📦 Products:\n';
       order.order_items.forEach((item: any, index: number) => {
         productDetails += `\n${index + 1}. ${item.product_name}\n`;
         productDetails += `   Qty: ${item.quantity} × ৳${item.price}\n`;
-        if (item.product_image) {
-          productDetails += `   🖼️ ${item.product_image}\n`;
-        }
       });
     }
 
@@ -126,6 +123,8 @@ serve(async (req) => {
 
     // Send WhatsApp message to customer with product details and payment info
     const customerMessage = message + productDetails + paymentMessage;
+    
+    // Send text message first
     const { error: customerMessageError } = await supabase.functions.invoke('send-whatsapp-message', {
       body: {
         phoneNumber,
@@ -137,21 +136,37 @@ serve(async (req) => {
       console.error('Error sending customer notification:', customerMessageError);
     }
 
+    // Send product images separately
+    if (order.order_items && order.order_items.length > 0) {
+      for (const item of order.order_items) {
+        if (item.product_image) {
+          const imageCaption = `${item.product_name}\nQty: ${item.quantity} × ৳${item.price}`;
+          await supabase.functions.invoke('send-whatsapp-message', {
+            body: {
+              phoneNumber,
+              message: imageCaption,
+              mediaUrl: item.product_image
+            }
+          });
+        }
+      }
+    }
+
     // Send notification to admin with full order details
     const { data: storeSettings } = await supabase
       .from('store_settings')
-      .select('admin_whatsapp')
+      .select('admin_whatsapp, contact_phone')
       .single();
 
-    if (storeSettings?.admin_whatsapp) {
+    // Use admin_whatsapp if set, otherwise fall back to contact_phone
+    const adminPhone = storeSettings?.admin_whatsapp || storeSettings?.contact_phone;
+
+    if (adminPhone) {
       let adminProductList = '';
       if (order.order_items && order.order_items.length > 0) {
         adminProductList = '\n📦 Items:\n';
         order.order_items.forEach((item: any, index: number) => {
           adminProductList += `${index + 1}. ${item.product_name} (×${item.quantity}) - ৳${item.price}\n`;
-          if (item.product_image) {
-            adminProductList += `   Image: ${item.product_image}\n`;
-          }
         });
       }
 
@@ -171,16 +186,32 @@ serve(async (req) => {
         `Country: ${order.billing_address.country || 'N/A'}\n` +
         adminProductList;
 
+      // Send admin notification
       await supabase.functions.invoke('send-whatsapp-message', {
         body: {
-          phoneNumber: storeSettings.admin_whatsapp,
+          phoneNumber: adminPhone,
           message: adminMessage
         }
       });
 
-      console.log(`Admin notification sent for order ${order.order_number}`);
+      // Send product images to admin
+      if (order.order_items && order.order_items.length > 0) {
+        for (const item of order.order_items) {
+          if (item.product_image) {
+            await supabase.functions.invoke('send-whatsapp-message', {
+              body: {
+                phoneNumber: adminPhone,
+                message: `Product: ${item.product_name}`,
+                mediaUrl: item.product_image
+              }
+            });
+          }
+        }
+      }
+
+      console.log(`Admin notification sent to ${adminPhone} for order ${order.order_number}`);
     } else {
-      console.log('No admin WhatsApp configured');
+      console.log('No admin WhatsApp or contact phone configured');
     }
 
     console.log(`Notification sent for order ${order.order_number} using template ${templateName}`);
