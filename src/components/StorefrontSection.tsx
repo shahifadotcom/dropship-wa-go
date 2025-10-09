@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import Autoplay from 'embla-carousel-autoplay';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { Download, Printer, ShoppingCart, ChevronRight } from 'lucide-react';
@@ -26,7 +28,7 @@ interface StorefrontSectionProps {
   limit?: number;
 }
 
-export function StorefrontSection({ type, title, limit = 8 }: StorefrontSectionProps) {
+export function StorefrontSection({ type, title, limit = 16 }: StorefrontSectionProps) {
   const [products, setProducts] = useState<DBProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -109,64 +111,83 @@ export function StorefrontSection({ type, title, limit = 8 }: StorefrontSectionP
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {products.map((product) => (
-            <Card key={product.id} className="group cursor-pointer hover:shadow-lg transition-shadow">
-              <div onClick={() => navigate(`/products/${product.slug}`)}>
-                <div className="relative aspect-square overflow-hidden rounded-t-lg">
-                  <img
-                    src={product.images[0]}
-                    alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <Badge
-                    variant={badgeVariant}
-                    className="absolute top-2 right-2"
-                  >
-                    {type === 'digital' ? (
-                      <><Download className="h-3 w-3 mr-1" /> Digital</>
-                    ) : (
-                      <><Printer className="h-3 w-3 mr-1" /> Print on Demand</>
-                    )}
-                  </Badge>
+        <Carousel
+          opts={{
+            align: "start",
+            loop: true,
+          }}
+          plugins={[
+            Autoplay({
+              delay: 3000,
+            }),
+          ]}
+          className="w-full"
+        >
+          <CarouselContent>
+            {products.map((product) => (
+              <CarouselItem key={product.id} className="basis-1/2 md:basis-1/4">
+                <div className="p-1">
+                  <Card className="group cursor-pointer hover:shadow-lg transition-shadow h-full">
+                    <div onClick={() => navigate(`/products/${product.slug}`)}>
+                      <div className="relative aspect-square overflow-hidden rounded-t-lg">
+                        <img
+                          src={product.images[0]}
+                          alt={product.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        <Badge
+                          variant={badgeVariant}
+                          className="absolute top-2 right-2"
+                        >
+                          {type === 'digital' ? (
+                            <><Download className="h-3 w-3 mr-1" /> Digital</>
+                          ) : (
+                            <><Printer className="h-3 w-3 mr-1" /> Print on Demand</>
+                          )}
+                        </Badge>
+                      </div>
+                      <CardHeader>
+                        <CardTitle className="text-lg line-clamp-2">{product.name}</CardTitle>
+                        {product.description && (
+                          <p className="text-sm text-muted-foreground line-clamp-2">
+                            {product.description}
+                          </p>
+                        )}
+                      </CardHeader>
+                    </div>
+                    <CardContent>
+                      <div className="flex items-center justify-between">
+                        <span className="text-2xl font-bold">${product.price.toFixed(2)}</span>
+                        <Button
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAddToCart(product);
+                          }}
+                        >
+                          <ShoppingCart className="h-4 w-4 mr-1" />
+                          Add to Cart
+                        </Button>
+                      </div>
+                      {type === 'digital' && (
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Instant download after purchase
+                        </p>
+                      )}
+                      {type === 'print_on_demand' && (
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Printed & shipped on order
+                        </p>
+                      )}
+                    </CardContent>
+                  </Card>
                 </div>
-                <CardHeader>
-                  <CardTitle className="text-lg line-clamp-2">{product.name}</CardTitle>
-                  {product.description && (
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {product.description}
-                    </p>
-                  )}
-                </CardHeader>
-              </div>
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold">${product.price.toFixed(2)}</span>
-                  <Button
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleAddToCart(product);
-                    }}
-                  >
-                    <ShoppingCart className="h-4 w-4 mr-1" />
-                    Add to Cart
-                  </Button>
-                </div>
-                {type === 'digital' && (
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Instant download after purchase
-                  </p>
-                )}
-                {type === 'print_on_demand' && (
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Printed & shipped on order
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          <CarouselPrevious />
+          <CarouselNext />
+        </Carousel>
       </div>
     </section>
   );

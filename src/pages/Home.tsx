@@ -41,7 +41,7 @@ const Home = () => {
   useEffect(() => {
     const loadTopDeals = async () => {
       setLoadingTopDeals(true);
-      const mostOrdered = await CountryService.getMostOrderedProducts(8, countryId);
+      const mostOrdered = await CountryService.getMostOrderedProducts(16, countryId);
       setTopDeals(mostOrdered);
       setLoadingTopDeals(false);
     };
@@ -61,8 +61,8 @@ const Home = () => {
     setIsProductModalOpen(true);
   };
 
-  // Get latest products (first 8)
-  const latestProducts = products.slice(0, 8);
+  // Get latest products (first 16)
+  const latestProducts = products.slice(0, 16);
   
   // Get featured products for 2-column sections
   const featuredProducts1 = products.slice(0, 2);
@@ -148,7 +148,7 @@ const Home = () => {
                 >
                   <CarouselContent>
                     {topDeals.map((product) => (
-                      <CarouselItem key={product.id} className="md:basis-1/2 lg:basis-1/4">
+                      <CarouselItem key={product.id} className="basis-1/2 md:basis-1/4">
                         <div className="p-1">
                           <ProductCard
                             product={product}
@@ -164,18 +164,36 @@ const Home = () => {
               )}
             </div>
 
-            {/* Responsive grid for latest products */}
+            {/* Latest Products - Auto Scrolling Carousel */}
             <div className="mb-8">
               <h2 className="text-2xl font-bold text-foreground mb-6">Latest Products</h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
-                {latestProducts.map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    onQuickView={handleProductClick}
-                  />
-                ))}
-              </div>
+              <Carousel
+                opts={{
+                  align: "start",
+                  loop: true,
+                }}
+                plugins={[
+                  Autoplay({
+                    delay: 3000,
+                  }),
+                ]}
+                className="w-full"
+              >
+                <CarouselContent>
+                  {latestProducts.map((product) => (
+                    <CarouselItem key={product.id} className="basis-1/2 md:basis-1/4">
+                      <div className="p-1">
+                        <ProductCard
+                          product={product}
+                          onQuickView={handleProductClick}
+                        />
+                      </div>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <CarouselPrevious />
+                <CarouselNext />
+              </Carousel>
             </div>
           </div>
         </div>
@@ -210,7 +228,7 @@ const Home = () => {
                 >
                   <CarouselContent>
                     {topDeals.map((product) => (
-                      <CarouselItem key={product.id} className="basis-full">
+                      <CarouselItem key={product.id} className="basis-1/2">
                         <div className="p-1">
                           <ProductCard
                             product={product}
@@ -226,45 +244,77 @@ const Home = () => {
               )}
             </div>
 
-            {/* Mobile Latest Products - Horizontal Scroll */}
+            {/* Mobile Latest Products - Carousel */}
             <div>
               <h2 className="text-xl font-bold text-foreground mb-4">Latest Products</h2>
-              <div className="overflow-x-auto">
-                <div className="flex gap-3 pb-4">
-                  {products.slice(0, 12).map((product) => (
-                    <div key={product.id} className="flex-shrink-0 w-40">
-                      <ProductCard
-                        product={product}
-                        onQuickView={handleProductClick}
-                      />
-                    </div>
+              <Carousel
+                opts={{
+                  align: "start",
+                  loop: true,
+                }}
+                plugins={[
+                  Autoplay({
+                    delay: 3000,
+                  }),
+                ]}
+                className="w-full"
+              >
+                <CarouselContent>
+                  {products.slice(0, 16).map((product) => (
+                    <CarouselItem key={product.id} className="basis-1/2">
+                      <div className="p-1">
+                        <ProductCard
+                          product={product}
+                          onQuickView={handleProductClick}
+                        />
+                      </div>
+                    </CarouselItem>
                   ))}
-                </div>
-              </div>
+                </CarouselContent>
+                <CarouselPrevious />
+                <CarouselNext />
+              </Carousel>
             </div>
 
-            {/* Mobile Grid Products - Perfect 2x4 alignment */}
+            {/* Mobile All Products - Carousel */}
             <div>
               <h2 className="text-xl font-bold text-foreground mb-4">All Products</h2>
-              <div className="grid grid-cols-2 gap-3 items-start">
-                {products.slice(12, 20).map((product) => (
-                  <div key={product.id} className="flex">
-                    <ProductCard
-                      product={product}
-                      onQuickView={handleProductClick}
-                    />
-                  </div>
-                ))}
-              </div>
+              <Carousel
+                opts={{
+                  align: "start",
+                  loop: true,
+                }}
+                plugins={[
+                  Autoplay({
+                    delay: 3000,
+                  }),
+                ]}
+                className="w-full"
+              >
+                <CarouselContent>
+                  {products.slice(16, 32).map((product) => (
+                    <CarouselItem key={product.id} className="basis-1/2">
+                      <div className="p-1">
+                        <ProductCard
+                          product={product}
+                          onQuickView={handleProductClick}
+                        />
+                      </div>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <CarouselPrevious />
+                <CarouselNext />
+              </Carousel>
             </div>
           </div>
         </div>
 
         {/* Digital Products Section */}
-        <StorefrontSection type="digital" title="Digital Products" limit={6} />
+        <StorefrontSection type="digital" title="Digital Products" limit={16} />
 
         {/* Print on Demand Section */}
-        <StorefrontSection type="print_on_demand" title="Print on Demand" limit={6} />
+        <StorefrontSection type="print_on_demand" title="Print on Demand" limit={16} />
       </main>
 
       {/* Product Detail Modal */}
