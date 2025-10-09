@@ -17,6 +17,7 @@ export interface Product {
   rating: number;
   reviewCount: number;
   isDigital?: boolean;
+  downloadUrl?: string;
   createdAt: Date;
   updatedAt: Date;
 }

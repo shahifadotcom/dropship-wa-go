@@ -56,6 +56,7 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
     cash_on_delivery_enabled: false,
     virtual_trial_enabled: false,
     is_digital: false,
+    download_url: '',
     brand: '',
     tags: '',
     
@@ -127,6 +128,7 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
         cash_on_delivery_enabled: product.cash_on_delivery_enabled || false,
         virtual_trial_enabled: product.virtual_trial_enabled || false,
         is_digital: product.is_digital || false,
+        download_url: product.download_url || '',
         brand: product.brand || '',
         tags: product.tags ? product.tags.join(', ') : '',
         stock_quantity: product.stock_quantity?.toString() || '',
@@ -148,7 +150,7 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
         shipping_cost: '', tax_rate: '', images: [''], category_id: '', country_id: '', 
         vendor_id: 'none', auto_order_enabled: false,
         allowed_payment_gateways: [] as string[], cash_on_delivery_enabled: false,
-        virtual_trial_enabled: false, is_digital: false,
+        virtual_trial_enabled: false, is_digital: false, download_url: '',
         brand: '', tags: '', stock_quantity: '', sku: '', weight: '',
         dimensions: { length: '', width: '', height: '' },
         meta_title: '', meta_description: '', social_preview_image: ''
@@ -221,6 +223,7 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
         cash_on_delivery_enabled: formData.cash_on_delivery_enabled,
         virtual_trial_enabled: formData.virtual_trial_enabled,
         is_digital: formData.is_digital,
+        download_url: formData.download_url || null,
         vendor_id: formData.vendor_id && formData.vendor_id !== 'none' ? formData.vendor_id : null,
         auto_order_enabled: formData.auto_order_enabled,
         dimensions: {
@@ -266,7 +269,7 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
         shipping_cost: '', tax_rate: '', images: [''], category_id: '', country_id: '', 
         vendor_id: 'none', auto_order_enabled: false,
         allowed_payment_gateways: [] as string[], cash_on_delivery_enabled: false,
-        virtual_trial_enabled: false, is_digital: false,
+        virtual_trial_enabled: false, is_digital: false, download_url: '',
         brand: '', tags: '', stock_quantity: '', sku: '', weight: '',
         dimensions: { length: '', width: '', height: '' },
         meta_title: '', meta_description: '', social_preview_image: ''
@@ -487,6 +490,24 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
                         </Label>
                       </div>
                     </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Digital products are auto-completed after payment verification. Subscriptions are auto-activated, and downloadable files get instant download links.
+                    </p>
+                    
+                    {formData.is_digital && (
+                      <div className="mt-4">
+                        <Label htmlFor="download_url">Download URL (Optional - For Digital Downloads)</Label>
+                        <Input
+                          id="download_url"
+                          value={formData.download_url}
+                          onChange={(e) => setFormData({ ...formData, download_url: e.target.value })}
+                          placeholder="https://your-cdn.com/downloads/file.zip"
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          For downloadable products like eBooks, software, etc. Leave empty for subscription services.
+                        </p>
+                      </div>
+                    )}
                     <p className="text-xs text-gray-500 mt-1">
                       Select which payment methods are available for this product. If none selected, all gateways will be available.
                     </p>

@@ -1224,6 +1224,7 @@ export type Database = {
           created_at: string | null
           description: string
           dimensions: Json | null
+          download_url: string | null
           id: string
           images: string[] | null
           in_stock: boolean | null
@@ -1259,6 +1260,7 @@ export type Database = {
           created_at?: string | null
           description: string
           dimensions?: Json | null
+          download_url?: string | null
           id?: string
           images?: string[] | null
           in_stock?: boolean | null
@@ -1294,6 +1296,7 @@ export type Database = {
           created_at?: string | null
           description?: string
           dimensions?: Json | null
+          download_url?: string | null
           id?: string
           images?: string[] | null
           in_stock?: boolean | null

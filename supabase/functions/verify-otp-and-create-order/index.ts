@@ -249,6 +249,9 @@ serve(async (req) => {
 
     // Create order items (optional)
     const items = Array.isArray(orderData.items) ? orderData.items : [];
+    let hasDigitalProduct = false;
+    let hasSubscriptionProduct = false;
+    
     if (items.length > 0) {
       const orderItemsData = items.map((item: any) => ({
         order_id: order.id,
@@ -268,6 +271,45 @@ serve(async (req) => {
         console.error('Error creating order items:', itemsError);
         throw itemsError;
       }
+
+      // Check if order contains digital products
+      const productIds = items.map((item: any) => item.productId);
+      const { data: products } = await supabase
+        .from('products')
+        .select('id, is_digital, sku')
+        .in('id', productIds);
+
+      if (products && products.length > 0) {
+        hasDigitalProduct = products.some((p: any) => p.is_digital);
+        hasSubscriptionProduct = products.some((p: any) => p.sku === 'CALLING-12M');
+      }
+    }
+
+    // Auto-complete digital product orders after payment verification
+    if (hasDigitalProduct && paymentStatus === 'paid') {
+      console.log('Digital product detected - auto-completing order');
+      
+      await supabase
+        .from('orders')
+        .update({ 
+          status: 'delivered' // Digital products are instantly delivered
+        })
+        .eq('id', order.id);
+
+      // If it's a subscription product, activate it
+      if (hasSubscriptionProduct && userId) {
+        console.log('Subscription product detected - activating subscription');
+        try {
+          await supabase.functions.invoke('activate-calling-subscription', {
+            body: {
+              orderId: order.id,
+              userId: userId
+            }
+          });
+        } catch (subError) {
+          console.error('Error activating subscription:', subError);
+        }
+      }
     }
 
     // Send order confirmation notification
@@ -285,7 +327,9 @@ serve(async (req) => {
         success: true,
         userId,
         orderId: order.id,
-        orderNumber
+        orderNumber,
+        isDigital: hasDigitalProduct,
+        isSubscription: hasSubscriptionProduct
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
