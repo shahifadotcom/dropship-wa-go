@@ -1,10 +1,11 @@
 const express = require('express');
 const cors = require('cors');
-const { Client, LocalAuth } = require('whatsapp-web.js');
+const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 require('dotenv').config();
 const http = require('http');
 const { WebSocketServer } = require('ws');
+const axios = require('axios');
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -127,7 +128,7 @@ app.post('/initialize', async (req, res) => {
 });
 
 app.post('/send-message', async (req, res) => {
-    const { phoneNumber, message } = req.body;
+    const { phoneNumber, message, mediaUrl } = req.body;
 
     if (!phoneNumber || !message) {
         return res.status(400).json({
@@ -148,7 +149,33 @@ app.post('/send-message', async (req, res) => {
         const formattedNumber = phoneNumber.replace(/\D/g, '');
         const chatId = `${formattedNumber}@c.us`;
 
-        await client.sendMessage(chatId, message);
+        // Send message with media if mediaUrl is provided
+        if (mediaUrl) {
+            console.log(`Downloading image from: ${mediaUrl}`);
+            
+            // Download the image
+            const response = await axios.get(mediaUrl, { responseType: 'arraybuffer' });
+            const buffer = Buffer.from(response.data);
+            const mimeType = response.headers['content-type'] || 'image/jpeg';
+            
+            // Get filename from URL or generate one
+            const urlParts = mediaUrl.split('/');
+            const filename = urlParts[urlParts.length - 1] || 'image.jpg';
+            
+            // Create MessageMedia object
+            const media = new MessageMedia(
+                mimeType,
+                buffer.toString('base64'),
+                filename
+            );
+            
+            console.log(`Sending image with caption: ${message}`);
+            await client.sendMessage(chatId, media, { caption: message });
+            console.log('Image sent successfully');
+        } else {
+            // Send text message only
+            await client.sendMessage(chatId, message);
+        }
         
         res.json({
             success: true,
@@ -228,7 +255,20 @@ wss.on('connection', (ws) => {
                     if (!isReady || !client) throw new Error('WhatsApp not ready');
                     const formattedNumber = String(msg.phoneNumber || '').replace(/\D/g, '');
                     const chatId = `${formattedNumber}@c.us`;
-                    await client.sendMessage(chatId, msg.text || msg.message || '');
+                    
+                    // Handle media messages via WebSocket
+                    if (msg.mediaUrl) {
+                        const response = await axios.get(msg.mediaUrl, { responseType: 'arraybuffer' });
+                        const buffer = Buffer.from(response.data);
+                        const mimeType = response.headers['content-type'] || 'image/jpeg';
+                        const urlParts = msg.mediaUrl.split('/');
+                        const filename = urlParts[urlParts.length - 1] || 'image.jpg';
+                        const media = new MessageMedia(mimeType, buffer.toString('base64'), filename);
+                        await client.sendMessage(chatId, media, { caption: msg.text || msg.message || '' });
+                    } else {
+                        await client.sendMessage(chatId, msg.text || msg.message || '');
+                    }
+                    
                     ws.send(JSON.stringify({ type: 'message_sent', phoneNumber: formattedNumber }));
                     break;
                 }
