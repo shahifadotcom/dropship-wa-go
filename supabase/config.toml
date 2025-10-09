@@ -68,7 +68,10 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.check-gemini-key]
-verify_jwt = true
+verify_jwt = false
+
+[functions.activate-calling-subscription]
+verify_jwt = false
 
 [db]
 enabled = true
