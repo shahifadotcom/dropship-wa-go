@@ -192,7 +192,8 @@ export default function GoogleServices() {
       `scope=${encodeURIComponent(scopes)}&` +
       `response_type=code&` +
       `access_type=offline&` +
-      `prompt=consent`;
+      `include_granted_scopes=true&` +
+      `prompt=${encodeURIComponent('consent select_account')}`;
 
     // Redirect to Google OAuth in the same window
     window.location.href = authUrl;
