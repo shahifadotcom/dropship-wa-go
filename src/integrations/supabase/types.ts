@@ -1413,6 +1413,7 @@ export type Database = {
           sender_number: string
           transaction_date: string | null
           transaction_id: string
+          verified_source: boolean | null
           wallet_type: string
         }
         Insert: {
@@ -1427,6 +1428,7 @@ export type Database = {
           sender_number: string
           transaction_date?: string | null
           transaction_id: string
+          verified_source?: boolean | null
           wallet_type: string
         }
         Update: {
@@ -1441,6 +1443,7 @@ export type Database = {
           sender_number?: string
           transaction_date?: string | null
           transaction_id?: string
+          verified_source?: boolean | null
           wallet_type?: string
         }
         Relationships: []
@@ -1550,6 +1553,8 @@ export type Database = {
           amount_sent: number | null
           balance_verified: boolean | null
           created_at: string | null
+          gateway_balance_after: number | null
+          gateway_balance_before: number | null
           id: string
           new_balance: number | null
           old_balance: number | null
@@ -1564,6 +1569,8 @@ export type Database = {
           amount_sent?: number | null
           balance_verified?: boolean | null
           created_at?: string | null
+          gateway_balance_after?: number | null
+          gateway_balance_before?: number | null
           id?: string
           new_balance?: number | null
           old_balance?: number | null
@@ -1578,6 +1585,8 @@ export type Database = {
           amount_sent?: number | null
           balance_verified?: boolean | null
           created_at?: string | null
+          gateway_balance_after?: number | null
+          gateway_balance_before?: number | null
           id?: string
           new_balance?: number | null
           old_balance?: number | null
@@ -1873,6 +1882,7 @@ export type Database = {
           product_id: string | null
           result_image_url: string | null
           status: string
+          user_id: string | null
           user_image_url: string
         }
         Insert: {
@@ -1883,6 +1893,7 @@ export type Database = {
           product_id?: string | null
           result_image_url?: string | null
           status?: string
+          user_id?: string | null
           user_image_url: string
         }
         Update: {
@@ -1893,6 +1904,7 @@ export type Database = {
           product_id?: string | null
           result_image_url?: string | null
           status?: string
+          user_id?: string | null
           user_image_url?: string
         }
         Relationships: [
@@ -2283,6 +2295,10 @@ export type Database = {
       }
       can_view_sensitive_product_data: {
         Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      check_otp_rate_limit: {
+        Args: { p_phone_number: string }
         Returns: boolean
       }
       create_error_logs_table_if_not_exists: {
