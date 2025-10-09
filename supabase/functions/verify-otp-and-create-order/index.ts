@@ -189,6 +189,11 @@ serve(async (req) => {
     
     const orderNumber = orderSequence.toString();
 
+    // Determine payment status based on method
+    const isCOD = orderData.paymentMethod?.toLowerCase().includes('cod') || 
+                  orderData.paymentMethod?.toLowerCase().includes('cash');
+    const paymentStatus = isCOD ? 'confirmation_paid' : 'paid';
+
     // Create order
     const { data: order, error: orderError } = await supabase
       .from('orders')
@@ -197,7 +202,8 @@ serve(async (req) => {
         customer_id: userId,
         customer_email: orderData.email || '',
         status: 'confirmed',
-        payment_status: 'pending',
+        payment_status: paymentStatus,
+        payment_method: orderData.paymentMethod || 'COD',
         subtotal: orderData.subtotal,
         tax: orderData.tax,
         shipping: orderData.shipping,

@@ -82,13 +82,30 @@ serve(async (req) => {
       message = message.replace(new RegExp(`{{${key}}}`, 'g'), value.toString());
     });
 
-    // Build product details for message
+    // Determine if COD payment
+    const isCOD = order.payment_method?.toLowerCase().includes('cod') || 
+                  order.payment_method?.toLowerCase().includes('cash');
+    
+    // Build product details with images for customer message
     let productDetails = '';
     if (order.order_items && order.order_items.length > 0) {
-      productDetails = '\n\nProducts:\n';
-      order.order_items.forEach((item: any) => {
-        productDetails += `- ${item.product_name} (Qty: ${item.quantity}) - ৳${item.price}\n`;
+      productDetails = '\n\n📦 Products:\n';
+      order.order_items.forEach((item: any, index: number) => {
+        productDetails += `\n${index + 1}. ${item.product_name}\n`;
+        productDetails += `   Qty: ${item.quantity} × ৳${item.price}\n`;
+        if (item.product_image) {
+          productDetails += `   🖼️ ${item.product_image}\n`;
+        }
       });
+    }
+
+    // Add payment message for COD
+    let paymentMessage = '';
+    if (isCOD) {
+      const remainingAmount = order.total - 100;
+      paymentMessage = `\n\n💰 Payment: Cash on Delivery\n✅ Confirmation fee received: ৳100\n⚠️ Remaining amount (৳${remainingAmount.toFixed(2)}) to be paid to delivery person`;
+    } else {
+      paymentMessage = '\n\n✅ Payment: Completed';
     }
 
     // Get customer's WhatsApp number from billing address
@@ -107,8 +124,8 @@ serve(async (req) => {
       );
     }
 
-    // Send WhatsApp message to customer with product details
-    const customerMessage = message + productDetails;
+    // Send WhatsApp message to customer with product details and payment info
+    const customerMessage = message + productDetails + paymentMessage;
     const { error: customerMessageError } = await supabase.functions.invoke('send-whatsapp-message', {
       body: {
         phoneNumber,
@@ -127,12 +144,32 @@ serve(async (req) => {
       .single();
 
     if (storeSettings?.admin_whatsapp) {
-      const adminMessage = `🔔 New Order #${order.order_number}\n\n` +
-        `Customer: ${customerName}\n` +
-        `Phone: ${phoneNumber}\n` +
-        `Address: ${order.billing_address.fullAddress || 'N/A'}\n` +
-        `Total: ৳${order.total.toFixed(2)}\n` +
-        productDetails;
+      let adminProductList = '';
+      if (order.order_items && order.order_items.length > 0) {
+        adminProductList = '\n📦 Items:\n';
+        order.order_items.forEach((item: any, index: number) => {
+          adminProductList += `${index + 1}. ${item.product_name} (×${item.quantity}) - ৳${item.price}\n`;
+          if (item.product_image) {
+            adminProductList += `   Image: ${item.product_image}\n`;
+          }
+        });
+      }
+
+      const paymentInfo = isCOD 
+        ? `💵 Payment: COD (Confirmation: ৳100 received, Remaining: ৳${(order.total - 100).toFixed(2)})`
+        : `✅ Payment: Completed`;
+
+      const adminMessage = `🔔 NEW ORDER RECEIVED!\n\n` +
+        `📋 Order #${order.order_number}\n` +
+        `💰 Total: ৳${order.total.toFixed(2)}\n` +
+        `${paymentInfo}\n\n` +
+        `👤 CUSTOMER:\n` +
+        `Name: ${customerName}\n` +
+        `Phone: ${phoneNumber}\n\n` +
+        `📍 DELIVERY ADDRESS:\n` +
+        `${order.billing_address.fullAddress || 'N/A'}\n` +
+        `Country: ${order.billing_address.country || 'N/A'}\n` +
+        adminProductList;
 
       await supabase.functions.invoke('send-whatsapp-message', {
         body: {
@@ -140,6 +177,10 @@ serve(async (req) => {
           message: adminMessage
         }
       });
+
+      console.log(`Admin notification sent for order ${order.order_number}`);
+    } else {
+      console.log('No admin WhatsApp configured');
     }
 
     console.log(`Notification sent for order ${order.order_number} using template ${templateName}`);
