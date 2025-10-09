@@ -196,7 +196,7 @@ serve(async (req) => {
     // Determine payment status based on method
     const isCOD = orderData.paymentMethod?.toLowerCase().includes('cod') || 
                   orderData.paymentMethod?.toLowerCase().includes('cash');
-    const paymentStatus = isCOD ? 'confirmation_paid' : 'paid';
+    const paymentStatus = isCOD ? 'pending' : 'paid';
 
     // Create order
     const { data: order, error: orderError } = await supabase
