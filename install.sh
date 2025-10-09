@@ -58,19 +58,23 @@ echo -e "${YELLOW}Installing Supabase CLI...${NC}"
 curl -fsSL https://supabase.com/install.sh | sh
 echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
 
-# Install project dependencies and WhatsApp bridge
+# Install project dependencies and servers
 echo -e "${YELLOW}Installing project dependencies...${NC}"
 npm install
 
 echo -e "${YELLOW}Installing WhatsApp bridge dependencies...${NC}"
 cd whatsapp-bridge && npm install && cd ..
+
+echo -e "${YELLOW}Installing calling server dependencies...${NC}"
+cd calling-server && npm install && cd ..
+
 echo -e "${GREEN}✓ All dependencies installed${NC}"
 
 # Build the project
 echo -e "${YELLOW}Building the project...${NC}"
 npm run build
 
-# Setup PM2 ecosystem for both apps
+# Setup PM2 ecosystem for all three apps
 echo -e "${YELLOW}Setting up PM2 process management...${NC}"
 cat > ecosystem.config.js << 'EOF'
 module.exports = {
@@ -100,6 +104,20 @@ module.exports = {
       env: {
         NODE_ENV: 'production',
         PORT: 3001
+      }
+    },
+    {
+      name: 'calling-server',
+      script: 'npm',
+      args: 'start',
+      cwd: './calling-server',
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '512M',
+      env: {
+        NODE_ENV: 'production',
+        PORT: 3002
       }
     }
   ]
@@ -166,11 +184,13 @@ echo -e "${BLUE}Application Information:${NC}"
 echo -e "Main App: http://161.97.169.64"
 echo -e "Admin Panel: http://161.97.169.64/admin/whatsapp"
 echo -e "WhatsApp Bridge: http://161.97.169.64/wa (proxied)"
+echo -e "Calling Server: http://161.97.169.64:3002"
 echo ""
 echo -e "${BLUE}Useful Commands:${NC}"
 echo -e "View all apps: pm2 list"
 echo -e "Main app logs: pm2 logs shahifa-ecommerce"
 echo -e "WhatsApp logs: pm2 logs whatsapp-bridge"
+echo -e "Calling logs: pm2 logs calling-server"
 echo -e "Stop all: pm2 stop all"
 echo -e "Restart all: pm2 restart all"
 echo -e "Monitor: pm2 monit"

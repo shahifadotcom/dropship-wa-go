@@ -248,7 +248,7 @@ if command -v pm2 &> /dev/null; then
     pm2 stop $WHATSAPP_PROJECT_NAME 2>/dev/null || true
     pm2 delete $WHATSAPP_PROJECT_NAME 2>/dev/null || true
     
-    # Create PM2 ecosystem file for both applications
+    # Create PM2 ecosystem file for all three applications
     cat > ecosystem.config.js << EOF
 module.exports = {
   apps: [
@@ -278,6 +278,20 @@ module.exports = {
         NODE_ENV: 'production',
         PORT: $WHATSAPP_PORT
       }
+    },
+    {
+      name: 'calling-server',
+      script: 'npm',
+      args: 'start',
+      cwd: './calling-server',
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '512M',
+      env: {
+        NODE_ENV: 'production',
+        PORT: 3002
+      }
     }
   ]
 }
@@ -287,12 +301,13 @@ EOF
     pm2 start ecosystem.config.js
     pm2 save
     
-echo -e "${GREEN}Both applications started with PM2!${NC}"
+echo -e "${GREEN}All three applications started with PM2!${NC}"
     echo -e "${BLUE}Main Application: http://161.97.169.64:$MAIN_PORT${NC}"
     echo -e "${BLUE}Admin Panel: http://161.97.169.64:$MAIN_PORT/admin/whatsapp${NC}"
     echo -e "${BLUE}WhatsApp Bridge: http://161.97.169.64:$WHATSAPP_PORT${NC}"
+    echo -e "${BLUE}Calling Server: http://161.97.169.64:3002${NC}"
     echo ""
-    echo -e "${GREEN}🎉 WhatsApp Integration Ready!${NC}"
+    echo -e "${GREEN}🎉 All Services Ready!${NC}"
     echo -e "${YELLOW}To connect WhatsApp:${NC}"
     echo -e "1. Visit the Admin Panel link above"
     echo -e "2. Click 'Initialize WhatsApp'"
@@ -302,6 +317,7 @@ echo -e "${GREEN}Both applications started with PM2!${NC}"
     echo -e "View all logs: pm2 logs"
     echo -e "View main app logs: pm2 logs $PROJECT_NAME"
     echo -e "View WhatsApp logs: pm2 logs $WHATSAPP_PROJECT_NAME"
+    echo -e "View calling logs: pm2 logs calling-server"
     echo -e "Monitor: pm2 monit"
     echo -e "Stop all: pm2 stop all"
     echo -e "Restart all: pm2 restart all"

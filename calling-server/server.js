@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
@@ -267,8 +268,9 @@ io.on('connection', (socket) => {
   });
 });
 
-const PORT = process.env.CALLING_SERVER_PORT || 3003;
+const PORT = process.env.PORT || 3002;
 
-httpServer.listen(PORT, () => {
+httpServer.listen(PORT, '0.0.0.0', () => {
   console.log(`WebRTC signaling server running on port ${PORT}`);
+  console.log(`Server is accessible at http://0.0.0.0:${PORT}`);
 });
