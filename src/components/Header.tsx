@@ -1,4 +1,4 @@
-import { ShoppingCart, Search, Menu, User, Heart, Package, LogOut } from "lucide-react";
+import { ShoppingCart, Search, Menu, User, Heart, Package, LogOut, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
+import { useCategories } from "@/hooks/useCategories";
 import CartDrawer from "./CartDrawer";
 import { CountrySelectorDropdown } from "./CountrySelectorDropdown";
 
@@ -13,6 +14,7 @@ const Header = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { settings } = useStoreSettings();
+  const { categories } = useCategories();
   const { countryCode = 'bd' } = useParams<{ countryCode: string }>();
 
   const handleSignOut = async () => {
@@ -140,13 +142,26 @@ const Header = () => {
             <a href={`/${countryCode}/blog`} className="text-navigation-foreground hover:text-navigation-foreground/80 transition-colors font-medium">
               Blog
             </a>
-            <a href="/categories" className="text-navigation-foreground hover:text-navigation-foreground/80 transition-colors font-medium">
-              Categories
-            </a>
-            <a href="/deals" className="text-navigation-foreground hover:text-navigation-foreground/80 transition-colors font-medium">
-              Deals
-            </a>
-            <a href="/contact" className="text-navigation-foreground hover:text-navigation-foreground/80 transition-colors font-medium">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="text-navigation-foreground hover:text-navigation-foreground/80 transition-colors font-medium flex items-center gap-1">
+                  Categories
+                  <ChevronDown className="h-4 w-4" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="center" className="w-56 bg-background z-50">
+                {categories.map((category) => (
+                  <DropdownMenuItem 
+                    key={category.id}
+                    onClick={() => navigate(`/category/${category.slug}`)}
+                    className="cursor-pointer"
+                  >
+                    {category.name}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <a href="https://wa.me/+8801775777308" target="_blank" rel="noopener noreferrer" className="text-navigation-foreground hover:text-navigation-foreground/80 transition-colors font-medium">
               Contact
             </a>
           </nav>
