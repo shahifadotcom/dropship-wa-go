@@ -57,6 +57,7 @@ export const PaymentSelector = ({
   const [transactionId, setTransactionId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAdvancePayment, setShowAdvancePayment] = useState(false);
+  const [isBinancePay, setIsBinancePay] = useState(false);
   const { selectedCountry, countryId } = useCountryDetection();
 
   useEffect(() => {
@@ -83,6 +84,86 @@ export const PaymentSelector = ({
 
     loadPaymentMethods();
   }, [productId, productIds, countryId]);
+
+  const handleBinancePayment = async () => {
+    if (!selectedGateway) return;
+    
+    setIsSubmitting(true);
+    
+    try {
+      // Create order first
+      const { data: orderData, error: orderError } = await supabase.functions.invoke('verify-otp-and-create-order', {
+        body: {
+          skipOTP: true,
+          orderData: {
+            fullName: customerData?.fullName || '',
+            fullAddress: customerData?.fullAddress || '',
+            whatsappNumber: customerData?.whatsappNumber || '',
+            country: customerData?.country || '',
+            items: cartItems,
+            subtotal: orderAmount,
+            total: orderAmount,
+            paymentMethod: 'binance_pay'
+          }
+        }
+      });
+
+      if (orderError || !orderData?.orderId) {
+        throw new Error('Failed to create order');
+      }
+
+      const newOrderId = orderData.orderId;
+
+      // Get Binance config
+      const { data: binanceConfig } = await supabase
+        .from('binance_config')
+        .select('binance_pay_id, merchant_name')
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (!binanceConfig) {
+        throw new Error('Binance Pay not configured');
+      }
+
+      // Open Binance app with deep link
+      const binanceDeepLink = `binance://pay?merchant=${encodeURIComponent(binanceConfig.binance_pay_id)}&amount=${orderAmount}&currency=USD&orderId=${newOrderId}&merchantName=${encodeURIComponent(binanceConfig.merchant_name || 'Store')}`;
+      
+      // Try to open Binance app
+      window.location.href = binanceDeepLink;
+      
+      // Fallback to web after a delay
+      setTimeout(() => {
+        const binanceWebUrl = `https://www.binance.com/en/pay/checkout?merchant=${encodeURIComponent(binanceConfig.binance_pay_id)}&amount=${orderAmount}&currency=USD&orderId=${newOrderId}`;
+        window.open(binanceWebUrl, '_blank');
+      }, 1500);
+
+      toast.success('Redirecting to Binance Pay...');
+      
+      // Poll for payment confirmation
+      const pollPayment = setInterval(async () => {
+        const { data: order } = await supabase
+          .from('orders')
+          .select('payment_status')
+          .eq('id', newOrderId)
+          .single();
+          
+        if (order?.payment_status === 'paid') {
+          clearInterval(pollPayment);
+          onPaymentSubmitted(newOrderId);
+          toast.success('Payment confirmed!');
+        }
+      }, 3000);
+
+      // Stop polling after 5 minutes
+      setTimeout(() => clearInterval(pollPayment), 300000);
+
+    } catch (error) {
+      console.error('Binance payment error:', error);
+      toast.error('Failed to process Binance payment');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const handleSubmitPayment = async () => {
     if (!selectedGateway || !transactionId.trim()) {
@@ -237,8 +318,11 @@ export const PaymentSelector = ({
           onValueChange={(value) => {
             const gateway = paymentGateways.find(g => g.id === value);
             setSelectedGateway(gateway || null);
-            setShowAdvancePayment(gateway?.name === 'cod');
-            onCODSelected(gateway?.name === 'cod');
+            const isCOD = gateway?.name === 'cod';
+            const isBinance = gateway?.name.toLowerCase().includes('binance');
+            setShowAdvancePayment(isCOD);
+            setIsBinancePay(isBinance);
+            onCODSelected(isCOD);
           }}
           className="gap-3"
         >
@@ -280,7 +364,35 @@ export const PaymentSelector = ({
           })}
         </RadioGroup>
 
-        {selectedGateway && !showAdvancePayment && (
+        {isBinancePay && (
+          <div className="space-y-4 pt-4 border-t">
+            <Alert>
+              <AlertDescription>
+                Click below to pay with Binance Pay. The Binance app will open automatically.
+              </AlertDescription>
+            </Alert>
+
+            <Button 
+              onClick={handleBinancePayment} 
+              className="w-full"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Opening Binance...
+                </>
+              ) : (
+                <>
+                  <Bitcoin className="mr-2 h-4 w-4" />
+                  Pay with Binance
+                </>
+              )}
+            </Button>
+          </div>
+        )}
+
+        {selectedGateway && !showAdvancePayment && !isBinancePay && (
           <div className="space-y-4 pt-4 border-t">
             <div className="space-y-2">
               <Label htmlFor="transactionId">Transaction ID</Label>

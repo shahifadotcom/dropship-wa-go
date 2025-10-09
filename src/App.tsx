@@ -56,6 +56,7 @@ import Sitemap from "./pages/Sitemap";
 import RobotsTxt from "./pages/RobotsTxt";
 import AdminBlog from "./pages/admin/Blog";
 import AISettings from "./pages/admin/AISettings";
+import BinancePay from "./pages/admin/BinancePay";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 
@@ -124,6 +125,7 @@ const App = () => {
               <Route path="/admin/calling-subscriptions" element={<CallingSubscriptions />} />
               <Route path="/admin/blog" element={<AdminBlog />} />
               <Route path="/admin/ai-settings" element={<AISettings />} />
+              <Route path="/admin/binance-pay" element={<BinancePay />} />
               
               <Route path="/dashboard" element={<UserDashboard />} />
               <Route path="/profile" element={<Profile />} />

@@ -22,7 +22,8 @@ import {
   Zap,
   Image,
   Sparkles,
-  Phone
+  Phone,
+  Wallet
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -55,6 +56,7 @@ const AdminSidebar = () => {
     { icon: Palette, label: "Theme", href: "/admin/theme" },
     { icon: Sparkles, label: "Virtual Trial", href: "/admin/virtual-trial" },
     { icon: Bot, label: "AI Settings", href: "/admin/ai-settings" },
+    { icon: Wallet, label: "Binance Pay", href: "/admin/binance-pay" },
     { icon: Phone, label: "Calling Subscriptions", href: "/admin/calling-subscriptions" },
     { icon: MessageSquare, label: "WhatsApp", href: "/admin/whatsapp" },
     { icon: Zap, label: "Vendor Automation", href: "/admin/vendor-automation" },

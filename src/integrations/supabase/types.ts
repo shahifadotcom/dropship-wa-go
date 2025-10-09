@@ -138,6 +138,39 @@ export type Database = {
         }
         Relationships: []
       }
+      binance_config: {
+        Row: {
+          api_key: string
+          api_secret: string
+          binance_pay_id: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          merchant_name: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          api_key: string
+          api_secret: string
+          binance_pay_id: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          merchant_name?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          api_key?: string
+          api_secret?: string
+          binance_pay_id?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          merchant_name?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       binance_pay_config: {
         Row: {
           api_key: string | null

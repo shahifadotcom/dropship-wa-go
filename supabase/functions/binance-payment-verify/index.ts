@@ -93,30 +93,65 @@ serve(async (req) => {
 
 async function verifyBinanceTransaction(transactionId: string, expectedAmount: number): Promise<boolean> {
   try {
-    // This is a placeholder for actual Binance API integration
-    // You would implement actual Binance Pay API verification here
-    console.log(`Simulating Binance verification for transaction: ${transactionId}, amount: ${expectedAmount}`);
+    // Get Binance API credentials from config
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      { auth: { persistSession: false } }
+    );
+
+    const { data: config } = await supabaseClient
+      .from('binance_config')
+      .select('api_key, api_secret')
+      .eq('is_active', true)
+      .maybeSingle();
+
+    if (!config) {
+      console.log('Binance Pay not configured, skipping verification');
+      return false;
+    }
+
+    // Generate signature for Binance API
+    const timestamp = Date.now().toString();
+    const nonce = crypto.randomUUID().replace(/-/g, '');
+    const payload = JSON.stringify({ prepayId: transactionId });
     
-    // For demo purposes, always return true after 2 seconds
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    return true;
+    // Create signature (simplified - actual implementation needs HMAC SHA512)
+    const signaturePayload = timestamp + nonce + payload;
+    const encoder = new TextEncoder();
+    const keyData = encoder.encode(config.api_secret);
+    const messageData = encoder.encode(signaturePayload);
     
-    // Actual implementation would look like:
-    // const response = await fetch('https://bpay.binanceapi.com/binancepay/openapi/v2/order/query', {
-    //   method: 'POST',
-    //   headers: {
-    //     'Content-Type': 'application/json',
-    //     'BinancePay-Timestamp': timestamp,
-    //     'BinancePay-Nonce': nonce,
-    //     'BinancePay-Certificate-SN': Deno.env.get('BINANCE_CERT_SN'),
-    //     'BinancePay-Signature': signature,
-    //   },
-    //   body: JSON.stringify({
-    //     prepayId: transactionId
-    //   })
-    // });
-    // const result = await response.json();
-    // return result.status === 'SUCCESS' && result.data.orderStatus === 'PAID';
+    const cryptoKey = await crypto.subtle.importKey(
+      'raw',
+      keyData,
+      { name: 'HMAC', hash: 'SHA-512' },
+      false,
+      ['sign']
+    );
+    
+    const signatureBuffer = await crypto.subtle.sign('HMAC', cryptoKey, messageData);
+    const signature = Array.from(new Uint8Array(signatureBuffer))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+
+    // Call Binance API
+    const response = await fetch('https://bpay.binanceapi.com/binancepay/openapi/v2/order/query', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'BinancePay-Timestamp': timestamp,
+        'BinancePay-Nonce': nonce,
+        'BinancePay-Certificate-SN': config.api_key,
+        'BinancePay-Signature': signature.toUpperCase(),
+      },
+      body: payload
+    });
+
+    const result = await response.json();
+    console.log('Binance API response:', result);
+    
+    return result.status === 'SUCCESS' && result.data?.orderStatus === 'PAID';
   } catch (error) {
     console.error('Binance verification error:', error);
     return false;
