@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      ad_platforms: {
+        Row: {
+          access_token: string | null
+          ad_account_id: string | null
+          business_id: string | null
+          created_at: string | null
+          credentials: Json | null
+          id: string
+          is_active: boolean | null
+          pixel_id: string | null
+          platform: string
+          refresh_token: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          access_token?: string | null
+          ad_account_id?: string | null
+          business_id?: string | null
+          created_at?: string | null
+          credentials?: Json | null
+          id?: string
+          is_active?: boolean | null
+          pixel_id?: string | null
+          platform: string
+          refresh_token?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          access_token?: string | null
+          ad_account_id?: string | null
+          business_id?: string | null
+          created_at?: string | null
+          credentials?: Json | null
+          id?: string
+          is_active?: boolean | null
+          pixel_id?: string | null
+          platform?: string
+          refresh_token?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       addresses: {
         Row: {
           address1: string
@@ -113,6 +155,137 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_ad_campaigns: {
+        Row: {
+          ad_creative: Json | null
+          ai_insights: Json | null
+          budget_daily: number | null
+          budget_total: number | null
+          campaign_id: string | null
+          campaign_name: string
+          created_at: string | null
+          created_by_ai: boolean | null
+          id: string
+          objective: string
+          performance_metrics: Json | null
+          platform: string
+          status: string | null
+          target_audience: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          ad_creative?: Json | null
+          ai_insights?: Json | null
+          budget_daily?: number | null
+          budget_total?: number | null
+          campaign_id?: string | null
+          campaign_name: string
+          created_at?: string | null
+          created_by_ai?: boolean | null
+          id?: string
+          objective: string
+          performance_metrics?: Json | null
+          platform: string
+          status?: string | null
+          target_audience?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          ad_creative?: Json | null
+          ai_insights?: Json | null
+          budget_daily?: number | null
+          budget_total?: number | null
+          campaign_id?: string | null
+          campaign_name?: string
+          created_at?: string | null
+          created_by_ai?: boolean | null
+          id?: string
+          objective?: string
+          performance_metrics?: Json | null
+          platform?: string
+          status?: string | null
+          target_audience?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      ai_audience_insights: {
+        Row: {
+          ai_recommendations: Json | null
+          audience_data: Json
+          avg_order_value: number | null
+          conversion_rate: number | null
+          created_at: string | null
+          id: string
+          insight_type: string
+          last_analyzed_at: string | null
+          products_interested: Json | null
+        }
+        Insert: {
+          ai_recommendations?: Json | null
+          audience_data: Json
+          avg_order_value?: number | null
+          conversion_rate?: number | null
+          created_at?: string | null
+          id?: string
+          insight_type: string
+          last_analyzed_at?: string | null
+          products_interested?: Json | null
+        }
+        Update: {
+          ai_recommendations?: Json | null
+          audience_data?: Json
+          avg_order_value?: number | null
+          conversion_rate?: number | null
+          created_at?: string | null
+          id?: string
+          insight_type?: string
+          last_analyzed_at?: string | null
+          products_interested?: Json | null
+        }
+        Relationships: []
+      }
+      ai_optimization_logs: {
+        Row: {
+          actual_impact: Json | null
+          campaign_id: string | null
+          changes_made: Json
+          created_at: string | null
+          expected_impact: string | null
+          id: string
+          optimization_type: string
+          reasoning: string | null
+        }
+        Insert: {
+          actual_impact?: Json | null
+          campaign_id?: string | null
+          changes_made: Json
+          created_at?: string | null
+          expected_impact?: string | null
+          id?: string
+          optimization_type: string
+          reasoning?: string | null
+        }
+        Update: {
+          actual_impact?: Json | null
+          campaign_id?: string | null
+          changes_made?: Json
+          created_at?: string | null
+          expected_impact?: string | null
+          id?: string
+          optimization_type?: string
+          reasoning?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_optimization_logs_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "ai_ad_campaigns"
             referencedColumns: ["id"]
           },
         ]
@@ -1619,6 +1792,48 @@ export type Database = {
         }
         Relationships: []
       }
+      server_side_events: {
+        Row: {
+          created_at: string | null
+          custom_data: Json | null
+          error_message: string | null
+          event_id: string
+          event_type: string
+          id: string
+          order_id: string | null
+          platform: string
+          platform_response: Json | null
+          sent_successfully: boolean | null
+          user_data: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          custom_data?: Json | null
+          error_message?: string | null
+          event_id: string
+          event_type: string
+          id?: string
+          order_id?: string | null
+          platform: string
+          platform_response?: Json | null
+          sent_successfully?: boolean | null
+          user_data?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          custom_data?: Json | null
+          error_message?: string | null
+          event_id?: string
+          event_type?: string
+          id?: string
+          order_id?: string | null
+          platform?: string
+          platform_response?: Json | null
+          sent_successfully?: boolean | null
+          user_data?: Json | null
+        }
+        Relationships: []
+      }
       sms_transactions: {
         Row: {
           amount: number | null
@@ -1937,6 +2152,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      tracking_events: {
+        Row: {
+          created_at: string | null
+          currency: string | null
+          event_data: Json | null
+          event_name: string
+          id: string
+          ip_address: string | null
+          order_id: string | null
+          platform_sent: Json | null
+          product_id: string | null
+          referrer: string | null
+          session_id: string | null
+          user_agent: string | null
+          user_id: string | null
+          value: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          currency?: string | null
+          event_data?: Json | null
+          event_name: string
+          id?: string
+          ip_address?: string | null
+          order_id?: string | null
+          platform_sent?: Json | null
+          product_id?: string | null
+          referrer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          value?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          currency?: string | null
+          event_data?: Json | null
+          event_name?: string
+          id?: string
+          ip_address?: string | null
+          order_id?: string | null
+          platform_sent?: Json | null
+          product_id?: string | null
+          referrer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          value?: number | null
+        }
+        Relationships: []
       }
       transaction_verifications: {
         Row: {

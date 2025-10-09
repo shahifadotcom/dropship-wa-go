@@ -2,6 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import PixelTracker from "@/components/PixelTracker";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { CartProvider } from "@/contexts/CartContext";
 import { AuthProvider } from "@/hooks/useAuth";
@@ -57,6 +58,8 @@ import Sitemap from "./pages/Sitemap";
 import RobotsTxt from "./pages/RobotsTxt";
 import AdminBlog from "./pages/admin/Blog";
 import AISettings from "./pages/admin/AISettings";
+import AdPlatforms from "./pages/admin/AdPlatforms";
+import AIAdsManager from "./pages/admin/AIAdsManager";
 import BinancePay from "./pages/admin/BinancePay";
 import Stripe from "./pages/admin/Stripe";
 import Blog from "./pages/Blog";
@@ -81,6 +84,7 @@ const App = () => {
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <PixelTracker />
             <CallButton />
             <Routes>
               {/* Country-based routes */}
@@ -126,7 +130,9 @@ const App = () => {
               <Route path="/admin/virtual-trial" element={<VirtualTrial />} />
               <Route path="/admin/calling-subscriptions" element={<CallingSubscriptions />} />
               <Route path="/admin/blog" element={<AdminBlog />} />
-              <Route path="/admin/ai-settings" element={<AISettings />} />
+          <Route path="/admin/ai-settings" element={<AISettings />} />
+          <Route path="/admin/ad-platforms" element={<AdPlatforms />} />
+          <Route path="/admin/ai-ads" element={<AIAdsManager />} />
               <Route path="/admin/binance-pay" element={<BinancePay />} />
               <Route path="/admin/stripe" element={<Stripe />} />
               <Route path="/admin/sslcommerz" element={<SSLCommerz />} />
