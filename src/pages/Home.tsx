@@ -183,20 +183,6 @@ const Home = () => {
         {/* Mobile Layout - Optimized */}
         <div className="md:hidden">
           <div className="px-4 py-4 space-y-6">
-            {/* Hide Footer on Mobile - handled separately */}
-            {/* Mobile Featured Products */}
-            <div>
-              <div className="grid grid-cols-2 gap-3">
-                {featuredProducts1.slice(0, 2).map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    onQuickView={handleProductClick}
-                  />
-                ))}
-              </div>
-            </div>
-
             {/* Mobile Image Slider */}
             <div>
               <ImageSlider />
