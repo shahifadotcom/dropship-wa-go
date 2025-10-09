@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { ContactsList } from './ContactsList';
 import { ChatInterface } from './ChatInterface';
+import { Capacitor } from '@capacitor/core';
 
 export const CallButton = () => {
   const { user } = useAuth();
@@ -17,11 +18,14 @@ export const CallButton = () => {
   const [chatContactId, setChatContactId] = useState<string | null>(null);
   const [chatContactName, setChatContactName] = useState('');
 
+  // Only show calling feature in native mobile app
+  const isNativeApp = Capacitor.isNativePlatform();
+
   useEffect(() => {
-    if (!user) return;
+    if (!user || !isNativeApp) return;
 
     checkSubscription();
-  }, [user]);
+  }, [user, isNativeApp]);
 
   const checkSubscription = async () => {
     if (!user) return;
@@ -60,7 +64,7 @@ export const CallButton = () => {
     setShowContacts(false);
   };
 
-  if (!user || !isVisible) return null;
+  if (!user || !isVisible || !isNativeApp) return null;
 
   return (
     <>

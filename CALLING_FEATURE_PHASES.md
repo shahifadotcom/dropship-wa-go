@@ -60,13 +60,12 @@
 - ✅ User guide documentation
 
 ## Phase 7: Mobile Integration ✅ (COMPLETED)
-- ✅ Integrate with Android app
-- ✅ Push notifications for incoming calls
-- ✅ Background service for call reception (CallingService)
-- ✅ Permission handling in native app (camera, audio, phone)
-- ✅ Native WebRTC integration
-- ✅ Incoming call activity with answer/decline UI
-- ✅ Socket.IO signaling connection
+- ✅ Calling feature only visible in Capacitor native app
+- ✅ Hidden in browser (desktop and mobile web)
+- ✅ SMS scanner app cleaned (no calling code)
+- ✅ Native platform detection using Capacitor.isNativePlatform()
+- ✅ Permission handling ready for Android/iOS
+- ✅ Camera and microphone access in native apps
 
 ## Current Status: ALL PHASES COMPLETE! 🎉🎊
 
@@ -130,18 +129,23 @@
 5. Admin monitors subscriptions and revenue
 
 ### Android App Features:
-- **CallingService**: Background foreground service for call handling
-- **IncomingCallActivity**: Full-screen activity for incoming calls
-- **WebRTC Integration**: Native WebRTC with PeerConnectionFactory
-- **Socket.IO Client**: Real-time signaling with calling server
-- **Permissions**: Camera, microphone, phone state access
-- **Notifications**: Foreground service notifications for active calls
+- **Native App Only**: Calling icon only appears in Capacitor Android/iOS apps
+- **Browser Hidden**: No calling features visible when accessed via browser
+- **SMS Scanner App**: Remains separate, only for payment verification
+- **Capacitor Integration**: Uses `Capacitor.isNativePlatform()` to detect native app
+- **Permissions**: Camera, microphone handled by Capacitor
+- **WebRTC**: Native browser WebRTC APIs work in Capacitor
+
+### Important Notes:
+- 📱 Calling feature is **ONLY in the main e-commerce Capacitor app**
+- 🚫 **NOT** in the SMS scanner app (`android-app/` folder)
+- 🌐 Browser users (desktop/mobile web) will **NOT** see calling features
+- ✅ Only Android/iOS app users see the floating call button
 
 ### Build & Deploy Android App:
-1. Install dependencies: `cd android-app && ./gradlew clean`
-2. Build APK: `./gradlew assembleDebug`
-3. Install on device: `adb install -r app/build/outputs/apk/debug/app-debug.apk`
-4. Or open in Android Studio and run directly
+1. Install dependencies: Follow `CAPACITOR_CALLING_SETUP.md`
+2. Build Capacitor app: `npm run build && npx cap sync android`
+3. Run on device: `npx cap run android`
 
 ### Future Enhancements:
 - FCM push notifications for missed calls when app is closed
