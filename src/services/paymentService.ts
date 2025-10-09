@@ -234,21 +234,39 @@ export class PaymentService {
     }
   }
 
-  // Check if transaction ID exists in SMS transactions
+  // Check if transaction ID exists in SMS transactions or transaction verifications
   static async checkSMSTransaction(transactionId: string): Promise<boolean> {
     try {
-      const { data, error } = await supabase
+      // Check SMS transactions table
+      const { data: smsData, error: smsError } = await supabase
         .from('sms_transactions')
         .select('id')
         .eq('transaction_id', transactionId.trim())
         .maybeSingle();
 
-      if (error) {
-        console.error('Error checking SMS transaction:', error);
+      if (smsError) {
+        console.error('Error checking SMS transaction:', smsError);
+      }
+
+      // If found in SMS transactions, return true
+      if (smsData) {
+        return true;
+      }
+
+      // Also check transaction_verifications table
+      const { data: txData, error: txError } = await supabase
+        .from('transaction_verifications')
+        .select('id')
+        .eq('transaction_id', transactionId.trim())
+        .maybeSingle();
+
+      if (txError) {
+        console.error('Error checking transaction verifications:', txError);
         return false;
       }
 
-      return !!data;
+      // Return true if found in either table
+      return !!txData;
     } catch (error) {
       console.error('Error checking SMS transaction:', error);
       return false;
