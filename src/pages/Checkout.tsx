@@ -16,6 +16,7 @@ import 'react-phone-number-input/style.css';
 import { OTPVerificationModal } from '@/components/OTPVerificationModal';
 import { PaymentSelector } from '@/components/payment/PaymentSelector';
 import { useCountryDetection } from '@/hooks/useCountryDetection';
+import { SuggestedProducts } from '@/components/SuggestedProducts';
 
 interface CheckoutFormData {
   country: string;
@@ -367,6 +368,16 @@ const Checkout = () => {
             </Card>
           </div>
         </div>
+        )}
+
+        {/* Suggested Products Section */}
+        {!showPaymentSection && (
+          <div className="mt-8">
+            <SuggestedProducts 
+              currentProductIds={cart.items.map(item => item.productId)}
+              limit={8}
+            />
+          </div>
         )}
 
         <OTPVerificationModal

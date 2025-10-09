@@ -7,6 +7,7 @@ import ProductCard from "@/components/ProductCard";
 import ProductDetailModal from "@/components/ProductDetailModal";
 import Footer from "@/components/Footer";
 import MobileBottomNav from "@/components/MobileBottomNav";
+import { StorefrontSection } from "@/components/StorefrontSection";
 import { useProducts } from "@/hooks/useProducts";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
 import { Product } from "@/lib/types";
@@ -205,6 +206,12 @@ const Home = () => {
             </div>
           </div>
         </div>
+
+        {/* Digital Products Section */}
+        <StorefrontSection type="digital" title="Digital Products" limit={6} />
+
+        {/* Print on Demand Section */}
+        <StorefrontSection type="print_on_demand" title="Print on Demand" limit={6} />
       </main>
 
       {/* Product Detail Modal */}

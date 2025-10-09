@@ -1524,6 +1524,8 @@ export type Database = {
           name: string
           original_price: number | null
           price: number
+          print_on_demand: boolean | null
+          product_type: string | null
           rating: number | null
           review_count: number | null
           shipping_cost: number | null
@@ -1560,6 +1562,8 @@ export type Database = {
           name: string
           original_price?: number | null
           price: number
+          print_on_demand?: boolean | null
+          product_type?: string | null
           rating?: number | null
           review_count?: number | null
           shipping_cost?: number | null
@@ -1596,6 +1600,8 @@ export type Database = {
           name?: string
           original_price?: number | null
           price?: number
+          print_on_demand?: boolean | null
+          product_type?: string | null
           rating?: number | null
           review_count?: number | null
           shipping_cost?: number | null

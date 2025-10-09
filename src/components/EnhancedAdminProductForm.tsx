@@ -59,6 +59,8 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
     cash_on_delivery_enabled: false,
     virtual_trial_enabled: false,
     is_digital: false,
+    print_on_demand: false,
+    product_type: 'physical',
     download_url: '',
     brand: '',
     tags: '',
@@ -173,6 +175,8 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
           cash_on_delivery_enabled: p.cash_on_delivery_enabled || false,
           virtual_trial_enabled: p.virtual_trial_enabled || false,
           is_digital: p.is_digital || false,
+          print_on_demand: p.print_on_demand || false,
+          product_type: p.product_type || 'physical',
           download_url: p.download_url || '',
           brand: p.brand || '',
           tags: p.tags ? p.tags.join(', ') : '',
@@ -195,7 +199,7 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
           shipping_cost: '', tax_rate: '', images: [''], category_id: '', country_id: 'all-countries', 
           vendor_id: 'none', auto_order_enabled: false,
           allowed_payment_gateways: [] as string[], cash_on_delivery_enabled: false,
-          virtual_trial_enabled: false, is_digital: false, download_url: '',
+          virtual_trial_enabled: false, is_digital: false, print_on_demand: false, product_type: 'physical', download_url: '',
           brand: '', tags: '', stock_quantity: '', sku: '', weight: '',
           dimensions: { length: '', width: '', height: '' },
           meta_title: '', meta_description: '', social_preview_image: ''
@@ -317,7 +321,7 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
         shipping_cost: '', tax_rate: '', images: [''], category_id: '', country_id: 'all-countries', 
         vendor_id: 'none', auto_order_enabled: false,
         allowed_payment_gateways: [] as string[], cash_on_delivery_enabled: false,
-        virtual_trial_enabled: false, is_digital: false, download_url: '',
+        virtual_trial_enabled: false, is_digital: false, print_on_demand: false, product_type: 'physical', download_url: '',
         brand: '', tags: '', stock_quantity: '', sku: '', weight: '',
         dimensions: { length: '', width: '', height: '' },
         meta_title: '', meta_description: '', social_preview_image: ''
@@ -633,16 +637,45 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
                           type="checkbox"
                           id="is_digital"
                           checked={formData.is_digital}
-                          onChange={(e) => setFormData({ ...formData, is_digital: e.target.checked })}
+                          onChange={(e) => {
+                            const isDigital = e.target.checked;
+                            setFormData({ 
+                              ...formData, 
+                              is_digital: isDigital,
+                              product_type: isDigital ? 'digital' : formData.print_on_demand ? 'print_on_demand' : 'physical',
+                              print_on_demand: isDigital ? false : formData.print_on_demand
+                            });
+                          }}
                           className="rounded border-gray-300"
                         />
                         <Label htmlFor="is_digital" className="text-sm font-medium">
                           Digital Product (No physical shipping)
                         </Label>
                       </div>
+                      
+                      <div className="flex items-center space-x-2 mt-3">
+                        <input
+                          type="checkbox"
+                          id="print_on_demand"
+                          checked={formData.print_on_demand}
+                          onChange={(e) => {
+                            const isPOD = e.target.checked;
+                            setFormData({ 
+                              ...formData, 
+                              print_on_demand: isPOD,
+                              product_type: isPOD ? 'print_on_demand' : formData.is_digital ? 'digital' : 'physical',
+                              is_digital: isPOD ? false : formData.is_digital
+                            });
+                          }}
+                          className="rounded border-gray-300"
+                        />
+                        <Label htmlFor="print_on_demand" className="text-sm font-medium">
+                          Print on Demand (Printed & shipped on order)
+                        </Label>
+                      </div>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Digital products are auto-completed after payment verification. Subscriptions are auto-activated, and downloadable files get instant download links.
+                      Digital products are instant delivery. Print on Demand products are manufactured after order.
                     </p>
                     
                     {formData.is_digital && (
