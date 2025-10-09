@@ -25,10 +25,10 @@ export const useStoreSettings = () => {
 
   const fetchSettings = async () => {
     try {
-      // Use anon access for public store settings
+      // Use public view for anon access (non-sensitive data)
       const { data, error } = await supabase
-        .from('store_settings')
-        .select('id, store_name, store_tagline, store_description, store_logo, favicon_url, site_title, currency, contact_email, contact_phone, contact_address, email_notifications, whatsapp_notifications, inventory_alerts, maintenance_mode')
+        .from('store_settings_public')
+        .select('*')
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -75,15 +75,15 @@ export const useStoreSettings = () => {
           store_description: data.store_description || '',
           store_logo: data.store_logo,
           favicon_url: data.favicon_url,
-          site_title: data.site_title || 'Online Store',
+          site_title: 'Online Store',
           currency: data.currency || 'BDT',
-          contact_email: data.contact_email || '',
-          contact_phone: data.contact_phone || '',
-          contact_address: data.contact_address || '',
-          email_notifications: data.email_notifications ?? false,
-          whatsapp_notifications: data.whatsapp_notifications ?? false,
-          inventory_alerts: data.inventory_alerts ?? false,
-          maintenance_mode: data.maintenance_mode ?? false,
+          contact_email: '',
+          contact_phone: '',
+          contact_address: '',
+          email_notifications: false,
+          whatsapp_notifications: false,
+          inventory_alerts: false,
+          maintenance_mode: false,
         });
       }
     } catch (error) {

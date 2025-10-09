@@ -17,6 +17,7 @@ import { OTPVerificationModal } from '@/components/OTPVerificationModal';
 import { PaymentSelector } from '@/components/payment/PaymentSelector';
 import { useCountryDetection } from '@/hooks/useCountryDetection';
 import { SuggestedProducts } from '@/components/SuggestedProducts';
+import { z } from 'zod';
 
 interface CheckoutFormData {
   country: string;
@@ -105,6 +106,22 @@ const Checkout = () => {
     { code: 'CA', name: 'Canada', dialCode: '+1' }
   ];
 
+  const checkoutSchema = z.object({
+    country: z.string().min(1, "Country is required"),
+    fullName: z.string()
+      .trim()
+      .min(2, "Full name must be at least 2 characters")
+      .max(100, "Full name must be less than 100 characters")
+      .regex(/^[a-zA-Z\s]+$/, "Full name can only contain letters and spaces"),
+    fullAddress: z.string()
+      .trim()
+      .min(10, "Please provide a complete address")
+      .max(500, "Address must be less than 500 characters"),
+    whatsappNumber: z.string()
+      .min(10, "Invalid phone number")
+      .regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone number format")
+  });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -117,10 +134,14 @@ const Checkout = () => {
       return;
     }
 
-    if (!formData.fullName || !formData.fullAddress || !formData.whatsappNumber) {
+    // Validate form data
+    const validationResult = checkoutSchema.safeParse(formData);
+    if (!validationResult.success) {
+      const errors = validationResult.error.flatten().fieldErrors;
+      const errorMessages = Object.values(errors).flat();
       toast({
-        title: "Missing required fields",
-        description: "Please fill in all required fields.",
+        title: "Validation Error",
+        description: errorMessages[0] || "Please check your input",
         variant: "destructive"
       });
       return;
