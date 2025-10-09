@@ -132,6 +132,7 @@ export class CountryService {
         inStock: item.in_stock,
         stockQuantity: item.stock_quantity || 0,
         sku: item.sku,
+        slug: item.slug,
         tags: item.tags || [],
         variants: [], // Variants excluded from public catalog for security
         rating: Number(item.rating) || 0,
