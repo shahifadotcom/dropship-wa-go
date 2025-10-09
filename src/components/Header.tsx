@@ -97,7 +97,6 @@ const Header = () => {
 
           {/* Desktop User Actions */}
           <div className="flex items-center space-x-2">
-            <CountrySelectorDropdown />
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
