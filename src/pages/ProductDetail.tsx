@@ -40,7 +40,7 @@ const ProductDetail = () => {
           .from('products')
           .select('*, virtual_trial_enabled, meta_title, meta_description, social_preview_image')
           .eq('slug', slug)
-          .single();
+          .maybeSingle();
 
         if (error) throw error;
         
