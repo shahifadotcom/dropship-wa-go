@@ -48,53 +48,29 @@ serve(async (req) => {
       transaction_id, 
       sender_number, 
       message_content, 
-      amount,
-      new_balance,
       timestamp 
     } = smsData
 
-    // Store SMS data with new balance for audit trail
+    // Store SMS data for audit trail (simplified)
     const { error: smsError } = await supabase
       .from('sms_transactions')
       .insert({
         transaction_id,
         sender_number,
         message_content,
-        wallet_type: 'unknown', // Will be determined during matching
-        amount,
-        new_balance,
+        wallet_type: 'mobile_wallet',
         transaction_date: new Date(timestamp),
         is_processed: false
       })
 
     if (smsError) {
       console.error('Failed to store SMS:', smsError)
-      // Continue anyway
     }
 
-    console.log('SMS transaction stored with balance:', new_balance)
-
-    // Store in transaction_verifications for manual review with balance data
-    const { error: verificationError } = await supabase
-      .from('transaction_verifications')
-      .insert({
-        transaction_id,
-        amount,
-        new_balance,
-        payment_gateway: 'pending_match', // Admin will assign wallet type
-        status: 'pending'
-      })
-
-    if (verificationError) {
-      console.error('Error storing verification:', verificationError)
-    } else {
-      console.log('Transaction stored for manual verification with balance:', new_balance)
-    }
+    console.log('SMS transaction stored:', transaction_id)
 
     let transactionData = {
       transactionId: transaction_id,
-      amount,
-      newBalance: new_balance,
       sender: sender_number,
       message: message_content,
       timestamp

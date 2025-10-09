@@ -29,10 +29,8 @@ export const PaymentSelector = ({
   const [paymentGateways, setPaymentGateways] = useState<PaymentGateway[]>([]);
   const [selectedGateway, setSelectedGateway] = useState<PaymentGateway | null>(null);
   const [transactionId, setTransactionId] = useState('');
-  const [amount, setAmount] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAdvancePayment, setShowAdvancePayment] = useState(false);
-  const [isVerifyingBinance, setIsVerifyingBinance] = useState(false);
   const { detectedCountry } = useCountryDetection();
 
   useEffect(() => {
@@ -61,14 +59,8 @@ export const PaymentSelector = ({
   }, [productId, productIds, detectedCountry]);
 
   const handleSubmitPayment = async () => {
-    if (!selectedGateway || !transactionId.trim() || !amount.trim()) {
-      toast.error('Please fill in all required fields');
-      return;
-    }
-
-    const parsedAmount = parseFloat(amount);
-    if (isNaN(parsedAmount) || parsedAmount <= 0) {
-      toast.error('Please enter a valid amount');
+    if (!selectedGateway || !transactionId.trim()) {
+      toast.error('Please enter transaction ID');
       return;
     }
 
@@ -102,37 +94,16 @@ export const PaymentSelector = ({
 
       const newOrderId = orderData.orderId;
 
-      // Handle Binance Pay differently - auto verify
-      if (selectedGateway.name === 'binance_pay') {
-        setIsVerifyingBinance(true);
-        
-        const verified = await PaymentService.verifyBinancePayment(
-          transactionId,
-          newOrderId,
-          parsedAmount
-        );
-
-        setIsVerifyingBinance(false);
-
-        if (verified) {
-          toast.success('Payment verified! Your order has been confirmed.');
-          onPaymentSubmitted(newOrderId);
-        } else {
-          toast.error('Payment verification failed. Please contact support.');
-        }
-        return;
-      }
-
-      // For other payment methods, submit for manual verification
+      // Submit for manual verification (admin checks wallet balance)
       const submitted = await PaymentService.submitTransaction(
         newOrderId,
         selectedGateway.name,
         transactionId,
-        parsedAmount
+        orderAmount
       );
 
       if (submitted) {
-        toast.success('Transaction submitted for verification. You will be notified once verified.');
+        toast.success('Order placed! Transaction will be verified manually.');
         onPaymentSubmitted(newOrderId);
       } else {
         throw new Error('Failed to submit transaction');
@@ -147,14 +118,8 @@ export const PaymentSelector = ({
   };
 
   const handleAdvancePayment = async () => {
-    if (!transactionId.trim() || !amount.trim()) {
-      toast.error('Please enter transaction ID and amount');
-      return;
-    }
-
-    const parsedAmount = parseFloat(amount);
-    if (isNaN(parsedAmount) || parsedAmount !== 100) {
-      toast.error('Advance payment must be exactly 100 BDT');
+    if (!transactionId.trim()) {
+      toast.error('Please enter transaction ID');
       return;
     }
 
@@ -188,13 +153,13 @@ export const PaymentSelector = ({
 
       const newOrderId = orderData.orderId;
 
-      // Create advance payment record (store method used for audit)
+      // Create advance payment record
       const advancePaymentId = await PaymentService.createAdvancePayment(newOrderId, 100, selectedGateway?.name || 'cod');
       if (!advancePaymentId) {
         throw new Error('Failed to create advance payment record');
       }
 
-      // Create transaction verification record for admin review
+      // Submit for manual verification
       const transactionSubmitted = await PaymentService.submitTransaction(
         newOrderId,
         selectedGateway?.name || 'cod',
@@ -203,7 +168,7 @@ export const PaymentSelector = ({
       );
 
       if (transactionSubmitted) {
-        toast.success('Confirmation fee submitted. Your COD order is pending verification.');
+        toast.success('COD order placed! Confirmation fee will be verified manually.');
         onPaymentSubmitted(newOrderId);
       } else {
         throw new Error('Failed to submit transaction for verification');
@@ -274,41 +239,31 @@ export const PaymentSelector = ({
         {selectedGateway && !showAdvancePayment && (
           <div className="space-y-4 pt-4 border-t">
             <div className="space-y-2">
-              <Label htmlFor="amount">Amount Sent (BDT)</Label>
-              <Input
-                id="amount"
-                type="number"
-                step="0.01"
-                placeholder="Enter amount you sent"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                disabled={isSubmitting || isVerifyingBinance}
-              />
-            </div>
-
-            <div className="space-y-2">
               <Label htmlFor="transactionId">Transaction ID</Label>
               <Input
                 id="transactionId"
                 placeholder="Enter your transaction ID"
                 value={transactionId}
                 onChange={(e) => setTransactionId(e.target.value)}
-                disabled={isSubmitting || isVerifyingBinance}
+                disabled={isSubmitting}
               />
+              <p className="text-xs text-muted-foreground">
+                Send payment to {selectedGateway.wallet_number} and enter the transaction ID here
+              </p>
             </div>
 
             <Button 
               onClick={handleSubmitPayment} 
               className="w-full"
-              disabled={isSubmitting || isVerifyingBinance || !transactionId.trim() || !amount.trim()}
+              disabled={isSubmitting || !transactionId.trim()}
             >
-              {isSubmitting || isVerifyingBinance ? (
+              {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {isVerifyingBinance ? 'Verifying...' : 'Processing...'}
+                  Processing...
                 </>
               ) : (
-                'Submit Payment'
+                'Place Order'
               )}
             </Button>
           </div>
@@ -318,22 +273,9 @@ export const PaymentSelector = ({
           <div className="space-y-4 pt-4 border-t">
             <Alert>
               <AlertDescription>
-                For Cash on Delivery orders, please pay 100 BDT as a confirmation fee. The remaining amount will be paid to the delivery person.
+                Pay 100 BDT confirmation fee to {selectedGateway?.wallet_number}. Enter the transaction ID below.
               </AlertDescription>
             </Alert>
-
-            <div className="space-y-2">
-              <Label htmlFor="cod-amount">Confirmation Fee Amount (BDT)</Label>
-              <Input
-                id="cod-amount"
-                type="number"
-                placeholder="100"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                disabled={isSubmitting}
-              />
-              <p className="text-xs text-muted-foreground">Must be exactly 100 BDT</p>
-            </div>
 
             <div className="space-y-2">
               <Label htmlFor="cod-transactionId">Transaction ID</Label>
@@ -349,7 +291,7 @@ export const PaymentSelector = ({
             <Button 
               onClick={handleAdvancePayment} 
               className="w-full"
-              disabled={isSubmitting || !transactionId.trim() || !amount.trim()}
+              disabled={isSubmitting || !transactionId.trim()}
             >
               {isSubmitting ? (
                 <>
@@ -357,7 +299,7 @@ export const PaymentSelector = ({
                   Processing...
                 </>
               ) : (
-                'Submit Confirmation Fee'
+                'Place COD Order'
               )}
             </Button>
           </div>

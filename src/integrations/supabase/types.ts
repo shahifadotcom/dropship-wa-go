@@ -918,7 +918,6 @@ export type Database = {
       }
       payment_gateways: {
         Row: {
-          balance: number | null
           country_id: string | null
           created_at: string | null
           display_name: string
@@ -930,7 +929,6 @@ export type Database = {
           wallet_number: string
         }
         Insert: {
-          balance?: number | null
           country_id?: string | null
           created_at?: string | null
           display_name: string
@@ -942,7 +940,6 @@ export type Database = {
           wallet_number: string
         }
         Update: {
-          balance?: number | null
           country_id?: string | null
           created_at?: string | null
           display_name?: string
