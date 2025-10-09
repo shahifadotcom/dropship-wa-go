@@ -188,8 +188,8 @@ export const PaymentSelector = ({
 
       const newOrderId = orderData.orderId;
 
-      // Create advance payment record
-      const advancePaymentId = await PaymentService.createAdvancePayment(newOrderId, 100, 'binance_pay');
+      // Create advance payment record (store method used for audit)
+      const advancePaymentId = await PaymentService.createAdvancePayment(newOrderId, 100, selectedGateway?.name || 'cod');
       if (!advancePaymentId) {
         throw new Error('Failed to create advance payment record');
       }
@@ -202,18 +202,11 @@ export const PaymentSelector = ({
         100
       );
 
-      if (!transactionSubmitted) {
-        console.error('Failed to create transaction verification record');
-      }
-
-      // Verify the advance payment
-      const verified = await PaymentService.verifyBinancePayment(transactionId, newOrderId, 100);
-      
-      if (verified) {
-        toast.success('Confirmation fee verified! Your COD order has been placed.');
+      if (transactionSubmitted) {
+        toast.success('Confirmation fee submitted. Your COD order is pending verification.');
         onPaymentSubmitted(newOrderId);
       } else {
-        toast.error('Verification failed. Please contact support.');
+        throw new Error('Failed to submit transaction for verification');
       }
 
     } catch (error) {
