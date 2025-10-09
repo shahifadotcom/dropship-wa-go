@@ -72,6 +72,16 @@ const Checkout = () => {
 
       if (error) throw error;
 
+      // Check if the response indicates a failure with a specific message
+      if (!data.success && data.message) {
+        toast({
+          title: "Verification Failed",
+          description: data.message,
+          variant: "destructive"
+        });
+        return;
+      }
+
       if (data.success && data.orderId) {
         setCreatedOrderId(data.orderId);
         setShowPaymentSection(true);
@@ -87,7 +97,7 @@ const Checkout = () => {
       console.error('Order creation error:', error);
       toast({
         title: "Order Creation Failed",
-        description: "Failed to create order. Please try again.",
+        description: error.message || "Failed to create order. Please try again.",
         variant: "destructive"
       });
     } finally {

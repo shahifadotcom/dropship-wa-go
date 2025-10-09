@@ -32,6 +32,8 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Verify OTP with timing-safe comparison
+    console.log('Verifying OTP for phone:', phoneNumber);
+    
     const { data: otpRecords, error: otpError } = await supabase
       .from('otp_verifications')
       .select('*')
@@ -39,6 +41,8 @@ serve(async (req) => {
       .eq('is_verified', false)
       .gt('expires_at', new Date().toISOString())
       .order('created_at', { ascending: false });
+
+    console.log(`Found ${otpRecords?.length || 0} unverified OTP records for this phone number`);
 
     // Find matching OTP with constant-time comparison to prevent timing attacks
     let otpVerification = null;
@@ -54,6 +58,7 @@ serve(async (req) => {
           }
           if (isMatch) {
             otpVerification = record;
+            console.log('OTP matched successfully');
             break;
           }
         }
@@ -66,10 +71,54 @@ serve(async (req) => {
     }
 
     if (!otpVerification) {
+      console.error('No matching OTP found');
+      
+      // Check if OTP was already verified
+      const { data: verifiedOTP } = await supabase
+        .from('otp_verifications')
+        .select('*')
+        .eq('phone_number', phoneNumber)
+        .eq('otp_code', otpCode)
+        .eq('is_verified', true)
+        .maybeSingle();
+      
+      if (verifiedOTP) {
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            message: 'This OTP has already been used. Please request a new OTP.' 
+          }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+      
+      // Check if OTP expired
+      const { data: expiredOTP } = await supabase
+        .from('otp_verifications')
+        .select('*')
+        .eq('phone_number', phoneNumber)
+        .eq('otp_code', otpCode)
+        .lte('expires_at', new Date().toISOString())
+        .maybeSingle();
+      
+      if (expiredOTP) {
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            message: 'This OTP has expired. Please request a new OTP.' 
+          }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+      
       return new Response(
         JSON.stringify({ 
           success: false, 
-          message: 'Invalid or expired OTP' 
+          message: 'Invalid OTP code. Please check and try again.' 
         }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
