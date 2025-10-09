@@ -67,15 +67,17 @@ export const PaymentSelector = ({
     setIsSubmitting(true);
 
     try {
-      // Check if transaction already exists
-      const existingTx = await PaymentService.checkSMSTransaction(transactionId);
-      if (existingTx) {
-        toast.error('This transaction ID has already been used');
-        setIsSubmitting(false);
-        return;
+      // For local wallets, verify SMS transaction BEFORE creating order
+      if (PaymentService.isLocalWallet(selectedGateway.name)) {
+        const preMatched = await PaymentService.verifyLocalWalletPayment(transactionId, '', selectedGateway.name);
+        if (!preMatched) {
+          toast.error('Transaction ID not found in SMS records');
+          setIsSubmitting(false);
+          return;
+        }
       }
 
-      // Create order first
+      // Create order after successful SMS verification (or for non-local gateways)
       const { data: orderData, error: orderError } = await supabase.functions.invoke('verify-otp-and-create-order', {
         body: {
           skipOTP: true,
@@ -94,26 +96,10 @@ export const PaymentSelector = ({
 
       const newOrderId = orderData.orderId;
 
-      // Submit for verification record
-      const submitted = await PaymentService.submitTransaction(
-        newOrderId,
-        selectedGateway.name,
-        transactionId,
-        orderAmount
-      );
-
-      if (!submitted) {
-        throw new Error('Failed to submit transaction');
-      }
-
-      // Auto-verify based on gateway type
       if (PaymentService.isLocalWallet(selectedGateway.name)) {
-        const matched = await PaymentService.verifyLocalWalletPayment(transactionId, newOrderId, selectedGateway.name);
-        if (matched) {
-          toast.success('Order placed! Transaction matched via SMS and verified.');
-        } else {
-          toast.success('Order placed! Waiting for SMS match to auto-verify.');
-        }
+        // Mark order verified server-side (no client DB writes)
+        await PaymentService.verifyLocalWalletPayment(transactionId, newOrderId, selectedGateway.name);
+        toast.success('Order placed and verified via SMS.');
       } else {
         // For Binance/others, use gateway verification
         const verified = await PaymentService.verifyBinancePayment(transactionId, newOrderId, orderAmount);
@@ -143,10 +129,10 @@ export const PaymentSelector = ({
     setIsSubmitting(true);
 
     try {
-      // Check if transaction already exists
-      const existingTx = await PaymentService.checkSMSTransaction(transactionId);
-      if (existingTx) {
-        toast.error('This transaction ID has already been used');
+      // Verify SMS transaction BEFORE creating COD order
+      const preMatched = await PaymentService.verifyLocalWalletPayment(transactionId, '', selectedGateway?.name || 'cod');
+      if (!preMatched) {
+        toast.error('Transaction ID not found in SMS records');
         setIsSubmitting(false);
         return;
       }
@@ -176,25 +162,7 @@ export const PaymentSelector = ({
         throw new Error('Failed to create advance payment record');
       }
 
-      // Submit for verification record
-      const transactionSubmitted = await PaymentService.submitTransaction(
-        newOrderId,
-        selectedGateway?.name || 'cod',
-        transactionId,
-        100
-      );
-
-      if (!transactionSubmitted) {
-        throw new Error('Failed to submit transaction for verification');
-      }
-
-      // Auto-verify via SMS for COD/local wallets
-      const matched = await PaymentService.verifyLocalWalletPayment(transactionId, newOrderId, selectedGateway?.name || 'cod');
-      if (matched) {
-        toast.success('COD order placed! Confirmation fee matched via SMS and verified.');
-      } else {
-        toast.success('COD order placed! Waiting for SMS match to auto-verify.');
-      }
+      toast.success('COD order placed! Confirmation fee verified via SMS.');
       onPaymentSubmitted(newOrderId);
 
     } catch (error) {
