@@ -87,6 +87,59 @@ export const PaymentSelector = ({
     loadPaymentMethods();
   }, [productId, productIds, overrideCountryId, detectedCountryId]);
 
+  const handleStripePayment = async () => {
+    if (!selectedGateway) return;
+    
+    setIsSubmitting(true);
+    
+    try {
+      // Create order first for Stripe
+      const { data: orderData, error: orderError } = await supabase.functions.invoke('verify-otp-and-create-order', {
+        body: {
+          skipOTP: true,
+          orderData: {
+            fullName: customerData?.fullName || '',
+            fullAddress: customerData?.fullAddress || '',
+            whatsappNumber: customerData?.whatsappNumber || '',
+            country: customerData?.country || '',
+            items: cartItems,
+            subtotal: orderAmount,
+            total: orderAmount,
+            paymentMethod: 'stripe'
+          }
+        }
+      });
+
+      if (orderError || !orderData?.orderId) {
+        throw new Error('Failed to create order');
+      }
+
+      const orderId = orderData.orderId;
+
+      // Initialize Stripe payment
+      const { data: stripeData, error: stripeError } = await supabase.functions.invoke('stripe-init', {
+        body: {
+          orderId,
+          amount: orderAmount,
+          customerEmail: '',
+          customerName: customerData?.fullName || 'Customer',
+        }
+      });
+
+      if (stripeError || !stripeData?.success) {
+        throw new Error(stripeData?.error || 'Failed to initialize Stripe payment');
+      }
+
+      // Redirect to Stripe checkout
+      window.location.href = stripeData.sessionUrl;
+      
+    } catch (error) {
+      console.error('Stripe payment error:', error);
+      toast.error('Failed to initialize Stripe payment');
+      setIsSubmitting(false);
+    }
+  };
+
   const handleSSLCommerzPayment = async () => {
     if (!selectedGateway) return;
     
@@ -397,9 +450,15 @@ export const PaymentSelector = ({
             const isCOD = gateway?.name === 'cod';
             const isBinance = gateway?.name.toLowerCase().includes('binance');
             const isSSL = gateway?.name.toLowerCase().includes('sslcommerz');
+            const isStripe = gateway?.name.toLowerCase().includes('stripe');
             setShowAdvancePayment(isCOD);
             setIsBinancePay(isBinance);
             onCODSelected(isCOD);
+            
+            // Auto-trigger Stripe payment
+            if (isStripe) {
+              setTimeout(() => handleStripePayment(), 100);
+            }
             
             // Auto-trigger SSLCommerz payment
             if (isSSL) {

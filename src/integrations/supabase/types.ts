@@ -1858,6 +1858,86 @@ export type Database = {
         }
         Relationships: []
       }
+      stripe_config: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          is_sandbox: boolean
+          publishable_key: string
+          secret_key: string
+          updated_at: string
+          webhook_secret: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_sandbox?: boolean
+          publishable_key: string
+          secret_key: string
+          updated_at?: string
+          webhook_secret?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_sandbox?: boolean
+          publishable_key?: string
+          secret_key?: string
+          updated_at?: string
+          webhook_secret?: string | null
+        }
+        Relationships: []
+      }
+      stripe_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          customer_email: string | null
+          id: string
+          order_id: string | null
+          payment_intent_id: string
+          response_data: Json | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          customer_email?: string | null
+          id?: string
+          order_id?: string | null
+          payment_intent_id: string
+          response_data?: Json | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          customer_email?: string | null
+          id?: string
+          order_id?: string | null
+          payment_intent_id?: string
+          response_data?: Json | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stripe_transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transaction_verifications: {
         Row: {
           amount: number
