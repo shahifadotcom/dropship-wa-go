@@ -134,7 +134,7 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
         tax_rate: product.tax_rate?.toString() || '',
         images: product.images && product.images.length > 0 ? product.images : [''],
         category_id: product.category_id || '',
-        country_id: product.country_id || '',
+        country_id: product.country_id || 'all-countries',
         vendor_id: product.vendor_id || 'none',
         auto_order_enabled: product.auto_order_enabled || false,
         allowed_payment_gateways: product.allowed_payment_gateways || [],
@@ -160,7 +160,7 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
       // Reset form for new product
       setFormData({
         name: '', description: '', slug: '', price: '', original_price: '', cost_price: '', 
-        shipping_cost: '', tax_rate: '', images: [''], category_id: '', country_id: '', 
+        shipping_cost: '', tax_rate: '', images: [''], category_id: '', country_id: 'all-countries', 
         vendor_id: 'none', auto_order_enabled: false,
         allowed_payment_gateways: [] as string[], cash_on_delivery_enabled: false,
         virtual_trial_enabled: false, is_digital: false, download_url: '',
@@ -279,7 +279,7 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
       // Reset form
       setFormData({
         name: '', description: '', slug: '', price: '', original_price: '', cost_price: '', 
-        shipping_cost: '', tax_rate: '', images: [''], category_id: '', country_id: '', 
+        shipping_cost: '', tax_rate: '', images: [''], category_id: '', country_id: 'all-countries', 
         vendor_id: 'none', auto_order_enabled: false,
         allowed_payment_gateways: [] as string[], cash_on_delivery_enabled: false,
         virtual_trial_enabled: false, is_digital: false, download_url: '',
