@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { CheckCircle, Package, Mail, ArrowLeft } from 'lucide-react';
+import { CheckCircle, Package, MessageCircle, ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Order } from '@/lib/types';
 import { useCountryDetection } from '@/hooks/useCountryDetection';
@@ -122,8 +122,8 @@ const OrderSuccess = () => {
                   Thank you for your purchase. Your order has been received and is being processed.
                 </p>
                 <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                  <Mail className="h-4 w-4" />
-                  <span>A confirmation email has been sent to {order.customerEmail}</span>
+                  <MessageCircle className="h-4 w-4" />
+                  <span>A confirmation has been sent to your WhatsApp</span>
                 </div>
               </div>
             </CardContent>
