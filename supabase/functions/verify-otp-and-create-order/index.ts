@@ -214,6 +214,14 @@ serve(async (req) => {
                   orderData.paymentMethod?.toLowerCase().includes('cash');
     const paymentStatus = isCOD ? 'pending' : 'paid';
 
+    // Prepare billing address JSON
+    const billingAddress = {
+      fullName: orderData.fullName || '',
+      fullAddress: orderData.fullAddress || '',
+      whatsappNumber: orderData.whatsappNumber || '',
+      country: orderData.country || ''
+    };
+
     // Create order
     const { data: order, error: orderError } = await supabase
       .from('orders')
@@ -228,8 +236,8 @@ serve(async (req) => {
         tax: orderData.tax ?? 0,
         shipping: orderData.shipping ?? 0,
         total: orderData.total,
-        billing_address: orderData.billingAddress ?? '',
-        shipping_address: orderData.shippingAddress ?? ''
+        billing_address: billingAddress,
+        shipping_address: billingAddress
       })
       .select()
       .single();

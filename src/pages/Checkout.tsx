@@ -210,6 +210,8 @@ const Checkout = () => {
               productIds={cart.items.map(item => item.productId)}
               onPaymentSubmitted={handlePaymentSubmitted}
               onCODSelected={handleCODSelected}
+              customerData={formData}
+              cartItems={cart.items}
             />
           </div>
         ) : (

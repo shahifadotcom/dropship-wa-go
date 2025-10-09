@@ -17,6 +17,13 @@ interface PaymentSelectorProps {
   productIds?: string[];
   onPaymentSubmitted: (orderId: string) => void;
   onCODSelected: (isCOD: boolean) => void;
+  customerData?: {
+    fullName: string;
+    fullAddress: string;
+    whatsappNumber: string;
+    country: string;
+  };
+  cartItems?: any[];
 }
 
 export const PaymentSelector = ({ 
@@ -24,7 +31,9 @@ export const PaymentSelector = ({
   productId, 
   productIds, 
   onPaymentSubmitted,
-  onCODSelected 
+  onCODSelected,
+  customerData,
+  cartItems = []
 }: PaymentSelectorProps) => {
   const [paymentGateways, setPaymentGateways] = useState<PaymentGateway[]>([]);
   const [selectedGateway, setSelectedGateway] = useState<PaymentGateway | null>(null);
@@ -82,7 +91,11 @@ export const PaymentSelector = ({
         body: {
           skipOTP: true,
           orderData: {
-            items: [],
+            fullName: customerData?.fullName || '',
+            fullAddress: customerData?.fullAddress || '',
+            whatsappNumber: customerData?.whatsappNumber || '',
+            country: customerData?.country || '',
+            items: cartItems,
             subtotal: orderAmount,
             total: orderAmount,
             paymentMethod: selectedGateway.name
@@ -142,7 +155,11 @@ export const PaymentSelector = ({
         body: {
           skipOTP: true,
           orderData: {
-            items: [],
+            fullName: customerData?.fullName || '',
+            fullAddress: customerData?.fullAddress || '',
+            whatsappNumber: customerData?.whatsappNumber || '',
+            country: customerData?.country || '',
+            items: cartItems,
             subtotal: orderAmount,
             total: orderAmount,
             paymentMethod: 'cod'
