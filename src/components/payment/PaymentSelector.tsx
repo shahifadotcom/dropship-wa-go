@@ -69,7 +69,7 @@ export const PaymentSelector = ({
           if (productId) {
             gateways = await PaymentService.getProductPaymentGateways(productId, countryId);
           } else if (productIds && productIds.length > 0) {
-            gateways = await PaymentService.getPaymentGateways(countryId);
+            gateways = await PaymentService.getMultipleProductsPaymentGateways(productIds, countryId);
           } else {
             gateways = await PaymentService.getPaymentGateways(countryId);
           }

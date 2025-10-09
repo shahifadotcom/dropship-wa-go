@@ -72,6 +72,14 @@ export class PaymentService {
 
       // Get all available gateways for the country
       const allGateways = await this.getPaymentGateways(countryId);
+      
+      // Check if Binance Pay is enabled
+      const { data: binanceConfig } = await supabase
+        .from('binance_config')
+        .select('is_active')
+        .single();
+      
+      const binanceEnabled = binanceConfig?.is_active || false;
 
       // Filter based on product settings
       let filteredGateways = allGateways;
@@ -80,6 +88,22 @@ export class PaymentService {
         filteredGateways = allGateways.filter(gateway => 
           product.allowed_payment_gateways.includes(gateway.name)
         );
+        
+        // Add Binance Pay if enabled and allowed in product
+        if (binanceEnabled && product.allowed_payment_gateways.includes('binance_pay')) {
+          const hasBinance = filteredGateways.some(g => g.name === 'binance_pay');
+          if (!hasBinance) {
+            filteredGateways.push({
+              id: 'binance_pay',
+              name: 'binance_pay',
+              display_name: 'Binance Pay',
+              wallet_number: '',
+              country_id: countryId,
+              instructions: 'Pay securely using Binance Pay',
+              is_active: true
+            });
+          }
+        }
       }
 
       // Add or remove COD based on product setting
@@ -90,6 +114,90 @@ export class PaymentService {
       return filteredGateways;
     } catch (error) {
       console.error('Error fetching product payment gateways:', error);
+      return [];
+    }
+  }
+
+  // Get payment gateways for multiple products (intersection of allowed gateways)
+  static async getMultipleProductsPaymentGateways(productIds: string[], countryId: string): Promise<PaymentGateway[]> {
+    try {
+      if (!productIds || productIds.length === 0) {
+        return this.getPaymentGateways(countryId);
+      }
+
+      // Get all products' settings
+      const { data: products, error: productsError } = await supabase
+        .from('products')
+        .select('id, allowed_payment_gateways, cash_on_delivery_enabled')
+        .in('id', productIds);
+
+      if (productsError) throw productsError;
+
+      // Get all available gateways for the country
+      const allGateways = await this.getPaymentGateways(countryId);
+      
+      // Check if Binance Pay is enabled
+      const { data: binanceConfig } = await supabase
+        .from('binance_config')
+        .select('is_active')
+        .single();
+      
+      const binanceEnabled = binanceConfig?.is_active || false;
+
+      // Find intersection of allowed payment gateways
+      let allowedGatewayNames: string[] | null = null;
+      let allProductsAllowCOD = true;
+
+      for (const product of products) {
+        if (product.allowed_payment_gateways && product.allowed_payment_gateways.length > 0) {
+          if (allowedGatewayNames === null) {
+            allowedGatewayNames = [...product.allowed_payment_gateways];
+          } else {
+            // Intersection
+            allowedGatewayNames = allowedGatewayNames.filter(name =>
+              product.allowed_payment_gateways.includes(name)
+            );
+          }
+        }
+        
+        if (!product.cash_on_delivery_enabled) {
+          allProductsAllowCOD = false;
+        }
+      }
+
+      // Filter gateways
+      let filteredGateways = allGateways;
+
+      if (allowedGatewayNames && allowedGatewayNames.length > 0) {
+        filteredGateways = allGateways.filter(gateway =>
+          allowedGatewayNames!.includes(gateway.name)
+        );
+        
+        // Add Binance Pay if enabled and allowed in all products
+        if (binanceEnabled && allowedGatewayNames.includes('binance_pay')) {
+          const hasBinance = filteredGateways.some(g => g.name === 'binance_pay');
+          if (!hasBinance) {
+            filteredGateways.push({
+              id: 'binance_pay',
+              name: 'binance_pay',
+              display_name: 'Binance Pay',
+              wallet_number: '',
+              country_id: countryId,
+              instructions: 'Pay securely using Binance Pay',
+              is_active: true
+            });
+          }
+        }
+      }
+
+      // Remove COD if any product doesn't allow it
+      if (!allProductsAllowCOD) {
+        filteredGateways = filteredGateways.filter(gateway => gateway.name !== 'cod');
+      }
+
+      return filteredGateways;
+    } catch (error) {
+      console.error('Error fetching multiple products payment gateways:', error);
       return [];
     }
   }
