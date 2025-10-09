@@ -10,60 +10,64 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="SMS Scanner Admin Login"
-        android:textSize="24sp"
+        android:text="SMS Scanner Admin"
+        android:textSize="28sp"
         android:textColor="#1A1A1A"
         android:textStyle="bold"
-        android:layout_marginBottom="32dp"/>
+        android:layout_marginBottom="8dp"/>
 
-    <com.google.android.material.textfield.TextInputLayout
-        android:layout_width="match_parent"
+    <TextView
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:text="Login Required"
+        android:textSize="16sp"
+        android:textColor="#6B7280"
+        android:layout_marginBottom="48dp"/>
+
+    <EditText
+        android:id="@+id/emailInput"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
         android:hint="Admin Email"
-        android:layout_marginBottom="16dp">
+        android:inputType="textEmailAddress"
+        android:padding="16dp"
+        android:background="#F3F4F6"
+        android:layout_marginBottom="16dp"/>
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/emailInput"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:inputType="textEmailAddress"/>
-    </com.google.android.material.textfield.TextInputLayout>
-
-    <com.google.android.material.textfield.TextInputLayout
+    <EditText
+        android:id="@+id/passwordInput"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="56dp"
         android:hint="Password"
-        android:layout_marginBottom="24dp">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/passwordInput"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:inputType="textPassword"/>
-    </com.google.android.material.textfield.TextInputLayout>
+        android:inputType="textPassword"
+        android:padding="16dp"
+        android:background="#F3F4F6"
+        android:layout_marginBottom="24dp"/>
 
     <Button
         android:id="@+id/loginButton"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="56dp"
         android:text="Login"
         android:textColor="#FFFFFF"
-        android:backgroundTint="#2563EB"
-        android:padding="12dp"/>
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:background="#2563EB"/>
 
     <TextView
         android:id="@+id/errorText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textColor="#DC2626"
+        android:textSize="14sp"
         android:layout_marginTop="16dp"
         android:visibility="gone"/>
 
     <ProgressBar
         android:id="@+id/progressBar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginTop="24dp"
         android:visibility="gone"/>
 
 </LinearLayout>

@@ -6,9 +6,9 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import com.google.android.material.textfield.TextInputEditText;
 import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -21,8 +21,8 @@ public class LoginActivity extends Activity {
     private static final String SUPABASE_URL = "https://mofwljpreecqqxkilywh.supabase.co";
     private static final String SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vZndsanByZWVjcXF4a2lseXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcxMTk5MDgsImV4cCI6MjA3MjY5NTkwOH0.1kfabhKCzV9P384_J9uWF6wGSRHDTYr_9yUBTvGDAvY";
 
-    private TextInputEditText emailInput;
-    private TextInputEditText passwordInput;
+    private EditText emailInput;
+    private EditText passwordInput;
     private Button loginButton;
     private TextView errorText;
     private ProgressBar progressBar;
