@@ -15,10 +15,17 @@ export default function GoogleServices() {
   const [loading, setLoading] = useState(false);
   const [syncLoading, setSyncLoading] = useState(false);
   const [merchantConfig, setMerchantConfig] = useState<any>(null);
+  const [authLoading, setAuthLoading] = useState(false);
 
   useEffect(() => {
     loadGoogleConfig();
   }, []);
+
+  useEffect(() => {
+    if (merchantConfig) {
+      handleOAuthCallback();
+    }
+  }, [merchantConfig]);
 
   const loadGoogleConfig = async () => {
     try {
@@ -107,20 +114,88 @@ export default function GoogleServices() {
     }
   };
 
+  const handleOAuthCallback = async () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+
+    if (code && merchantConfig?.client_id && merchantConfig?.client_secret) {
+      setAuthLoading(true);
+      try {
+        const redirect_uri = window.location.origin + '/admin/google-services';
+
+        console.log('Processing OAuth callback...');
+
+        const { data, error } = await supabase.functions.invoke('google-oauth-callback', {
+          body: {
+            code,
+            client_id: merchantConfig.client_id,
+            client_secret: merchantConfig.client_secret,
+            redirect_uri,
+          },
+        });
+
+        if (error) throw error;
+
+        if (data.success) {
+          // Store tokens in the database
+          await saveGoogleConfig({
+            ...merchantConfig,
+            access_token: data.access_token,
+            refresh_token: data.refresh_token,
+            token_expiry: new Date(Date.now() + data.expires_in * 1000).toISOString(),
+            is_enabled: true,
+            connected_email: data.user_email,
+          });
+
+          toast({
+            title: "Success",
+            description: `Google account connected: ${data.user_email}`,
+          });
+
+          // Clean URL
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      } catch (error) {
+        console.error('Error processing OAuth callback:', error);
+        toast({
+          title: "Error",
+          description: "Failed to connect Google account",
+          variant: "destructive",
+        });
+      } finally {
+        setAuthLoading(false);
+      }
+    }
+  };
+
   const initiateGoogleAuth = () => {
+    if (!merchantConfig?.client_id) {
+      toast({
+        title: "Error",
+        description: "Please save your Client ID first",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const scopes = [
-      'https://www.googleapis.com/auth/content'
+      'https://www.googleapis.com/auth/content',
+      'https://www.googleapis.com/auth/userinfo.email',
+      'https://www.googleapis.com/auth/userinfo.profile',
     ].join(' ');
 
-    const authUrl = `https://accounts.google.com/oauth/authorize?` +
-      `client_id=${merchantConfig?.client_id || 'YOUR_CLIENT_ID'}&` +
-      `redirect_uri=${encodeURIComponent(window.location.origin + '/admin/google-services')}&` +
+    const redirect_uri = window.location.origin + '/admin/google-services';
+
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+      `client_id=${merchantConfig.client_id}&` +
+      `redirect_uri=${encodeURIComponent(redirect_uri)}&` +
       `scope=${encodeURIComponent(scopes)}&` +
       `response_type=code&` +
       `access_type=offline&` +
       `prompt=consent`;
 
-    window.open(authUrl, '_blank', 'width=500,height=600');
+    // Redirect to Google OAuth in the same window
+    window.location.href = authUrl;
   };
 
   return (
@@ -153,6 +228,11 @@ export default function GoogleServices() {
                 <div className="flex items-center justify-between p-4 border rounded-lg">
                   <div>
                     <h3 className="font-medium">Connection Status</h3>
+                    {merchantConfig?.connected_email && (
+                      <p className="text-sm text-muted-foreground">
+                        Connected as: {merchantConfig.connected_email}
+                      </p>
+                    )}
                     <p className="text-sm text-muted-foreground">
                       {merchantConfig?.last_sync 
                         ? `Last sync: ${new Date(merchantConfig.last_sync).toLocaleString()}`
@@ -161,7 +241,15 @@ export default function GoogleServices() {
                     </p>
                   </div>
                   <Badge variant={merchantConfig?.is_enabled ? "default" : "secondary"}>
-                    {merchantConfig?.is_enabled ? "Connected" : "Disconnected"}
+                    {merchantConfig?.is_enabled ? (
+                      <span className="flex items-center gap-1">
+                        <Check className="h-3 w-3" /> Connected
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1">
+                        <X className="h-3 w-3" /> Disconnected
+                      </span>
+                    )}
                   </Badge>
                 </div>
 
@@ -216,15 +304,25 @@ export default function GoogleServices() {
                     {loading ? 'Saving...' : 'Save Configuration'}
                   </Button>
 
-                  {merchantConfig?.client_id && (
+                  {merchantConfig?.client_id && !merchantConfig?.is_enabled && (
                     <Button 
                       variant="outline"
                       onClick={initiateGoogleAuth}
+                      disabled={authLoading}
                       className="w-full"
                     >
                       <ExternalLink className="h-4 w-4 mr-2" />
-                      Authorize Google Access
+                      {authLoading ? 'Authorizing...' : 'Authorize Google Access'}
                     </Button>
+                  )}
+
+                  {merchantConfig?.is_enabled && (
+                    <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg">
+                      <Check className="h-4 w-4 text-green-600" />
+                      <span className="text-sm text-green-700 dark:text-green-300">
+                        Google account successfully connected
+                      </span>
+                    </div>
                   )}
                 </div>
 
