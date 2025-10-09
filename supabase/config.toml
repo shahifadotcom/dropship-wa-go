@@ -55,6 +55,9 @@ verify_jwt = true
 [functions.binance-payment-verify]
 verify_jwt = false
 
+[functions.verify-local-wallet-transaction]
+verify_jwt = false
+
 [functions.wp-json-api]
 verify_jwt = false
 

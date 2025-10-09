@@ -94,7 +94,7 @@ export const PaymentSelector = ({
 
       const newOrderId = orderData.orderId;
 
-      // Submit for manual verification (admin checks wallet balance)
+      // Submit for verification record
       const submitted = await PaymentService.submitTransaction(
         newOrderId,
         selectedGateway.name,
@@ -102,12 +102,29 @@ export const PaymentSelector = ({
         orderAmount
       );
 
-      if (submitted) {
-        toast.success('Order placed! Transaction will be verified manually.');
-        onPaymentSubmitted(newOrderId);
-      } else {
+      if (!submitted) {
         throw new Error('Failed to submit transaction');
       }
+
+      // Auto-verify based on gateway type
+      if (PaymentService.isLocalWallet(selectedGateway.name)) {
+        const matched = await PaymentService.verifyLocalWalletPayment(transactionId, newOrderId, selectedGateway.name);
+        if (matched) {
+          toast.success('Order placed! Transaction matched via SMS and verified.');
+        } else {
+          toast.success('Order placed! Waiting for SMS match to auto-verify.');
+        }
+      } else {
+        // For Binance/others, use gateway verification
+        const verified = await PaymentService.verifyBinancePayment(transactionId, newOrderId, orderAmount);
+        if (verified) {
+          toast.success('Order placed and payment verified.');
+        } else {
+          toast.success('Order placed! Verification pending.');
+        }
+      }
+
+      onPaymentSubmitted(newOrderId);
 
     } catch (error) {
       console.error('Payment submission error:', error);
@@ -159,7 +176,7 @@ export const PaymentSelector = ({
         throw new Error('Failed to create advance payment record');
       }
 
-      // Submit for manual verification
+      // Submit for verification record
       const transactionSubmitted = await PaymentService.submitTransaction(
         newOrderId,
         selectedGateway?.name || 'cod',
@@ -167,12 +184,18 @@ export const PaymentSelector = ({
         100
       );
 
-      if (transactionSubmitted) {
-        toast.success('COD order placed! Confirmation fee will be verified manually.');
-        onPaymentSubmitted(newOrderId);
-      } else {
+      if (!transactionSubmitted) {
         throw new Error('Failed to submit transaction for verification');
       }
+
+      // Auto-verify via SMS for COD/local wallets
+      const matched = await PaymentService.verifyLocalWalletPayment(transactionId, newOrderId, selectedGateway?.name || 'cod');
+      if (matched) {
+        toast.success('COD order placed! Confirmation fee matched via SMS and verified.');
+      } else {
+        toast.success('COD order placed! Waiting for SMS match to auto-verify.');
+      }
+      onPaymentSubmitted(newOrderId);
 
     } catch (error) {
       console.error('Advance payment error:', error);

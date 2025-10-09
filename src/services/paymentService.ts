@@ -35,6 +35,11 @@ export interface TransactionVerification {
 
 export class PaymentService {
   
+  static isLocalWallet(name?: string) {
+    const w = String(name || '').toLowerCase();
+    return w === 'bkash' || w === 'nagad' || w === 'rocket' || w === 'cod';
+  }
+
   // Get payment gateways for a country
   static async getPaymentGateways(countryId: string): Promise<PaymentGateway[]> {
     try {
@@ -130,6 +135,24 @@ export class PaymentService {
       return data.success;
     } catch (error) {
       console.error('Error verifying Binance payment:', error);
+      return false;
+    }
+  }
+
+  // Verify Local Wallet (bKash/Nagad/Rocket/COD) by matching against SMS DB
+  static async verifyLocalWalletPayment(
+    transactionId: string,
+    orderId: string,
+    paymentGateway: string
+  ): Promise<boolean> {
+    try {
+      const { data, error } = await supabase.functions.invoke('verify-local-wallet-transaction', {
+        body: { transactionId, orderId, paymentGateway }
+      });
+      if (error) throw error;
+      return !!data?.success;
+    } catch (error) {
+      console.error('Error verifying local wallet payment:', error);
       return false;
     }
   }
