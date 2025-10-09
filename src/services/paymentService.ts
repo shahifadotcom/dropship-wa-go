@@ -234,26 +234,10 @@ export class PaymentService {
     }
   }
 
-  // Check if transaction ID exists in SMS transactions or transaction verifications
+  // Check if transaction ID has already been used in an order
   static async checkSMSTransaction(transactionId: string): Promise<boolean> {
     try {
-      // Check SMS transactions table
-      const { data: smsData, error: smsError } = await supabase
-        .from('sms_transactions')
-        .select('id')
-        .eq('transaction_id', transactionId.trim())
-        .maybeSingle();
-
-      if (smsError) {
-        console.error('Error checking SMS transaction:', smsError);
-      }
-
-      // If found in SMS transactions, return true
-      if (smsData) {
-        return true;
-      }
-
-      // Also check transaction_verifications table
+      // Only check transaction_verifications table - this is where used transactions are stored
       const { data: txData, error: txError } = await supabase
         .from('transaction_verifications')
         .select('id')
@@ -265,7 +249,7 @@ export class PaymentService {
         return false;
       }
 
-      // Return true if found in either table
+      // Return true only if found in transaction_verifications (already used)
       return !!txData;
     } catch (error) {
       console.error('Error checking SMS transaction:', error);
