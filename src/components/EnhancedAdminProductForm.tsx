@@ -55,6 +55,7 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
     allowed_payment_gateways: [] as string[],
     cash_on_delivery_enabled: false,
     virtual_trial_enabled: false,
+    is_digital: false,
     brand: '',
     tags: '',
     
@@ -125,6 +126,7 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
         allowed_payment_gateways: product.allowed_payment_gateways || [],
         cash_on_delivery_enabled: product.cash_on_delivery_enabled || false,
         virtual_trial_enabled: product.virtual_trial_enabled || false,
+        is_digital: product.is_digital || false,
         brand: product.brand || '',
         tags: product.tags ? product.tags.join(', ') : '',
         stock_quantity: product.stock_quantity?.toString() || '',
@@ -146,7 +148,7 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
         shipping_cost: '', tax_rate: '', images: [''], category_id: '', country_id: '', 
         vendor_id: 'none', auto_order_enabled: false,
         allowed_payment_gateways: [] as string[], cash_on_delivery_enabled: false,
-        virtual_trial_enabled: false,
+        virtual_trial_enabled: false, is_digital: false,
         brand: '', tags: '', stock_quantity: '', sku: '', weight: '',
         dimensions: { length: '', width: '', height: '' },
         meta_title: '', meta_description: '', social_preview_image: ''
@@ -218,6 +220,7 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
         allowed_payment_gateways: formData.allowed_payment_gateways,
         cash_on_delivery_enabled: formData.cash_on_delivery_enabled,
         virtual_trial_enabled: formData.virtual_trial_enabled,
+        is_digital: formData.is_digital,
         vendor_id: formData.vendor_id && formData.vendor_id !== 'none' ? formData.vendor_id : null,
         auto_order_enabled: formData.auto_order_enabled,
         dimensions: {
@@ -263,7 +266,7 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
         shipping_cost: '', tax_rate: '', images: [''], category_id: '', country_id: '', 
         vendor_id: 'none', auto_order_enabled: false,
         allowed_payment_gateways: [] as string[], cash_on_delivery_enabled: false,
-        virtual_trial_enabled: false,
+        virtual_trial_enabled: false, is_digital: false,
         brand: '', tags: '', stock_quantity: '', sku: '', weight: '',
         dimensions: { length: '', width: '', height: '' },
         meta_title: '', meta_description: '', social_preview_image: ''
@@ -469,6 +472,18 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
                         />
                         <Label htmlFor="virtual_trial_enabled" className="text-sm">
                           Enable Virtual Try-On (AI-powered clothing trial)
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="is_digital"
+                          checked={formData.is_digital}
+                          onChange={(e) => setFormData({ ...formData, is_digital: e.target.checked })}
+                          className="rounded border-gray-300"
+                        />
+                        <Label htmlFor="is_digital" className="text-sm font-medium">
+                          Digital Product (No physical shipping)
                         </Label>
                       </div>
                     </div>

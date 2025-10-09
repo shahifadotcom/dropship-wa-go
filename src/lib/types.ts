@@ -16,6 +16,7 @@ export interface Product {
   variants?: ProductVariant[];
   rating: number;
   reviewCount: number;
+  isDigital?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

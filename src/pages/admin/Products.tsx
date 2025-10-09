@@ -17,6 +17,7 @@ interface Product {
   category_id: string;
   stock_quantity: number;
   in_stock: boolean;
+  is_digital?: boolean;
   created_at: string;
   images?: string[];
   sku?: string;
@@ -166,6 +167,11 @@ const Products = () => {
                         <Badge variant={product.in_stock ? "default" : "secondary"}>
                           {product.in_stock ? 'In Stock' : 'Out of Stock'}
                         </Badge>
+                        {product.is_digital && (
+                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                            Digital Product
+                          </Badge>
+                        )}
                       </CardTitle>
                       <p className="text-muted-foreground">{product.description}</p>
                     </div>

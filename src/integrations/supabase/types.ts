@@ -1227,6 +1227,7 @@ export type Database = {
           id: string
           images: string[] | null
           in_stock: boolean | null
+          is_digital: boolean
           meta_description: string | null
           meta_title: string | null
           name: string
@@ -1261,6 +1262,7 @@ export type Database = {
           id?: string
           images?: string[] | null
           in_stock?: boolean | null
+          is_digital?: boolean
           meta_description?: string | null
           meta_title?: string | null
           name: string
@@ -1295,6 +1297,7 @@ export type Database = {
           id?: string
           images?: string[] | null
           in_stock?: boolean | null
+          is_digital?: boolean
           meta_description?: string | null
           meta_title?: string | null
           name?: string
