@@ -913,6 +913,7 @@ export type Database = {
           auth_scopes: string[] | null
           client_id: string | null
           client_secret: string | null
+          connected_email: string | null
           created_at: string | null
           id: string
           is_enabled: boolean | null
@@ -920,6 +921,7 @@ export type Database = {
           merchant_center_id: string | null
           refresh_token: string | null
           service_name: string
+          token_expiry: string | null
           updated_at: string | null
         }
         Insert: {
@@ -927,6 +929,7 @@ export type Database = {
           auth_scopes?: string[] | null
           client_id?: string | null
           client_secret?: string | null
+          connected_email?: string | null
           created_at?: string | null
           id?: string
           is_enabled?: boolean | null
@@ -934,6 +937,7 @@ export type Database = {
           merchant_center_id?: string | null
           refresh_token?: string | null
           service_name: string
+          token_expiry?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -941,6 +945,7 @@ export type Database = {
           auth_scopes?: string[] | null
           client_id?: string | null
           client_secret?: string | null
+          connected_email?: string | null
           created_at?: string | null
           id?: string
           is_enabled?: boolean | null
@@ -948,6 +953,7 @@ export type Database = {
           merchant_center_id?: string | null
           refresh_token?: string | null
           service_name?: string
+          token_expiry?: string | null
           updated_at?: string | null
         }
         Relationships: []
