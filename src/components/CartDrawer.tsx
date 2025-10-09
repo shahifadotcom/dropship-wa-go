@@ -2,9 +2,10 @@ import { Minus, Plus, ShoppingBag, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 interface CartDrawerProps {
   children: React.ReactNode;
@@ -13,6 +14,7 @@ interface CartDrawerProps {
 const CartDrawer = ({ children }: CartDrawerProps) => {
   const { cart, updateQuantity, removeFromCart, getCartItemCount } = useCart();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleQuantityChange = (itemId: string, newQuantity: number) => {
     if (newQuantity < 1) {
@@ -67,7 +69,9 @@ const CartDrawer = ({ children }: CartDrawerProps) => {
               <p className="text-muted-foreground mb-4">
                 Add some products to get started
               </p>
-              <Button>Continue Shopping</Button>
+              <SheetClose asChild>
+                <Button onClick={() => navigate('/')}>Continue Shopping</Button>
+              </SheetClose>
             </div>
           ) : (
             <>
@@ -154,12 +158,16 @@ const CartDrawer = ({ children }: CartDrawerProps) => {
                 </div>
 
                 <div className="space-y-2">
-                  <Button className="w-full" size="lg">
-                    Checkout
-                  </Button>
-                  <Button variant="outline" className="w-full">
-                    View Cart
-                  </Button>
+                  <SheetClose asChild>
+                    <Button className="w-full" size="lg" onClick={() => navigate('/checkout')}>
+                      Checkout
+                    </Button>
+                  </SheetClose>
+                  <SheetClose asChild>
+                    <Button variant="outline" className="w-full" onClick={() => navigate('/')}>
+                      Continue Shopping
+                    </Button>
+                  </SheetClose>
                 </div>
 
                 {cart.subtotal < 100 && (
