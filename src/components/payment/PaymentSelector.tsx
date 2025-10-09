@@ -370,19 +370,6 @@ export const PaymentSelector = ({
           </div>
         )}
 
-        {selectedGateway && (
-          <Alert>
-            <AlertDescription>
-              Please make the payment to the provided wallet number, then enter your transaction details above.
-              
-              {selectedGateway.name !== 'binance_pay' && (
-                <div className="mt-2">
-                  <strong>Note:</strong> Your order will be processed after manual verification.
-                </div>
-              )}
-            </AlertDescription>
-          </Alert>
-        )}
       </CardContent>
     </Card>
   );
