@@ -126,8 +126,8 @@ const Home = () => {
               <ImageSlider />
             </div>
 
-            {/* Top Selling Products - Auto Scrolling Carousel - Desktop Only */}
-            <div className="mb-8 hidden md:block">
+            {/* Top Selling Products - Auto Scrolling Carousel */}
+            <div className="mb-8">
               <h2 className="text-2xl font-bold text-foreground mb-6">Top Selling Products</h2>
               {loadingTopDeals ? (
                 <div className="flex justify-center py-8">
@@ -186,6 +186,44 @@ const Home = () => {
             {/* Mobile Image Slider */}
             <div>
               <ImageSlider />
+            </div>
+
+            {/* Mobile Top Selling Products */}
+            <div>
+              <h2 className="text-xl font-bold text-foreground mb-4">Top Selling Products</h2>
+              {loadingTopDeals ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+              ) : (
+                <Carousel
+                  opts={{
+                    align: "start",
+                    loop: true,
+                  }}
+                  plugins={[
+                    Autoplay({
+                      delay: 3000,
+                    }),
+                  ]}
+                  className="w-full"
+                >
+                  <CarouselContent>
+                    {topDeals.map((product) => (
+                      <CarouselItem key={product.id} className="basis-full">
+                        <div className="p-1">
+                          <ProductCard
+                            product={product}
+                            onQuickView={handleProductClick}
+                          />
+                        </div>
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  <CarouselPrevious />
+                  <CarouselNext />
+                </Carousel>
+              )}
             </div>
 
             {/* Mobile Latest Products - Horizontal Scroll */}
