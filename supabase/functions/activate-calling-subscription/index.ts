@@ -34,10 +34,10 @@ serve(async (req) => {
       throw new Error('Order not found');
     }
 
-    // Check if order contains calling subscription product
-    const callingProductSKUs = ['CALLING-1M', 'CALLING-3M', 'CALLING-6M'];
+    // Check if order contains calling subscription product (1 year only)
+    const callingProductSKU = 'CALLING-12M';
     const subscriptionItem = order.order_items.find((item: any) => 
-      callingProductSKUs.includes(item.product_id)
+      item.product_id === callingProductSKU
     );
 
     if (!subscriptionItem) {
@@ -47,16 +47,8 @@ serve(async (req) => {
       );
     }
 
-    // Determine subscription duration based on SKU
-    let durationMonths = 1;
-    const { data: product } = await supabaseClient
-      .from('products')
-      .select('sku')
-      .eq('id', subscriptionItem.product_id)
-      .single();
-
-    if (product?.sku === 'CALLING-3M') durationMonths = 3;
-    if (product?.sku === 'CALLING-6M') durationMonths = 6;
+    // One year subscription only
+    const durationMonths = 12;
 
     const startsAt = new Date();
     const expiresAt = new Date();

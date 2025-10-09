@@ -6,9 +6,7 @@ The calling feature enables registered users to make audio and video calls to ot
 ## Features
 
 ### 1. Subscription System
-- **1 Month Plan**: 500 BDT
-- **3 Month Plan**: 1000 BDT (33% discount)
-- **6 Month Plan**: 2000 BDT (60% discount)
+- **Annual Plan (12 Months)**: 500 BDT
 
 ### 2. Call Types
 - **Audio Calls**: Voice-only calls

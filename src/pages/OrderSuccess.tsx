@@ -63,7 +63,7 @@ const OrderSuccess = () => {
 
         // Check if order contains calling subscription and activate it
         if (data.customer_id && data.payment_status === 'paid') {
-          const callingProductSKUs = ['CALLING-1M', 'CALLING-3M', 'CALLING-6M'];
+          const callingProductSKU = 'CALLING-12M'; // 1 year subscription only
           
           // Check if any item is a calling subscription
           const hasCallingProduct = data.order_items?.some((item: any) => {
