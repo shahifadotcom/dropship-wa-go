@@ -19,7 +19,7 @@ const config: CapacitorConfig = {
       splashImmersive: true,
     },
     App: {
-      handlePermissions: false
+      handlePermissions: true
     },
     BackgroundMode: {
       enabled: true,
@@ -27,6 +27,10 @@ const config: CapacitorConfig = {
       text: 'Monitoring SMS for transaction IDs...',
       silent: false
     }
+  },
+  server: {
+    url: 'https://f56ea3cd-bd45-4fa5-a243-47efbd454051.lovableproject.com?forceHideBadge=true',
+    cleartext: true
   },
   android: {
     minSdkVersion: 23,
