@@ -100,7 +100,7 @@ serve(async (req) => {
     let paymentMessage = '';
     if (isCOD) {
       const remainingAmount = order.total - 100;
-      paymentMessage = `\n\n💰 Payment: Cash on Delivery\n✅ Confirmation fee received: ৳100\n⚠️ Remaining amount (৳${remainingAmount.toFixed(2)}) to be paid to delivery person`;
+      paymentMessage = `\n\n💰 Payment: Cash on Delivery\n✅ Confirmation fee received: ৳100\n⚠️ Remaining amount (৳${remainingAmount.toFixed(2)}) to be paid to delivery person\n\n⚠️ Note: If you do not receive the products, the ৳100 confirmation fee is non-refundable.`;
     } else {
       paymentMessage = '\n\n✅ Payment: Completed';
     }
