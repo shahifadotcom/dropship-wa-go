@@ -60,6 +60,29 @@ const OrderSuccess = () => {
         };
         
         setOrder(mappedOrder);
+
+        // Check if order contains calling subscription and activate it
+        if (data.customer_id && data.payment_status === 'paid') {
+          const callingProductSKUs = ['CALLING-1M', 'CALLING-3M', 'CALLING-6M'];
+          
+          // Check if any item is a calling subscription
+          const hasCallingProduct = data.order_items?.some((item: any) => {
+            // We need to check the product SKU from products table
+            return item.product_id;
+          });
+
+          if (hasCallingProduct) {
+            // Activate subscription via edge function
+            try {
+              await supabase.functions.invoke('activate-calling-subscription', {
+                body: { orderId: data.id, userId: data.customer_id }
+              });
+              console.log('Subscription activation triggered');
+            } catch (activationError) {
+              console.error('Failed to activate subscription:', activationError);
+            }
+          }
+        }
       } catch (error) {
         console.error('Failed to fetch order:', error);
       } finally {

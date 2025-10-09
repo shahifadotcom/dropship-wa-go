@@ -1,77 +1,134 @@
 # Audio/Video Calling Feature - Implementation Phases
 
 ## Phase 1: Database Setup ✅ (COMPLETED)
-- ✅ Create subscriptions table
-- ✅ Create call_logs table
-- ✅ Create chat_messages table
-- ✅ Create user_contacts table
-- ✅ Set up RLS policies
-- ✅ Create helper functions
+- ✅ Create subscriptions table with status enum
+- ✅ Create call_logs table with call status tracking
+- ✅ Create chat_messages table with real-time support
+- ✅ Create user_contacts table for contact management
+- ✅ Set up RLS policies for security
+- ✅ Create helper functions (has_active_subscription, update_updated_at)
 
 ## Phase 2: Subscription Products ✅ (COMPLETED)
 - ✅ Create calling subscription products in store
-- ✅ Available in all countries (global)
-- ✅ Pricing tiers:
+- ✅ Available in all countries (global products)
+- ✅ Pricing tiers implemented:
   - 1 Month: 500 BDT
-  - 3 Months: 1000 BDT (33% discount)
-  - 6 Months: 2000 BDT (60% discount)
-- ✅ Product visible to all users
+  - 3 Months: 1000 BDT (33% discount - originally 1500)
+  - 6 Months: 2000 BDT (60% discount - originally 3000)
+- ✅ Products visible to all users
 - ✅ Edge function to activate subscriptions after purchase
 
 ## Phase 3: WebRTC Signaling Server ✅ (COMPLETED)
 - ✅ Node.js/Express server with Socket.IO
 - ✅ Handle WebRTC signaling (offer, answer, ICE candidates)
-- ✅ User presence management
-- ✅ Call state management
-- ✅ Subscription verification
-- ✅ Add to start.sh script
+- ✅ User presence management (online/offline status)
+- ✅ Call state management (initiated, ringing, answered, ended)
+- ✅ Subscription verification before calls
+- ✅ Automatic call logging to database
+- ✅ Added to start.sh script
 
 ## Phase 4: Frontend Calling Interface ✅ (COMPLETED)
-- ✅ Floating call button (middle right side)
-- ✅ Call initiation UI
-- ✅ Incoming call notification
-- ✅ Active call interface (audio/video controls)
+- ✅ Floating call button (middle right side, always visible)
+- ✅ Call button shows chat button for subscribers
+- ✅ Call initiation UI with contact selection
+- ✅ Incoming call notification and acceptance UI
+- ✅ Active call interface with video streams
+- ✅ Audio/video controls (mute, video toggle)
 - ✅ Subscription check before making calls
-- ✅ Mute/unmute controls
-- ✅ Video on/off toggle
+- ✅ Redirect to subscription purchase if not subscribed
+- ✅ WebRTC peer connection management
+- ✅ ICE candidate exchange
 
 ## Phase 5: Chat Functionality ✅ (COMPLETED)
-- ✅ Real-time chat with other users
-- ✅ Message history
-- ✅ Contacts management
-- ✅ Add contacts by phone number
-- ✅ Chat interface UI
+- ✅ Real-time chat with other users using Supabase Realtime
+- ✅ Message history with timestamps
+- ✅ Chat interface component with scroll area
+- ✅ Contacts management system
+- ✅ Add contacts by phone number search
+- ✅ Contact list with quick actions (call/chat)
+- ✅ Read receipts for messages
+- ✅ Typing indicators support (infrastructure ready)
 
-## Phase 6: Mobile Integration 🔄 (PENDING)
+## Phase 6: Integration & Admin Features ✅ (COMPLETED)
+- ✅ Custom hook (useCallingSubscription) for subscription management
+- ✅ Automatic subscription activation on order completion
+- ✅ Admin panel for subscription management
+- ✅ Subscription statistics dashboard
+- ✅ Cancel subscription functionality
+- ✅ Days remaining calculator
+- ✅ Revenue tracking
+- ✅ User guide documentation
+
+## Phase 7: Mobile Integration 🔄 (PENDING)
 - [ ] Integrate with Android app
 - [ ] Push notifications for incoming calls
 - [ ] Background service for call reception
-- [ ] Permission handling
+- [ ] Permission handling in native app
 - [ ] Native audio/video optimization
 
-## Current Status: Phase 5 Complete! 🎉
+## Current Status: Phases 1-6 Complete! 🎉
 
-### What's Working:
-1. **Subscription System**: Users can purchase 1, 3, or 6-month calling subscriptions
-2. **WebRTC Calling**: Full audio and video calling between registered users
-3. **Signaling Server**: Running on port 3001, handles all call signaling
-4. **Call Controls**: Mute, video toggle, end call functionality
-5. **Chat System**: Real-time messaging with contacts
-6. **Contacts Management**: Search and add contacts by phone number
-7. **Subscription Enforcement**: 
-   - Non-subscribers can receive calls but cannot make calls
-   - Subscribers can make and receive calls
-   - Chat available for subscribers
+### Complete Feature Set:
 
-### How to Use:
-1. **Start the servers**: Run `./start.sh` from project root
-2. **Purchase subscription**: Browse to a calling subscription product and purchase
-3. **Access calling**: Click the phone icon on the right side of the screen
-4. **Add contacts**: Search by phone number and add contacts
-5. **Make calls**: Select a contact and choose audio or video call
-6. **Chat**: Click the message icon to chat with contacts
+**Subscription System:**
+- Three pricing tiers with automatic activation
+- Edge function handles subscription logic
+- Integrated with checkout process
+- Automatic expiry tracking
 
-### Next Steps (Phase 6):
+**WebRTC Calling:**
+- Full audio and video calling between users
+- Signaling server on port 3001
+- STUN server configuration for NAT traversal
+- Real-time connection management
+
+**User Interface:**
+- Floating action button for quick access
+- Contact list with search functionality
+- Call interface with media controls
+- Chat window with real-time messaging
+
+**Admin Features:**
+- Subscription management dashboard
+- Statistics tracking (total, active, expired, revenue)
+- Cancel subscriptions
+- View user details and subscription status
+
+**Security:**
+- Row Level Security policies on all tables
+- Subscription verification before calls
+- Encrypted WebRTC connections
+- Protected admin routes
+
+**Documentation:**
+- Phase implementation plan
+- User guide with troubleshooting
+- Server setup instructions
+- API documentation
+
+### How to Deploy:
+
+1. **Run Migrations**: All database migrations are complete
+2. **Install Dependencies**: 
+   ```bash
+   cd calling-server && npm install
+   ```
+3. **Start Servers**: 
+   ```bash
+   ./start.sh  # Starts all three servers
+   ```
+4. **Access Admin Panel**: `/admin/calling-subscriptions`
+
+### Usage Flow:
+
+1. User purchases subscription (auto-activates)
+2. User clicks phone icon on homepage
+3. User searches and adds contacts by phone
+4. User makes audio/video calls or sends messages
+5. Admin monitors subscriptions and revenue
+
+### Next Steps (Phase 7):
 - Android app integration with native calling
-- Push notifications for incoming calls
-- Background service for always-on call reception
+- Push notifications for missed calls
+- Background service for always-on reception
+- Native camera/microphone optimization

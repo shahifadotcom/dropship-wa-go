@@ -50,6 +50,7 @@ import StorefrontSlider from "./pages/admin/StorefrontSlider";
 import VirtualTrial from "./pages/admin/VirtualTrial";
 import ProductDetail from "./pages/ProductDetail";
 import Calling from "./pages/Calling";
+import CallingSubscriptions from "./pages/admin/CallingSubscriptions";
 
 const queryClient = new QueryClient();
 
@@ -104,6 +105,7 @@ const App = () => {
               <Route path="/admin/vendor-automation" element={<VendorAutomation />} />
               <Route path="/admin/storefront-slider" element={<StorefrontSlider />} />
               <Route path="/admin/virtual-trial" element={<VirtualTrial />} />
+              <Route path="/admin/calling-subscriptions" element={<CallingSubscriptions />} />
               
               <Route path="/dashboard" element={<UserDashboard />} />
               <Route path="/profile" element={<Profile />} />
