@@ -120,6 +120,28 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
     }
   }, [isOpen]);
 
+  // Ensure the selected country (even if inactive) is present in the dropdown
+  useEffect(() => {
+    if (!isOpen) return;
+    const currentId = formData.country_id as string;
+    if (
+      currentId &&
+      currentId !== 'all-countries' &&
+      countries.length > 0 &&
+      !countries.find((c: any) => c.id === currentId)
+    ) {
+      // Fetch the specific country by id (without filtering by is_active)
+      supabase
+        .from('countries')
+        .select('*')
+        .eq('id', currentId)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data) setCountries((prev: any[]) => [...prev, data]);
+        });
+    }
+  }, [isOpen, formData.country_id, countries]);
+
   // Load product data for editing (fetch fresh to ensure persisted fields like country_id)
   useEffect(() => {
     const init = async () => {
