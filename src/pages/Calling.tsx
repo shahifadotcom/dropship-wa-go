@@ -33,7 +33,6 @@ export default function Calling() {
 
   useEffect(() => {
     if (!user) {
-      navigate('/auth');
       return;
     }
 
@@ -346,8 +345,55 @@ export default function Calling() {
     }
   };
 
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background p-4 flex items-center justify-center">
+        <div className="max-w-md w-full bg-card border rounded-lg p-8 text-center">
+          <Phone className="h-16 w-16 mx-auto mb-4 text-primary" />
+          <h1 className="text-2xl font-bold mb-2">Audio/Video Calling</h1>
+          <p className="text-muted-foreground mb-6">
+            Please login or register to use calling features
+          </p>
+          <div className="space-y-3">
+            <Button 
+              onClick={() => navigate('/auth')} 
+              className="w-full"
+              size="lg"
+            >
+              Login / Register
+            </Button>
+            <Button 
+              onClick={() => navigate('/')} 
+              variant="outline"
+              className="w-full"
+            >
+              Back to Store
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!hasSubscription) {
-    return null;
+    return (
+      <div className="min-h-screen bg-background p-4 flex items-center justify-center">
+        <div className="max-w-md w-full bg-card border rounded-lg p-8 text-center">
+          <Phone className="h-16 w-16 mx-auto mb-4 text-primary" />
+          <h1 className="text-2xl font-bold mb-2">Subscription Required</h1>
+          <p className="text-muted-foreground mb-6">
+            You need an active calling subscription to use this feature
+          </p>
+          <Button 
+            onClick={() => navigate('/')} 
+            className="w-full"
+            size="lg"
+          >
+            Back to Store
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   return (

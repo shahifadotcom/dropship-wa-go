@@ -21,13 +21,6 @@ public class MainActivity extends BridgeActivity {
         
         Log.d(TAG, "MainActivity created");
         
-        // Check if user is authenticated
-        if (!AuthTokenManager.isAuthenticated(this)) {
-            Log.w(TAG, "User not authenticated - redirecting to login");
-            redirectToLogin();
-            return;
-        }
-        
         // Add JavaScript interface for auth token management
         getBridge().getWebView().addJavascriptInterface(
             new AuthTokenManager(this), 
@@ -37,38 +30,12 @@ public class MainActivity extends BridgeActivity {
         // Request SMS permissions on startup
         requestSMSPermissions();
         
-        // Start SMS monitoring service
-        startSMSMonitorService();
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        menu.add(0, 1, 0, "Logout");
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == 1) {
-            logout();
-            return true;
+        // Start SMS monitoring service if authenticated
+        if (AuthTokenManager.isAuthenticated(this)) {
+            startSMSMonitorService();
         }
-        return super.onOptionsItemSelected(item);
     }
 
-    private void logout() {
-        Log.d(TAG, "Logging out");
-        AuthTokenManager tokenManager = new AuthTokenManager(this);
-        tokenManager.clearAuthToken();
-        redirectToLogin();
-    }
-
-    private void redirectToLogin() {
-        Intent intent = new Intent(this, LoginActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(intent);
-        finish();
-    }
 
     private void requestSMSPermissions() {
         String[] permissions = {

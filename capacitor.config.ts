@@ -2,7 +2,7 @@ import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'app.lovable.f56ea3cdbd454fa5a24347efbd454051',
-  appName: 'dropship-wa-go',
+  appName: 'shahifa',
   webDir: 'dist',
   plugins: {
     SplashScreen: {
