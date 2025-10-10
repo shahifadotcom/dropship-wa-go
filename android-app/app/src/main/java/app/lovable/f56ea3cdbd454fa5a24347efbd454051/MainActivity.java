@@ -21,6 +21,15 @@ public class MainActivity extends BridgeActivity {
         
         Log.d(TAG, "MainActivity created");
         
+        // Check authentication - redirect to login if not authenticated
+        if (!AuthTokenManager.isAuthenticated(this)) {
+            Log.d(TAG, "Not authenticated, redirecting to login");
+            Intent intent = new Intent(this, LoginActivity.class);
+            startActivity(intent);
+            finish();
+            return;
+        }
+        
         // Add JavaScript interface for auth token management
         getBridge().getWebView().addJavascriptInterface(
             new AuthTokenManager(this), 
@@ -30,10 +39,8 @@ public class MainActivity extends BridgeActivity {
         // Request SMS permissions on startup
         requestSMSPermissions();
         
-        // Start SMS monitoring service if authenticated
-        if (AuthTokenManager.isAuthenticated(this)) {
-            startSMSMonitorService();
-        }
+        // Start SMS monitoring service
+        startSMSMonitorService();
     }
 
 

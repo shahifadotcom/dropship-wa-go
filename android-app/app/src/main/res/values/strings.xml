@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SMS Scanner Admin</string>
+    <string name="title_activity_main">SMS Scanner Admin</string>
+    <string name="package_name">app.lovable.f56ea3cdbd454fa5a24347efbd454051</string>
+    <string name="custom_url_scheme">app.lovable.f56ea3cdbd454fa5a24347efbd454051</string>
+</resources>

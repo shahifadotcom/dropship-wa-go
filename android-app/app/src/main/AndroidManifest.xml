@@ -44,23 +44,25 @@
         android:requestLegacyExternalStorage="true"
         tools:targetApi="31">
 
-        <activity
-            android:exported="false"
-            android:launchMode="singleTask"
-            android:name="app.lovable.f56ea3cdbd454fa5a24347efbd454051.LoginActivity"
-            android:theme="@style/AppTheme.NoActionBarLaunch">
-        </activity>
-
+        <!-- Login Activity as launcher - SMS Scanner requires admin login -->
         <activity
             android:exported="true"
             android:launchMode="singleTask"
-            android:name="app.lovable.f56ea3cdbd454fa5a24347efbd454051.MainActivity"
+            android:name="app.lovable.f56ea3cdbd454fa5a24347efbd454051.LoginActivity"
             android:theme="@style/AppTheme.NoActionBarLaunch">
-
+            
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+
+        <!-- Main Activity - SMS Scanner (requires authentication) -->
+        <activity
+            android:exported="false"
+            android:launchMode="singleTask"
+            android:name="app.lovable.f56ea3cdbd454fa5a24347efbd454051.MainActivity"
+            android:theme="@style/AppTheme.NoActionBarLaunch">
         </activity>
 
 
