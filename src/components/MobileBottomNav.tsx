@@ -1,4 +1,4 @@
-import { Home, Grid3X3, Phone, User, Share2, Facebook, Instagram, Twitter, Youtube, Music } from "lucide-react";
+import { Home, Grid3X3, Phone, User, Share2, Facebook, Instagram, Twitter, Youtube, Music, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { useState } from "react";
@@ -68,14 +68,16 @@ const MobileBottomNav = () => {
           </DialogContent>
         </Dialog>
 
-        {/* Call - Elevated and styled */}
-        <button
-          onClick={() => navigate('/calling')}
-          className="flex flex-col items-center gap-1 bg-blue-500 rounded-full p-4 -mt-6 shadow-lg hover:bg-blue-600 transition-all duration-300 transform hover:scale-105"
+        {/* WhatsApp - Elevated and styled */}
+        <a
+          href="https://wa.me/+8801775777308"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex flex-col items-center gap-1 bg-green-500 rounded-full p-4 -mt-6 shadow-lg hover:bg-green-600 transition-all duration-300 transform hover:scale-105"
           style={{ marginBottom: '8px' }}
         >
-          <Phone className="h-6 w-6 text-white" />
-        </button>
+          <MessageCircle className="h-6 w-6 text-white" />
+        </a>
 
         {/* Account */}
         <Dialog open={accountOpen} onOpenChange={setAccountOpen}>

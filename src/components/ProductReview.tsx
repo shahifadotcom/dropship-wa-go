@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -14,7 +14,7 @@ interface ProductReviewProps {
 
 interface Review {
   id: string;
-  user_name: string;
+  user_name: string | null;
   rating: number;
   comment: string;
   created_at: string;
@@ -32,20 +32,20 @@ export const ProductReview = ({ productId, productSlug }: ProductReviewProps) =>
   const [loadingReviews, setLoadingReviews] = useState(true);
 
   // Load reviews on mount
-  useState(() => {
+  useEffect(() => {
     loadReviews();
-  });
+  }, [productId]);
 
   const loadReviews = async () => {
     try {
       const { data, error } = await supabase
         .from('product_reviews')
-        .select('*')
+        .select('id, user_name, rating, comment, created_at')
         .eq('product_id', productId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setReviews(data || []);
+      setReviews((data || []) as Review[]);
     } catch (error) {
       console.error('Error loading reviews:', error);
     } finally {
@@ -84,9 +84,21 @@ export const ProductReview = ({ productId, productSlug }: ProductReviewProps) =>
 
     setSubmitting(true);
     try {
+      // Get user profile for name
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('first_name, last_name')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      const userName = profile 
+        ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Anonymous'
+        : 'Anonymous';
+
       const { error } = await supabase.from('product_reviews').insert({
         product_id: productId,
         user_id: user.id,
+        user_name: userName,
         rating,
         comment: comment.trim(),
       });
