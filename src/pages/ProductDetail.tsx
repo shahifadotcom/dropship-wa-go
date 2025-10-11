@@ -322,6 +322,15 @@ const ProductDetail = () => {
                   Buy Now
                 </Button>
               </div>
+
+              {/* Suggested Products Section after Buy Now button */}
+              <div className="mt-8">
+                <SuggestedProducts 
+                  currentProductIds={[product.id]}
+                  categoryId={product.category}
+                  limit={8}
+                />
+              </div>
             </div>
 
             <p className="text-muted-foreground leading-relaxed mt-6">
@@ -378,15 +387,6 @@ const ProductDetail = () => {
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Mobile: Suggested Products Section */}
-        <div className="mt-12 md:hidden">
-          <SuggestedProducts 
-            currentProductIds={[product.id]}
-            categoryId={product.category}
-            limit={8}
-          />
         </div>
 
         {/* Desktop: Suggested Products Section */}
