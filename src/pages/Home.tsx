@@ -120,30 +120,6 @@ const Home = () => {
         {/* Desktop and Tablet Layout */}
         <div className="hidden md:block">
           <div className="container mx-auto px-4 py-8">
-            {/* First 2-column products - Responsive */}
-            <div className="mb-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {featuredProducts1.map((product) => (
-                  <div key={product.id} className="bg-card rounded-lg p-4 border border-navigation/20 hover:shadow-lg transition-shadow">
-                    <img 
-                      src={product.images[0]} 
-                      alt={product.name}
-                      className="w-full h-48 md:h-64 object-cover rounded-lg mb-4"
-                    />
-                    <h3 className="font-semibold text-card-foreground mb-2 line-clamp-2">{product.name}</h3>
-                    <p className="text-primary font-bold text-lg">{product.price.toFixed(2)} {currency}</p>
-                    <Button 
-                      onClick={() => handleProductClick(product)} 
-                      className="w-full mt-3"
-                      variant="outline"
-                    >
-                      Quick View
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
-
             {/* Image Slider */}
             <div className="mb-8">
               <ImageSlider />

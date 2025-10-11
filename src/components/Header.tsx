@@ -9,6 +9,7 @@ import { useStoreSettings } from "@/hooks/useStoreSettings";
 import { useCategories } from "@/hooks/useCategories";
 import CartDrawer from "./CartDrawer";
 import { CountrySelectorDropdown } from "./CountrySelectorDropdown";
+import { FaviconUpdater } from "./FaviconUpdater";
 import { useState, useEffect } from "react";
 
 const Header = () => {
@@ -23,6 +24,13 @@ const Header = () => {
   useEffect(() => {
     setSearchQuery(searchParams.get('search') || '');
   }, [searchParams]);
+
+  // Update document title dynamically
+  useEffect(() => {
+    if (settings?.store_name) {
+      document.title = settings.store_name;
+    }
+  }, [settings?.store_name]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -40,8 +48,10 @@ const Header = () => {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-navigation border-b border-navigation/20 shadow-md">
-      <div className="container mx-auto px-4">
+    <>
+      <FaviconUpdater />
+      <header className="sticky top-0 z-50 w-full bg-navigation border-b border-navigation/20 shadow-md">
+        <div className="container mx-auto px-4">
         {/* Mobile Header */}
         <div className="flex md:hidden items-center justify-between h-16 gap-4">
           {/* Store Logo */}
@@ -187,7 +197,8 @@ const Header = () => {
           </nav>
         </div>
       </div>
-    </header>
+      </header>
+    </>
   );
 };
 

@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useCountryDetection } from '@/hooks/useCountryDetection';
 import { VirtualTryOn } from '@/components/VirtualTryOn';
 import { SuggestedProducts } from '@/components/SuggestedProducts';
+import { ProductReview } from '@/components/ProductReview';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import MobileBottomNav from '@/components/MobileBottomNav';
@@ -288,9 +289,49 @@ const ProductDetail = () => {
               </p>
             </div>
 
-            <p className="text-muted-foreground leading-relaxed">
+            {/* Mobile: Buttons after stock - Desktop: Later */}
+            <div className="md:hidden">
+              {virtualTrialEnabled && product.images.length > 0 && (
+                <div className="pt-4">
+                  <VirtualTryOn
+                    productId={product.id}
+                    productImage={product.images[0]}
+                    productName={product.name}
+                  />
+                </div>
+              )}
+
+              <div className="flex gap-4 pt-4">
+                <Button
+                  onClick={handleAddToCart}
+                  disabled={!product.inStock}
+                  size="lg"
+                  variant="outline"
+                  className="flex-1"
+                >
+                  <ShoppingCart className="h-5 w-5 mr-2" />
+                  Add to Cart
+                </Button>
+                
+                <Button
+                  onClick={handleBuyNow}
+                  disabled={!product.inStock}
+                  size="lg"
+                  className="flex-1"
+                >
+                  Buy Now
+                </Button>
+              </div>
+            </div>
+
+            <p className="text-muted-foreground leading-relaxed mt-6">
               {product.description}
             </p>
+
+            {/* Mobile: Review Section after description */}
+            <div className="md:hidden mt-6 pb-24">
+              <ProductReview productId={product.id} productSlug={product.slug} />
+            </div>
 
             {product.tags && product.tags.length > 0 && (
               <div className="sr-only">
@@ -302,47 +343,64 @@ const ProductDetail = () => {
               </div>
             )}
 
-            {virtualTrialEnabled && product.images.length > 0 && (
-              <div className="pt-4">
-                <VirtualTryOn
-                  productId={product.id}
-                  productImage={product.images[0]}
-                  productName={product.name}
-                />
-              </div>
-            )}
+            {/* Desktop: Buttons after description */}
+            <div className="hidden md:block">
+              {virtualTrialEnabled && product.images.length > 0 && (
+                <div className="pt-4">
+                  <VirtualTryOn
+                    productId={product.id}
+                    productImage={product.images[0]}
+                    productName={product.name}
+                  />
+                </div>
+              )}
 
-            <div className="flex gap-4 pt-4 pb-24 md:pb-4">
-              <Button
-                onClick={handleAddToCart}
-                disabled={!product.inStock}
-                size="lg"
-                variant="outline"
-                className="flex-1"
-              >
-                <ShoppingCart className="h-5 w-5 mr-2" />
-                Add to Cart
-              </Button>
-              
-              <Button
-                onClick={handleBuyNow}
-                disabled={!product.inStock}
-                size="lg"
-                className="flex-1"
-              >
-                Buy Now
-              </Button>
+              <div className="flex gap-4 pt-4">
+                <Button
+                  onClick={handleAddToCart}
+                  disabled={!product.inStock}
+                  size="lg"
+                  variant="outline"
+                  className="flex-1"
+                >
+                  <ShoppingCart className="h-5 w-5 mr-2" />
+                  Add to Cart
+                </Button>
+                
+                <Button
+                  onClick={handleBuyNow}
+                  disabled={!product.inStock}
+                  size="lg"
+                  className="flex-1"
+                >
+                  Buy Now
+                </Button>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Suggested Products Section */}
-        <div className="mt-12">
+        {/* Mobile: Suggested Products Section */}
+        <div className="mt-12 md:hidden">
           <SuggestedProducts 
             currentProductIds={[product.id]}
             categoryId={product.category}
             limit={8}
           />
+        </div>
+
+        {/* Desktop: Suggested Products Section */}
+        <div className="mt-12 hidden md:block">
+          <SuggestedProducts 
+            currentProductIds={[product.id]}
+            categoryId={product.category}
+            limit={8}
+          />
+        </div>
+
+        {/* Desktop: Review Section under suggested products */}
+        <div className="mt-12 hidden md:block">
+          <ProductReview productId={product.id} productSlug={product.slug} />
         </div>
       </main>
 
