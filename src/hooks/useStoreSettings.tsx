@@ -75,7 +75,7 @@ export const useStoreSettings = () => {
           store_description: data.store_description || '',
           store_logo: data.store_logo,
           favicon_url: data.favicon_url,
-          site_title: 'Online Store',
+          site_title: data.store_name || 'Online Store',
           currency: data.currency || 'BDT',
           contact_email: '',
           contact_phone: '',
