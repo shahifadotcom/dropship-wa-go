@@ -18,6 +18,7 @@ interface Review {
   rating: number;
   comment: string;
   created_at: string;
+  review_images: string[];
 }
 
 export const ProductReview = ({ productId, productSlug }: ProductReviewProps) => {

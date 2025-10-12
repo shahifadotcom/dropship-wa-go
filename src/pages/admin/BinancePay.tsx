@@ -18,6 +18,8 @@ export default function BinancePay() {
     binance_pay_id: "",
     merchant_name: "",
     is_active: false,
+    verification_mode: "manual",
+    admin_whatsapp: "",
   });
 
   useEffect(() => {
@@ -53,6 +55,8 @@ export default function BinancePay() {
         binance_pay_id: config.binance_pay_id,
         merchant_name: config.merchant_name,
         is_active: config.is_active,
+        verification_mode: config.verification_mode,
+        admin_whatsapp: config.admin_whatsapp,
       };
 
       if (config.id) {
@@ -149,6 +153,38 @@ export default function BinancePay() {
               onChange={(e) => setConfig({ ...config, merchant_name: e.target.value })}
               placeholder="Your store name"
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="admin_whatsapp">Admin WhatsApp Number (for payment notifications)</Label>
+            <Input
+              id="admin_whatsapp"
+              type="tel"
+              value={config.admin_whatsapp}
+              onChange={(e) => setConfig({ ...config, admin_whatsapp: e.target.value })}
+              placeholder="+8801775777308"
+            />
+            <p className="text-sm text-muted-foreground">
+              Receive WhatsApp notifications when customers submit Binance payment details
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="verification_mode">Verification Mode</Label>
+            <select
+              id="verification_mode"
+              value={config.verification_mode}
+              onChange={(e) => setConfig({ ...config, verification_mode: e.target.value as 'auto' | 'manual' })}
+              className="w-full px-3 py-2 border rounded-md"
+            >
+              <option value="manual">Manual Verification (Personal Account)</option>
+              <option value="auto">Auto Verification (Merchant Account - Not Available)</option>
+            </select>
+            <p className="text-sm text-muted-foreground">
+              {config.verification_mode === 'manual' 
+                ? "You'll verify payments manually after checking your Binance account" 
+                : "Auto verification requires a Binance Merchant account"}
+            </p>
           </div>
 
           <div className="flex items-center space-x-2">

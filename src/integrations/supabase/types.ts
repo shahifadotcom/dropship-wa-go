@@ -313,6 +313,7 @@ export type Database = {
       }
       binance_config: {
         Row: {
+          admin_whatsapp: string | null
           api_key: string
           api_secret: string
           binance_pay_id: string
@@ -321,8 +322,10 @@ export type Database = {
           is_active: boolean | null
           merchant_name: string | null
           updated_at: string | null
+          verification_mode: string | null
         }
         Insert: {
+          admin_whatsapp?: string | null
           api_key: string
           api_secret: string
           binance_pay_id: string
@@ -331,8 +334,10 @@ export type Database = {
           is_active?: boolean | null
           merchant_name?: string | null
           updated_at?: string | null
+          verification_mode?: string | null
         }
         Update: {
+          admin_whatsapp?: string | null
           api_key?: string
           api_secret?: string
           binance_pay_id?: string
@@ -341,6 +346,7 @@ export type Database = {
           is_active?: boolean | null
           merchant_name?: string | null
           updated_at?: string | null
+          verification_mode?: string | null
         }
         Relationships: []
       }
@@ -1454,6 +1460,7 @@ export type Database = {
           id: string
           product_id: string
           rating: number
+          review_images: string[] | null
           updated_at: string | null
           user_id: string
           user_name: string | null
@@ -1464,6 +1471,7 @@ export type Database = {
           id?: string
           product_id: string
           rating: number
+          review_images?: string[] | null
           updated_at?: string | null
           user_id: string
           user_name?: string | null
@@ -1474,6 +1482,7 @@ export type Database = {
           id?: string
           product_id?: string
           rating?: number
+          review_images?: string[] | null
           updated_at?: string | null
           user_id?: string
           user_name?: string | null

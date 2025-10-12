@@ -51,6 +51,8 @@ const AdminSidebar = () => {
     { icon: Bot, label: "Order Automation", href: "/admin/order-automation" },
     { icon: CreditCard, label: "Payment Methods", href: "/admin/payment-methods" },
     { icon: CreditCard, label: "Payment Gateways", href: "/admin/payment-gateways" },
+    { icon: CreditCard, label: "Stripe", href: "/admin/stripe" },
+    { icon: CreditCard, label: "SSLCommerz", href: "/admin/sslcommerz" },
     { icon: Truck, label: "Shipping", href: "/admin/shipping" },
     { icon: Globe, label: "Google Services", href: "/admin/google-services" },
     { icon: Search, label: "SEO & Search", href: "/admin/seo" },

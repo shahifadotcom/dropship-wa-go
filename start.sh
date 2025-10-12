@@ -323,43 +323,53 @@ echo -e "${GREEN}All three applications started with PM2!${NC}"
     echo -e "Restart all: pm2 restart all"
     
 else
-    echo -e "${YELLOW}PM2 not found. Starting with npm...${NC}"
+    echo -e "${YELLOW}PM2 not found. Starting with Node.js background processes...${NC}"
     echo -e "${BLUE}Main Application: http://161.97.169.64:$MAIN_PORT${NC}"
     echo -e "${BLUE}Admin Panel: http://161.97.169.64:$MAIN_PORT/admin/whatsapp${NC}"
     echo -e "${BLUE}WhatsApp Bridge: http://161.97.169.64:$WHATSAPP_PORT${NC}"
     echo ""
+    
+    # Start WhatsApp bridge server in background with nohup
     echo -e "${YELLOW}Starting WhatsApp bridge server in background...${NC}"
-    
-    # Start WhatsApp bridge server in background
     cd whatsapp-bridge
-    npm start &
+    nohup npm start > ../whatsapp-bridge.log 2>&1 &
     WHATSAPP_PID=$!
+    echo $WHATSAPP_PID > ../whatsapp-bridge.pid
     cd ..
+    echo -e "${GREEN}WhatsApp bridge started (PID: $WHATSAPP_PID, logs: whatsapp-bridge.log)${NC}"
     
-    echo -e "${GREEN}WhatsApp bridge started with PID: $WHATSAPP_PID${NC}"
-    
+    # Start calling server in background with nohup
     echo -e "${YELLOW}Starting calling server in background...${NC}"
-    
-    # Start calling server in background
     cd calling-server
-    npm start &
+    nohup npm start > ../calling-server.log 2>&1 &
     CALLING_PID=$!
+    echo $CALLING_PID > ../calling-server.pid
     cd ..
+    echo -e "${GREEN}Calling server started (PID: $CALLING_PID, logs: calling-server.log)${NC}"
     
-    echo -e "${GREEN}Calling server started with PID: $CALLING_PID${NC}"
+    echo ""
+    echo -e "${GREEN}All background services started!${NC}"
     echo -e "${YELLOW}Starting main application...${NC}"
     echo -e "${YELLOW}Press Ctrl+C to stop all servers${NC}"
+    echo ""
     
     # Function to cleanup on exit
     cleanup() {
-        echo -e "\n${YELLOW}Stopping servers...${NC}"
-        kill $WHATSAPP_PID 2>/dev/null || true
-        kill $CALLING_PID 2>/dev/null || true
+        echo -e "\n${YELLOW}Stopping all servers...${NC}"
+        if [ -f whatsapp-bridge.pid ]; then
+            kill $(cat whatsapp-bridge.pid) 2>/dev/null || true
+            rm whatsapp-bridge.pid
+        fi
+        if [ -f calling-server.pid ]; then
+            kill $(cat calling-server.pid) 2>/dev/null || true
+            rm calling-server.pid
+        fi
+        echo -e "${GREEN}All services stopped${NC}"
         exit 0
     }
     
     # Set trap to cleanup on exit
-    trap cleanup SIGINT SIGTERM
+    trap cleanup SIGINT SIGTERM EXIT
     
     # Start the main application
     npm run preview -- --port $MAIN_PORT --host 0.0.0.0
