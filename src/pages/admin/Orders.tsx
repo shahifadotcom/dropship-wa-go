@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Search, Package } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AdminLayout from '@/layouts/AdminLayout';
 
 interface Order {
@@ -50,10 +51,41 @@ const Orders = () => {
     switch (status.toLowerCase()) {
       case 'pending': return 'secondary';
       case 'confirmed': return 'default';
+      case 'processing': return 'default';
       case 'shipped': return 'outline';
       case 'delivered': return 'default';
       case 'cancelled': return 'destructive';
       default: return 'secondary';
+    }
+  };
+
+  const handleStatusChange = async (orderId: string, newStatus: string, oldStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ status: newStatus })
+        .eq('id', orderId);
+
+      if (error) throw error;
+
+      // Trigger status update invoice function
+      await supabase.functions.invoke('order-status-update-invoice', {
+        body: { orderId, oldStatus, newStatus }
+      });
+
+      toast({
+        title: "Success",
+        description: `Order status updated to ${newStatus}`,
+      });
+
+      fetchOrders();
+    } catch (error: any) {
+      console.error('Error updating order status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update order status",
+        variant: "destructive"
+      });
     }
   };
 
@@ -109,7 +141,7 @@ const Orders = () => {
               <Card key={order.id}>
                 <CardHeader>
                   <div className="flex justify-between items-start">
-                    <div>
+                    <div className="flex-1">
                       <CardTitle className="flex items-center gap-2">
                         Order #{order.id.slice(0, 8)}
                         <Badge variant={getStatusColor(order.status)}>
@@ -126,6 +158,27 @@ const Orders = () => {
                     </div>
                   </div>
                 </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-4">
+                    <span className="text-sm font-medium">Change Status:</span>
+                    <Select
+                      value={order.status}
+                      onValueChange={(value) => handleStatusChange(order.id, value, order.status)}
+                    >
+                      <SelectTrigger className="w-[200px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="confirmed">Confirmed</SelectItem>
+                        <SelectItem value="processing">Processing</SelectItem>
+                        <SelectItem value="shipped">Shipped</SelectItem>
+                        <SelectItem value="delivered">Delivered</SelectItem>
+                        <SelectItem value="cancelled">Cancelled</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </CardContent>
               </Card>
             ))
           )}

@@ -76,7 +76,77 @@ serve(async (req) => {
       id: order.id
     };
 
-    // Replace template placeholders
+    // Check order status to determine notification type
+    const orderStatus = order.status?.toLowerCase();
+    
+    // For processing status, send simple shipping message
+    if (orderStatus === 'processing') {
+      const shippingMessage = `Great news ${customerName}! Your order #${order.order_number} has been shipped. Thank you`;
+      
+      const { error: sendError } = await supabase.functions.invoke('send-whatsapp-message', {
+        body: {
+          to: order.billing_address.whatsappNumber,
+          message: shippingMessage
+        }
+      });
+
+      if (sendError) {
+        console.error('Error sending shipping notification:', sendError);
+        throw new Error('Failed to send shipping notification');
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, message: 'Shipping notification sent' }),
+        { 
+          status: 200, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    // For confirmed status only, send notifications to both customer and admin
+    if (orderStatus !== 'confirmed') {
+      // For other statuses, send simple update to customer only
+      const templateVars = {
+        name: customerName,
+        order_number: order.order_number,
+        total: order.total.toFixed(2),
+        id: order.id
+      };
+
+      let message = template.template;
+      Object.entries(templateVars).forEach(([key, value]) => {
+        message = message.replace(new RegExp(`{{${key}}}`, 'g'), value.toString());
+      });
+
+      const { error: sendError } = await supabase.functions.invoke('send-whatsapp-message', {
+        body: {
+          to: order.billing_address.whatsappNumber,
+          message: message
+        }
+      });
+
+      if (sendError) {
+        console.error('Error sending status update:', sendError);
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, message: 'Status update sent to customer' }),
+        { 
+          status: 200, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    // Build full order details for confirmed status (customer and admin)
+    const templateVars = {
+      name: customerName,
+      order_number: order.order_number,
+      total: order.total.toFixed(2),
+      id: order.id
+    };
+
     let message = template.template;
     Object.entries(templateVars).forEach(([key, value]) => {
       message = message.replace(new RegExp(`{{${key}}}`, 'g'), value.toString());

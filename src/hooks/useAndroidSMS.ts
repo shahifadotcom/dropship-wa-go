@@ -21,6 +21,7 @@ export const useAndroidSMS = () => {
   const [lastTransaction, setLastTransaction] = useState<TransactionData | null>(null);
 
   // Real Bangladesh Mobile Wallet SMS Pattern
+  // Example: "You have received Tk 500.00 from 01954723595. Ref 95352. Fee Tk 0.00. Balance Tk 510.00. TrxID CI131K7A2D at 01/09/2025 11:32"
   const walletPattern = /You have received Tk\s*([0-9,.]+).*?Balance Tk\s*([0-9,.]+).*?TrxID\s*([A-Z0-9]+)/i;
 
   useEffect(() => {

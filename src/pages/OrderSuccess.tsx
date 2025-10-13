@@ -18,7 +18,10 @@ const OrderSuccess = () => {
 
   useEffect(() => {
     const fetchOrder = async () => {
-      if (!orderId) return;
+      if (!orderId) {
+        setLoading(false);
+        return;
+      }
       
       try {
         const { data, error } = await supabase
@@ -28,9 +31,14 @@ const OrderSuccess = () => {
             order_items(*)
           `)
           .eq('id', orderId)
-          .single();
+          .maybeSingle();
 
         if (error) throw error;
+        if (!data) {
+          setOrder(null);
+          setLoading(false);
+          return;
+        }
         
         // Map the data to Order type
         const mappedOrder: Order = {
