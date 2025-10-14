@@ -31,26 +31,6 @@ serve(async (req) => {
     const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Check rate limit - max 5 attempts per 15 minutes
-    const { data: canSend, error: rateLimitError } = await supabase
-      .rpc('check_otp_rate_limit', { p_phone_number: phoneNumber });
-
-    if (rateLimitError) {
-      console.error('Rate limit check error:', rateLimitError);
-    }
-
-    if (!canSend) {
-      return new Response(
-        JSON.stringify({ 
-          error: 'Rate limit exceeded. Please wait 15 minutes before requesting another OTP.'
-        }),
-        { 
-          status: 429, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
-    }
-
     // Generate secure OTP using database function
     const { data: otpData, error: otpError } = await supabase
       .rpc('generate_secure_otp');

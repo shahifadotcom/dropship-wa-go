@@ -63,6 +63,7 @@ import AdPlatforms from "./pages/admin/AdPlatforms";
 import AIAdsManager from "./pages/admin/AIAdsManager";
 import BinancePay from "./pages/admin/BinancePay";
 import Stripe from "./pages/admin/Stripe";
+import Reviews from "./pages/admin/Reviews";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 
@@ -138,6 +139,7 @@ const App = () => {
               <Route path="/admin/binance-pay" element={<BinancePay />} />
               <Route path="/admin/stripe" element={<Stripe />} />
               <Route path="/admin/sslcommerz" element={<SSLCommerz />} />
+              <Route path="/admin/reviews" element={<Reviews />} />
               
               <Route path="/dashboard" element={<UserDashboard />} />
               <Route path="/profile" element={<Profile />} />

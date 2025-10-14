@@ -4,6 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -31,6 +33,7 @@ export const ProductReview = ({ productId, productSlug }: ProductReviewProps) =>
   const [submitting, setSubmitting] = useState(false);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loadingReviews, setLoadingReviews] = useState(true);
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
 
   // Load reviews on mount
   useEffect(() => {
@@ -41,8 +44,9 @@ export const ProductReview = ({ productId, productSlug }: ProductReviewProps) =>
     try {
       const { data, error } = await supabase
         .from('product_reviews')
-        .select('id, user_name, rating, comment, created_at')
+        .select('id, user_name, rating, comment, created_at, review_images')
         .eq('product_id', productId)
+        .eq('status', 'approved')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -102,17 +106,19 @@ export const ProductReview = ({ productId, productSlug }: ProductReviewProps) =>
         user_name: userName,
         rating,
         comment: comment.trim(),
+        review_images: uploadedImages,
       });
 
       if (error) throw error;
 
       toast({
         title: 'Success',
-        description: 'Your review has been submitted',
+        description: 'Your review has been submitted and is pending approval',
       });
 
       setRating(0);
       setComment('');
+      setUploadedImages([]);
       loadReviews();
     } catch (error) {
       console.error('Error submitting review:', error);
@@ -168,6 +174,63 @@ export const ProductReview = ({ productId, productSlug }: ProductReviewProps) =>
           className="w-full"
         />
 
+        {/* Image Upload */}
+        <div className="space-y-2">
+          <Label>Add Images (Optional)</Label>
+          <Input
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={async (e) => {
+              const files = e.target.files;
+              if (!files || files.length === 0) return;
+
+              const uploadedUrls: string[] = [];
+
+              for (const file of Array.from(files)) {
+                try {
+                  const fileExt = file.name.split('.').pop();
+                  const fileName = `review-${Date.now()}-${Math.random()}.${fileExt}`;
+
+                  const { error: uploadError } = await supabase.storage
+                    .from('review-images')
+                    .upload(fileName, file);
+
+                  if (uploadError) throw uploadError;
+
+                  const { data: { publicUrl } } = supabase.storage
+                    .from('review-images')
+                    .getPublicUrl(fileName);
+
+                  uploadedUrls.push(publicUrl);
+                } catch (error) {
+                  console.error('Error uploading image:', error);
+                  toast({
+                    title: 'Upload Error',
+                    description: 'Failed to upload image',
+                    variant: 'destructive'
+                  });
+                }
+              }
+
+              if (uploadedUrls.length > 0) {
+                setUploadedImages(prev => [...prev, ...uploadedUrls]);
+                toast({
+                  title: 'Images Uploaded',
+                  description: `${uploadedUrls.length} image(s) ready to submit with review`
+                });
+              }
+            }}
+          />
+          {uploadedImages.length > 0 && (
+            <div className="flex gap-2 flex-wrap mt-2">
+              {uploadedImages.map((url, idx) => (
+                <img key={idx} src={url} alt={`Upload ${idx + 1}`} className="w-20 h-20 object-cover rounded" />
+              ))}
+            </div>
+          )}
+        </div>
+
         <Button onClick={handleSubmitReview} disabled={submitting}>
           {submitting ? 'Submitting...' : 'Submit Review'}
         </Button>
@@ -203,6 +266,14 @@ export const ProductReview = ({ productId, productSlug }: ProductReviewProps) =>
                 ))}
               </div>
               <p className="text-sm">{review.comment}</p>
+              
+              {review.review_images && review.review_images.length > 0 && (
+                <div className="flex gap-2 flex-wrap mt-2">
+                  {review.review_images.map((url, idx) => (
+                    <img key={idx} src={url} alt={`Review image ${idx + 1}`} className="w-20 h-20 object-cover rounded" />
+                  ))}
+                </div>
+              )}
             </div>
           ))
         )}

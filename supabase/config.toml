@@ -79,6 +79,9 @@ verify_jwt = false
 [functions.activate-calling-subscription]
 verify_jwt = false
 
+[functions.sms-transaction-handler]
+verify_jwt = false
+
 [db]
 enabled = true
 port = 54322

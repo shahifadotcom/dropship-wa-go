@@ -12,8 +12,8 @@ import java.util.regex.Pattern;
 public class SMSReceiver extends BroadcastReceiver {
     private static final String TAG = "SMSReceiver";
     
-    // Supabase Edge Function endpoint
-    private static final String API_ENDPOINT = "https://mofwljpreecqqxkilywh.supabase.co/functions/v1/sms-transaction-handler";
+    // Main server endpoint (local server IP)
+    private static final String API_ENDPOINT = "http://161.97.169.64:3000/api/sms-transaction";
     private static final String ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vZndsanByZWVjcXF4a2lseXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcxMTk5MDgsImV4cCI6MjA3MjY5NTkwOH0.1kfabhKCzV9P384_J9uWF6wGSRHDTYr_9yUBTvGDAvY";
 
     // Enhanced pattern to extract transaction ID from bKash, Nagad, Rocket SMS

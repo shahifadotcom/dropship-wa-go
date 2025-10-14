@@ -1455,34 +1455,43 @@ export type Database = {
       }
       product_reviews: {
         Row: {
+          approved_at: string | null
+          approved_by: string | null
           comment: string
           created_at: string | null
           id: string
           product_id: string
           rating: number
           review_images: string[] | null
+          status: string
           updated_at: string | null
           user_id: string
           user_name: string | null
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
           comment: string
           created_at?: string | null
           id?: string
           product_id: string
           rating: number
           review_images?: string[] | null
+          status?: string
           updated_at?: string | null
           user_id: string
           user_name?: string | null
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
           comment?: string
           created_at?: string | null
           id?: string
           product_id?: string
           rating?: number
           review_images?: string[] | null
+          status?: string
           updated_at?: string | null
           user_id?: string
           user_name?: string | null
@@ -3088,10 +3097,6 @@ export type Database = {
       }
       can_view_sensitive_product_data: {
         Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      check_otp_rate_limit: {
-        Args: { p_phone_number: string }
         Returns: boolean
       }
       create_error_logs_table_if_not_exists: {
