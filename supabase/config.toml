@@ -82,6 +82,12 @@ verify_jwt = false
 [functions.sms-transaction-handler]
 verify_jwt = false
 
+[functions.sms-transaction-local]
+verify_jwt = false
+
+[functions.order-status-update-invoice]
+verify_jwt = false
+
 [db]
 enabled = true
 port = 54322

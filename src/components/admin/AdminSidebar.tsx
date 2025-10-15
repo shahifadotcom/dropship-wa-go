@@ -25,7 +25,8 @@ import {
   Phone,
   Wallet,
   Target,
-  ShoppingBag
+  ShoppingBag,
+  Star
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -39,6 +40,7 @@ const AdminSidebar = () => {
     { icon: LayoutDashboard, label: "Dashboard", href: "/admin" },
     { icon: Package, label: "Products", href: "/admin/products" },
     { icon: ShoppingCart, label: "Orders", href: "/admin/orders" },
+    { icon: Star, label: "Reviews", href: "/admin/reviews" },
     { icon: Users, label: "Customers", href: "/admin/customers" },
     { icon: BarChart3, label: "Analytics", href: "/admin/analytics" },
     { icon: Tags, label: "Categories", href: "/admin/categories" },

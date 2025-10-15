@@ -174,7 +174,7 @@ export default function BinancePay() {
             <select
               id="verification_mode"
               value={config.verification_mode}
-              onChange={(e) => setConfig({ ...config, verification_mode: e.target.value as 'auto' | 'manual' })}
+              onChange={(e) => setConfig({ ...config, verification_mode: e.target.value })}
               className="w-full px-3 py-2 border rounded-md"
             >
               <option value="manual">Manual Verification (Personal Account)</option>
@@ -182,8 +182,8 @@ export default function BinancePay() {
             </select>
             <p className="text-sm text-muted-foreground">
               {config.verification_mode === 'manual' 
-                ? "You'll verify payments manually after checking your Binance account" 
-                : "Auto verification requires a Binance Merchant account"}
+                ? "Customers will see your Binance Pay ID and submit transaction ID after payment" 
+                : "Auto verification requires a Binance Merchant account with API access"}
             </p>
           </div>
 

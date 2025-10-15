@@ -12,8 +12,10 @@ import java.util.regex.Pattern;
 public class SMSReceiver extends BroadcastReceiver {
     private static final String TAG = "SMSReceiver";
     
-    // Main server endpoint (local server IP)
+    // Main server endpoint (local server IP handling SMS)
     private static final String API_ENDPOINT = "http://161.97.169.64:3000/api/sms-transaction";
+    // Fallback to Supabase direct (no auth required)
+    private static final String SUPABASE_ENDPOINT = "https://mofwljpreecqqxkilywh.supabase.co/functions/v1/sms-transaction-local";
     private static final String ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vZndsanByZWVjcXF4a2lseXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcxMTk5MDgsImV4cCI6MjA3MjY5NTkwOH0.1kfabhKCzV9P384_J9uWF6wGSRHDTYr_9yUBTvGDAvY";
 
     // Enhanced pattern to extract transaction ID from bKash, Nagad, Rocket SMS
@@ -98,24 +100,17 @@ public class SMSReceiver extends BroadcastReceiver {
 
     private void sendTransactionToServer(Context context, String transactionId, String sender, String message) {
         try {
-            // Get stored auth token
-            String authToken = getStoredAuthToken(context);
-            if (authToken == null) {
-                Log.e(TAG, "No auth token found - user must log in first");
-                showNotification(context, "Authentication Required", "Please log in to the app");
-                return;
-            }
-
+            // Try local server first, then fallback to Supabase direct
             java.net.URL url = new java.net.URL(API_ENDPOINT);
-            javax.net.ssl.HttpsURLConnection conn = (javax.net.ssl.HttpsURLConnection) url.openConnection();
+            java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
             
             conn.setRequestMethod("POST");
             conn.setRequestProperty("Content-Type", "application/json");
-            conn.setRequestProperty("apikey", ANON_KEY);
-            conn.setRequestProperty("Authorization", "Bearer " + authToken);
             conn.setDoOutput(true);
+            conn.setConnectTimeout(5000);
+            conn.setReadTimeout(5000);
             
-            // Build simplified JSON payload (transaction ID only)
+            // Build JSON payload for local server
             String jsonPayload = String.format(
                 "{\"smsData\":{\"transaction_id\":\"%s\",\"sender_number\":\"%s\",\"message_content\":\"%s\",\"timestamp\":%d}}",
                 transactionId,
@@ -124,43 +119,75 @@ public class SMSReceiver extends BroadcastReceiver {
                 System.currentTimeMillis()
             );
             
-            Log.d(TAG, "Sending payload: " + jsonPayload);
+            Log.d(TAG, "Sending to local server: " + jsonPayload);
             
             java.io.OutputStream os = conn.getOutputStream();
             os.write(jsonPayload.getBytes("UTF-8"));
             os.close();
             
             int responseCode = conn.getResponseCode();
-            Log.d(TAG, "Server response code: " + responseCode);
+            Log.d(TAG, "Local server response code: " + responseCode);
             
             if (responseCode == 200) {
-                java.io.BufferedReader br = new java.io.BufferedReader(
-                    new java.io.InputStreamReader(conn.getInputStream())
-                );
-                StringBuilder response = new StringBuilder();
-                String line;
-                while ((line = br.readLine()) != null) {
-                    response.append(line);
-                }
-                br.close();
-                
-                Log.d(TAG, "Server response: " + response.toString());
-                
-                // Show notification to user
+                Log.d(TAG, "Transaction sent successfully to local server");
+                showNotification(context, "Transaction Detected", 
+                    "Transaction ID: " + transactionId + " sent to local server");
+                conn.disconnect();
+                return;
+            }
+            
+            conn.disconnect();
+            
+            // If local server fails, try Supabase direct
+            Log.d(TAG, "Local server failed, trying Supabase direct...");
+            sendToSupabaseDirect(context, transactionId, sender, message);
+            
+        } catch (Exception e) {
+            Log.e(TAG, "Local server error, trying Supabase direct", e);
+            sendToSupabaseDirect(context, transactionId, sender, message);
+        }
+    }
+    
+    private void sendToSupabaseDirect(Context context, String transactionId, String sender, String message) {
+        try {
+            java.net.URL url = new java.net.URL(SUPABASE_ENDPOINT);
+            javax.net.ssl.HttpsURLConnection conn = (javax.net.ssl.HttpsURLConnection) url.openConnection();
+            
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Content-Type", "application/json");
+            conn.setRequestProperty("apikey", ANON_KEY);
+            conn.setDoOutput(true);
+            
+            String jsonPayload = String.format(
+                "{\"smsData\":{\"transaction_id\":\"%s\",\"sender_number\":\"%s\",\"message_content\":\"%s\",\"timestamp\":%d}}",
+                transactionId,
+                sender.replace("\"", "\\\""),
+                message.replace("\"", "\\\"").replace("\n", "\\n"),
+                System.currentTimeMillis()
+            );
+            
+            Log.d(TAG, "Sending to Supabase: " + jsonPayload);
+            
+            java.io.OutputStream os = conn.getOutputStream();
+            os.write(jsonPayload.getBytes("UTF-8"));
+            os.close();
+            
+            int responseCode = conn.getResponseCode();
+            Log.d(TAG, "Supabase response code: " + responseCode);
+            
+            if (responseCode == 200) {
+                Log.d(TAG, "Transaction sent successfully to Supabase");
                 showNotification(context, "Transaction Detected", 
                     "Transaction ID: " + transactionId + " sent to server");
-            } else {
-                Log.e(TAG, "Server returned error code: " + responseCode);
             }
             
             conn.disconnect();
             
         } catch (Exception e) {
-            Log.e(TAG, "Network error sending transaction", e);
+            Log.e(TAG, "Failed to send to Supabase", e);
+            showNotification(context, "Error", "Failed to send transaction");
         }
     }
-
-    private void showNotification(Context context, String title, String message) {
         try {
             android.app.NotificationManager notificationManager = 
                 (android.app.NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
