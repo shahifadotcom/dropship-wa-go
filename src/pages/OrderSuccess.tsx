@@ -10,7 +10,7 @@ import { Order } from '@/lib/types';
 import { useCountryDetection } from '@/hooks/useCountryDetection';
 
 const OrderSuccess = () => {
-  const { orderId } = useParams();
+  const { orderId: urlOrderId } = useParams();
   const navigate = useNavigate();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
@@ -18,6 +18,9 @@ const OrderSuccess = () => {
 
   useEffect(() => {
     const fetchOrder = async () => {
+      // Get orderId from URL or localStorage
+      const orderId = urlOrderId || localStorage.getItem('lastOrderId');
+      
       if (!orderId) {
         setLoading(false);
         return;
@@ -37,6 +40,8 @@ const OrderSuccess = () => {
         if (!data) {
           setOrder(null);
           setLoading(false);
+          // Clear invalid orderId from localStorage
+          localStorage.removeItem('lastOrderId');
           return;
         }
         
@@ -93,13 +98,19 @@ const OrderSuccess = () => {
         }
       } catch (error) {
         console.error('Failed to fetch order:', error);
+        localStorage.removeItem('lastOrderId');
       } finally {
         setLoading(false);
       }
     };
 
     fetchOrder();
-  }, [orderId]);
+    
+    // Clean up localStorage after order is loaded
+    return () => {
+      localStorage.removeItem('lastOrderId');
+    };
+  }, [urlOrderId]);
 
   if (loading) {
     return (

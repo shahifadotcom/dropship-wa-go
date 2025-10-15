@@ -103,7 +103,6 @@ const App = () => {
               
               <Route path="/auth" element={<Auth />} />
               <Route path="/checkout" element={<Checkout />} />
-              <Route path="/order-success/:orderId" element={<OrderSuccess />} />
               
               {/* Admin Routes */}
               <Route path="/admin" element={<Dashboard />} />
@@ -155,6 +154,10 @@ const App = () => {
         <Route path="/wp-json/*" element={<WCAuth />} />
         <Route path="/wc/v3/*" element={<WCAuth />} />
         <Route path="/cj-oauth-callback" element={<CJOAuthCallback />} />
+        
+              {/* Order Success - must accept orderId param OR no param */}
+              <Route path="/order-success/:orderId?" element={<OrderSuccess />} />
+              
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

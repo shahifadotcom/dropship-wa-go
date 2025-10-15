@@ -60,8 +60,11 @@ export const PaymentSelector = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAdvancePayment, setShowAdvancePayment] = useState(false);
   const [isBinancePay, setIsBinancePay] = useState(false);
+  const [binanceVerificationMode, setBinanceVerificationMode] = useState<'manual' | 'auto'>('manual');
+  const [binancePayId, setBinancePayId] = useState<string>('');
   const { countryId: detectedCountryId } = useCountryDetection();
   const effectiveCountryId = overrideCountryId || detectedCountryId;
+  
   useEffect(() => {
     const loadPaymentMethods = async () => {
       try {
@@ -78,6 +81,18 @@ export const PaymentSelector = ({
         }
 
         setPaymentGateways(gateways);
+        
+        // Load Binance config to check verification mode
+        const { data: binanceConfig } = await supabase
+          .from('binance_config')
+          .select('verification_mode, binance_pay_id')
+          .eq('is_active', true)
+          .maybeSingle();
+        
+        if (binanceConfig) {
+          setBinanceVerificationMode((binanceConfig.verification_mode as 'manual' | 'auto') || 'manual');
+          setBinancePayId(binanceConfig.binance_pay_id || '');
+        }
       } catch (error) {
         console.error('Failed to load payment methods:', error);
         toast.error('Failed to load payment methods');
@@ -204,88 +219,87 @@ export const PaymentSelector = ({
     setIsSubmitting(true);
     
     try {
-      // Generate temporary reference ID
-      const tempReferenceId = `binance_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      // Check verification mode
+      if (binanceVerificationMode === 'auto') {
+        // AUTO MODE: Use Binance API
+        const tempReferenceId = `binance_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-      // Get Binance config
-      const { data: binanceConfig } = await supabase
-        .from('binance_config')
-        .select('binance_pay_id, merchant_name')
-        .eq('is_active', true)
-        .maybeSingle();
+        const { data: binanceConfig } = await supabase
+          .from('binance_config')
+          .select('binance_pay_id, merchant_name')
+          .eq('is_active', true)
+          .maybeSingle();
 
-      if (!binanceConfig) {
-        throw new Error('Binance Pay not configured');
-      }
+        if (!binanceConfig) {
+          throw new Error('Binance Pay not configured');
+        }
 
-      // Open Binance app with deep link using temporary reference
-      const binanceDeepLink = `binance://pay?merchant=${encodeURIComponent(binanceConfig.binance_pay_id)}&amount=${orderAmount}&currency=USD&orderId=${tempReferenceId}&merchantName=${encodeURIComponent(binanceConfig.merchant_name || 'Store')}`;
-      
-      // Try to open Binance app
-      window.location.href = binanceDeepLink;
-      
-      // Fallback to web after a delay
-      setTimeout(() => {
-        const binanceWebUrl = `https://www.binance.com/en/pay/checkout?merchant=${encodeURIComponent(binanceConfig.binance_pay_id)}&amount=${orderAmount}&currency=USD&orderId=${tempReferenceId}`;
-        window.open(binanceWebUrl, '_blank');
-      }, 1500);
+        const binanceDeepLink = `binance://pay?merchant=${encodeURIComponent(binanceConfig.binance_pay_id)}&amount=${orderAmount}&currency=USD&orderId=${tempReferenceId}&merchantName=${encodeURIComponent(binanceConfig.merchant_name || 'Store')}`;
+        
+        window.location.href = binanceDeepLink;
+        
+        setTimeout(() => {
+          const binanceWebUrl = `https://www.binance.com/en/pay/checkout?merchant=${encodeURIComponent(binanceConfig.binance_pay_id)}&amount=${orderAmount}&currency=USD&orderId=${tempReferenceId}`;
+          window.open(binanceWebUrl, '_blank');
+        }, 1500);
 
-      toast.success('Complete payment in Binance, then return here to confirm...');
-      
-      // Poll for Binance payment confirmation via their API
-      let paymentConfirmed = false;
-      const pollPayment = setInterval(async () => {
-        try {
-          // Check if Binance payment is confirmed via verification function
-          const { data: verifyData } = await supabase.functions.invoke('binance-payment-verify', {
-            body: {
-              transactionId: tempReferenceId,
-              orderId: '',
-              amount: orderAmount
-            }
-          });
-          
-          if (verifyData?.success) {
-            clearInterval(pollPayment);
-            paymentConfirmed = true;
-            
-            // NOW create the order after payment is confirmed
-            const { data: orderData, error: orderError } = await supabase.functions.invoke('verify-otp-and-create-order', {
+        toast.success('Complete payment in Binance, then return here to confirm...');
+        
+        let paymentConfirmed = false;
+        const pollPayment = setInterval(async () => {
+          try {
+            const { data: verifyData } = await supabase.functions.invoke('binance-payment-verify', {
               body: {
-                skipOTP: true,
-                orderData: {
-                  fullName: customerData?.fullName || '',
-                  fullAddress: customerData?.fullAddress || '',
-                  whatsappNumber: customerData?.whatsappNumber || '',
-                  country: customerData?.country || '',
-                  items: cartItems,
-                  subtotal: orderAmount,
-                  total: orderAmount,
-                  paymentMethod: 'binance_pay'
-                }
+                transactionId: tempReferenceId,
+                orderId: '',
+                amount: orderAmount
               }
             });
+            
+            if (verifyData?.success) {
+              clearInterval(pollPayment);
+              paymentConfirmed = true;
+              
+              const { data: orderData, error: orderError } = await supabase.functions.invoke('verify-otp-and-create-order', {
+                body: {
+                  skipOTP: true,
+                  orderData: {
+                    fullName: customerData?.fullName || '',
+                    fullAddress: customerData?.fullAddress || '',
+                    whatsappNumber: customerData?.whatsappNumber || '',
+                    country: customerData?.country || '',
+                    items: cartItems,
+                    subtotal: orderAmount,
+                    total: orderAmount,
+                    paymentMethod: 'binance_pay'
+                  }
+                }
+              });
 
-            if (orderError || !orderData?.orderId) {
-              throw new Error('Payment confirmed but failed to create order');
+              if (orderError || !orderData?.orderId) {
+                throw new Error('Payment confirmed but failed to create order');
+              }
+
+              toast.success('Payment confirmed! Order created.');
+              onPaymentSubmitted(orderData.orderId);
             }
-
-            toast.success('Payment confirmed! Order created.');
-            onPaymentSubmitted(orderData.orderId);
+          } catch (error) {
+            console.error('Binance verification check error:', error);
           }
-        } catch (error) {
-          console.error('Binance verification check error:', error);
-        }
-      }, 5000);
+        }, 5000);
 
-      // Stop polling after 10 minutes
-      setTimeout(() => {
-        clearInterval(pollPayment);
-        if (!paymentConfirmed) {
-          toast.error('Payment verification timeout. Please contact support if payment was made.');
-          setIsSubmitting(false);
-        }
-      }, 600000);
+        setTimeout(() => {
+          clearInterval(pollPayment);
+          if (!paymentConfirmed) {
+            toast.error('Payment verification timeout. Please contact support if payment was made.');
+            setIsSubmitting(false);
+          }
+        }, 600000);
+
+      } else {
+        // MANUAL MODE: Just show instructions, user will submit transaction ID
+        setIsSubmitting(false);
+      }
 
     } catch (error) {
       console.error('Binance payment error:', error);
@@ -506,7 +520,49 @@ export const PaymentSelector = ({
           })}
         </RadioGroup>
 
-        {isBinancePay && (
+        {isBinancePay && binanceVerificationMode === 'manual' && (
+          <div className="space-y-4 pt-4 border-t">
+            <Alert>
+              <AlertDescription>
+                <div className="space-y-2">
+                  <p className="font-semibold">Please send USDT to this Binance Pay ID:</p>
+                  <div className="text-lg font-mono bg-muted px-3 py-2 rounded">
+                    {binancePayId}
+                  </div>
+                  <p className="text-sm">After payment, enter your transaction ID below.</p>
+                </div>
+              </AlertDescription>
+            </Alert>
+
+            <div className="space-y-2">
+              <Label htmlFor="binance-transactionId">Transaction ID</Label>
+              <Input
+                id="binance-transactionId"
+                placeholder="Enter Binance transaction ID"
+                value={transactionId}
+                onChange={(e) => setTransactionId(e.target.value)}
+                disabled={isSubmitting}
+              />
+            </div>
+
+            <Button 
+              onClick={handleSubmitPayment} 
+              className="w-full"
+              disabled={isSubmitting || !transactionId.trim()}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                'Place Order'
+              )}
+            </Button>
+          </div>
+        )}
+
+        {isBinancePay && binanceVerificationMode === 'auto' && (
           <div className="space-y-4 pt-4 border-t">
             <Alert>
               <AlertDescription>

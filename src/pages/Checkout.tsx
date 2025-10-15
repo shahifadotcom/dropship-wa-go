@@ -92,7 +92,12 @@ const Checkout = () => {
   const handlePaymentSubmitted = async (orderId: string) => {
     // Payment verified and order created, complete the checkout
     clearCart();
-    navigate(`/order-success/${orderId}`);
+    
+    // Save orderId to localStorage for order-success page
+    localStorage.setItem('lastOrderId', orderId);
+    
+    // Navigate to order-success without orderId in URL
+    navigate('/order-success');
   };
 
   const handleInputChange = (field: keyof CheckoutFormData, value: string) => {
