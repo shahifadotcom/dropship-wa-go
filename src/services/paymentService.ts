@@ -63,7 +63,7 @@ export class PaymentService {
     try {
       // First get the product's allowed payment gateways
       const { data: product, error: productError } = await supabase
-        .from('products')
+        .from('products_public')
         .select('allowed_payment_gateways, cash_on_delivery_enabled')
         .eq('id', productId)
         .single();
@@ -134,7 +134,7 @@ export class PaymentService {
 
       // Get all products' settings
       const { data: products, error: productsError } = await supabase
-        .from('products')
+        .from('products_public')
         .select('id, allowed_payment_gateways, cash_on_delivery_enabled')
         .in('id', productIds);
 
