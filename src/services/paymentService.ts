@@ -70,9 +70,6 @@ export class PaymentService {
 
       if (productError) throw productError;
 
-      // Get all available gateways for the country
-      const allGateways = await this.getPaymentGateways(countryId);
-      
       // Check if Binance Pay is enabled
       const { data: binanceConfig } = await supabase
         .from('binance_config')
@@ -81,13 +78,20 @@ export class PaymentService {
       
       const binanceEnabled = binanceConfig?.is_active || false;
 
-      // Filter based on product settings
-      let filteredGateways = allGateways;
+      let filteredGateways: PaymentGateway[] = [];
 
       if (product.allowed_payment_gateways && product.allowed_payment_gateways.length > 0) {
-        filteredGateways = allGateways.filter(gateway => 
-          product.allowed_payment_gateways.includes(gateway.name)
-        );
+        // Fetch gateways that match the allowed list for this country OR globally
+        const { data: gateways, error: gatewayError } = await supabase
+          .from('payment_gateways')
+          .select('*')
+          .in('name', product.allowed_payment_gateways)
+          .or(`country_id.eq.${countryId},country_id.is.null`)
+          .eq('is_active', true);
+
+        if (!gatewayError && gateways) {
+          filteredGateways = gateways;
+        }
         
         // Add Binance Pay if enabled and allowed in product
         if (binanceEnabled && product.allowed_payment_gateways.includes('binance_pay')) {
@@ -104,6 +108,9 @@ export class PaymentService {
             });
           }
         }
+      } else {
+        // No restrictions, show all gateways for the country
+        filteredGateways = await this.getPaymentGateways(countryId);
       }
 
       // Add or remove COD based on product setting
@@ -133,9 +140,6 @@ export class PaymentService {
 
       if (productsError) throw productsError;
 
-      // Get all available gateways for the country
-      const allGateways = await this.getPaymentGateways(countryId);
-      
       // Check if Binance Pay is enabled
       const { data: binanceConfig } = await supabase
         .from('binance_config')
@@ -165,13 +169,20 @@ export class PaymentService {
         }
       }
 
-      // Filter gateways
-      let filteredGateways = allGateways;
+      let filteredGateways: PaymentGateway[] = [];
 
       if (allowedGatewayNames && allowedGatewayNames.length > 0) {
-        filteredGateways = allGateways.filter(gateway =>
-          allowedGatewayNames!.includes(gateway.name)
-        );
+        // Fetch gateways that match the allowed list for this country OR globally
+        const { data: gateways, error: gatewayError } = await supabase
+          .from('payment_gateways')
+          .select('*')
+          .in('name', allowedGatewayNames)
+          .or(`country_id.eq.${countryId},country_id.is.null`)
+          .eq('is_active', true);
+
+        if (!gatewayError && gateways) {
+          filteredGateways = gateways;
+        }
         
         // Add Binance Pay if enabled and allowed in all products
         if (binanceEnabled && allowedGatewayNames.includes('binance_pay')) {
@@ -188,6 +199,9 @@ export class PaymentService {
             });
           }
         }
+      } else {
+        // No restrictions, show all gateways for the country
+        filteredGateways = await this.getPaymentGateways(countryId);
       }
 
       // Remove COD if any product doesn't allow it
