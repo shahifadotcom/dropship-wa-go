@@ -78,7 +78,7 @@ serve(async (req) => {
       
       const { error: sendError } = await supabase.functions.invoke('send-whatsapp-message', {
         body: {
-          to: order.billing_address.whatsappNumber,
+          phoneNumber: order.billing_address.whatsappNumber,
           message: shippingMessage
         }
       });
@@ -257,7 +257,7 @@ serve(async (req) => {
 
     const { error: sendError } = await supabase.functions.invoke('send-whatsapp-message', {
       body: {
-        to: order.billing_address.whatsappNumber,
+        phoneNumber: order.billing_address.whatsappNumber,
         message: message
       }
     });
