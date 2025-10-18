@@ -52,17 +52,20 @@ serve(async (req) => {
       throw new Error('Order not found');
     }
 
-    // Get notification template
-    const { data: template, error: templateError } = await supabase
-      .from('notification_templates')
-      .select('template')
-      .eq('name', templateName)
-      .single();
-
-    if (templateError || !template) {
-      console.error('Error fetching template:', templateError);
-      throw new Error('Template not found');
-    }
+    // Defer template fetch until needed based on status
+    let template: { template: string } | null = null;
+    const getTemplate = async (name: string) => {
+      const { data, error } = await supabase
+        .from('notification_templates')
+        .select('template')
+        .eq('name', name)
+        .single();
+      if (error || !data) {
+        console.warn('Template not found, using default message:', name, error);
+        return null;
+      }
+      return data as { template: string };
+    };
 
     // Prepare template variables
     const customerName = order.profiles 
@@ -99,6 +102,7 @@ serve(async (req) => {
 
     // For confirmed status only, send full details to BOTH customer and admin
     if (orderStatus === 'confirmed') {
+      const tpl = await getTemplate(templateName || 'order_confirmed');
       const templateVars = {
         name: customerName,
         order_number: order.order_number,
@@ -106,10 +110,13 @@ serve(async (req) => {
         id: order.id
       };
 
-      let message = template.template;
-      Object.entries(templateVars).forEach(([key, value]) => {
-        message = message.replace(new RegExp(`{{${key}}}`, 'g'), value.toString());
-      });
+      let message = `Hi ${customerName}, your order #${order.order_number} is confirmed. Total ৳${order.total.toFixed(2)}.`;
+      if (tpl?.template) {
+        message = tpl.template;
+        Object.entries(templateVars).forEach(([key, value]) => {
+          message = message.replace(new RegExp(`{{${key}}}`, 'g'), value.toString());
+        });
+      }
 
       const isCOD = order.payment_method?.toLowerCase().includes('cod') || 
                     order.payment_method?.toLowerCase().includes('cash');
@@ -243,6 +250,7 @@ serve(async (req) => {
     }
     
     // For all other statuses (not confirmed, not processing), send simple update to CUSTOMER ONLY
+    const tpl = await getTemplate(templateName || 'order_status_update');
     const templateVars = {
       name: customerName,
       order_number: order.order_number,
@@ -250,10 +258,13 @@ serve(async (req) => {
       id: order.id
     };
 
-    let message = template.template;
-    Object.entries(templateVars).forEach(([key, value]) => {
-      message = message.replace(new RegExp(`{{${key}}}`, 'g'), value.toString());
-    });
+    let message = `Update: Your order #${order.order_number} status is now "${order.status}".`;
+    if (tpl?.template) {
+      message = tpl.template;
+      Object.entries(templateVars).forEach(([key, value]) => {
+        message = message.replace(new RegExp(`{{${key}}}`, 'g'), value.toString());
+      });
+    }
 
     const { error: sendError } = await supabase.functions.invoke('send-whatsapp-message', {
       body: {
