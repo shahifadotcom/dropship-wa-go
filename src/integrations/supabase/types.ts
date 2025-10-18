@@ -3162,6 +3162,20 @@ export type Database = {
           weight: number
         }[]
       }
+      get_public_store_settings: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          created_at: string
+          currency: string
+          favicon_url: string
+          id: string
+          store_description: string
+          store_logo: string
+          store_name: string
+          store_tagline: string
+          updated_at: string
+        }[]
+      }
       get_user_roles: {
         Args: { _user_id: string }
         Returns: {
