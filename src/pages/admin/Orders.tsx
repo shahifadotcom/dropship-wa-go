@@ -68,10 +68,26 @@ const Orders = () => {
 
       if (error) throw error;
 
-      // Trigger status update invoice function
+      // Trigger status update invoice function (for processing)
       await supabase.functions.invoke('order-status-update-invoice', {
         body: { orderId, oldStatus, newStatus }
       });
+
+      // Send WhatsApp notification to customer (and admin when confirmed)
+      try {
+        const templateName = newStatus === 'confirmed' ? 'order_confirmed' : 'order_status_update';
+        const { data: notifData } = await supabase.functions.invoke('send-order-notification', {
+          body: { orderId, templateName }
+        });
+        // Fallback to order_confirmed template if the default is missing
+        if ((notifData as any)?.error?.includes?.('Template not found') && templateName !== 'order_confirmed') {
+          await supabase.functions.invoke('send-order-notification', {
+            body: { orderId, templateName: 'order_confirmed' }
+          });
+        }
+      } catch (notifyErr) {
+        console.error('Notification send error:', notifyErr);
+      }
 
       toast({
         title: "Success",

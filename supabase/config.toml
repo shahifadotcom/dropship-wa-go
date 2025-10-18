@@ -88,6 +88,9 @@ verify_jwt = false
 [functions.order-status-update-invoice]
 verify_jwt = false
 
+[functions.get-order-public]
+verify_jwt = false
+
 [db]
 enabled = true
 port = 54322

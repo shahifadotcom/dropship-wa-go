@@ -27,14 +27,10 @@ const OrderSuccess = () => {
       }
       
       try {
-        const { data, error } = await supabase
-          .from('orders')
-          .select(`
-            *,
-            order_items(*)
-          `)
-          .eq('id', orderId)
-          .maybeSingle();
+        const { data: resp, error } = await supabase.functions.invoke('get-order-public', {
+          body: { orderId }
+        });
+        const data = (resp as any)?.order || null;
 
         if (error) throw error;
         if (!data) {

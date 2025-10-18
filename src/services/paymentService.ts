@@ -93,8 +93,8 @@ export class PaymentService {
           filteredGateways = gateways;
         }
         
-        // Add Binance Pay if enabled and allowed in product
-        if (binanceEnabled && product.allowed_payment_gateways.includes('binance_pay')) {
+        // Add Binance Pay if allowed in product
+        if (product.allowed_payment_gateways.includes('binance_pay')) {
           const hasBinance = filteredGateways.some(g => g.name === 'binance_pay');
           if (!hasBinance) {
             filteredGateways.push({
@@ -184,8 +184,8 @@ export class PaymentService {
           filteredGateways = gateways;
         }
         
-        // Add Binance Pay if enabled and allowed in all products
-        if (binanceEnabled && allowedGatewayNames.includes('binance_pay')) {
+        // Add Binance Pay if allowed in all selected products
+        if (allowedGatewayNames.includes('binance_pay')) {
           const hasBinance = filteredGateways.some(g => g.name === 'binance_pay');
           if (!hasBinance) {
             filteredGateways.push({
