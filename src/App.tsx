@@ -126,6 +126,7 @@ const App = () => {
               <Route path="/admin/countries" element={<Countries />} />
               <Route path="/admin/ip-ranges" element={<IPRanges />} />
               <Route path="/admin/notifications" element={<Notifications />} />
+              <Route path="/admin/cj-dropshipping" element={<CJDropshipping />} />
               <Route path="/admin/whatsapp" element={<WhatsApp />} />
               <Route path="/admin/vendor-automation" element={<VendorAutomation />} />
               <Route path="/admin/storefront-slider" element={<StorefrontSlider />} />
