@@ -49,14 +49,27 @@ serve(async (req) => {
     }
 
     // Get credentials securely
-    const { data: credentials } = await supabaseClient.rpc('get_cj_credentials', {
+    const { data: credentials, error: credError } = await supabaseClient.rpc('get_cj_credentials', {
       connection_id: connectionId
     })
 
-    if (!credentials || credentials.length === 0) {
+    console.log('Credentials query result:', { hasCredentials: !!credentials, credError })
+
+    if (credError) {
+      console.error('Error fetching credentials:', credError)
+      return new Response(
+        JSON.stringify({ error: 'Failed to fetch credentials' }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+
+    if (!credentials || !credentials.access_token) {
       console.error('No credentials found for connection')
       return new Response(
-        JSON.stringify({ error: 'Connection credentials not found' }),
+        JSON.stringify({ error: 'Connection credentials not found. Please re-authorize.' }),
         { 
           status: 404, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -64,7 +77,7 @@ serve(async (req) => {
       )
     }
 
-    const accessToken = credentials[0].access_token
+    const accessToken = credentials.access_token
 
 
     if (!accessToken) {

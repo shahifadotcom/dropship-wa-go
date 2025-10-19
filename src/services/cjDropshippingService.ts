@@ -100,18 +100,32 @@ class CJDropshippingService {
         return null;
       }
 
-      // Store API key securely
-      await supabase.rpc('store_cj_credentials', {
+      // Store credentials (API key, access token, and refresh token) securely
+      const { error: credError } = await supabase.rpc('store_cj_credentials', {
         connection_id: connection.id,
         client_secret: connectionData.apiKey,
       });
 
-      // Update with tokens
-      await supabase.rpc('update_cj_credentials', {
+      if (credError) {
+        console.error('Failed to store credentials:', credError);
+        // Clean up connection if credentials storage fails
+        await supabase.from('cj_dropshipping_connections').delete().eq('id', connection.id);
+        return null;
+      }
+
+      // Update with access and refresh tokens
+      const { error: tokenError } = await supabase.rpc('update_cj_credentials', {
         connection_id: connection.id,
         new_access_token: authData.accessToken,
         new_refresh_token: authData.refreshToken,
       });
+
+      if (tokenError) {
+        console.error('Failed to store tokens:', tokenError);
+        // Clean up connection if token storage fails
+        await supabase.from('cj_dropshipping_connections').delete().eq('id', connection.id);
+        return null;
+      }
 
       return connection;
     } catch (error) {

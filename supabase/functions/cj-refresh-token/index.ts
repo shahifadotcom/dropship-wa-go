@@ -30,14 +30,27 @@ serve(async (req) => {
     }
 
     // Get refresh token from credentials
-    const { data: credentials } = await supabaseClient.rpc('get_cj_credentials', {
+    const { data: credentials, error: credError } = await supabaseClient.rpc('get_cj_credentials', {
       connection_id: connectionId
     })
 
-    if (!credentials || credentials.length === 0 || !credentials[0].refresh_token) {
+    console.log('Credentials query result:', { credentials, credError })
+
+    if (credError) {
+      console.error('Error fetching credentials:', credError)
+      return new Response(
+        JSON.stringify({ error: 'Failed to fetch credentials' }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+
+    if (!credentials || !credentials.refresh_token) {
       console.error('No refresh token found for connection')
       return new Response(
-        JSON.stringify({ error: 'Refresh token not found' }),
+        JSON.stringify({ error: 'Refresh token not found. Please re-authorize the connection.' }),
         { 
           status: 404, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -45,7 +58,7 @@ serve(async (req) => {
       )
     }
 
-    const refreshToken = credentials[0].refresh_token
+    const refreshToken = credentials.refresh_token
 
     console.log(`Refreshing CJ access token for connection: ${connectionId}`)
 
