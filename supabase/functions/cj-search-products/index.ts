@@ -53,7 +53,7 @@ serve(async (req) => {
       connection_id: connectionId
     })
 
-    console.log('Credentials query result:', { hasCredentials: !!credentials, credError })
+    console.log('Credentials query result:', { credentials, credError })
 
     if (credError) {
       console.error('Error fetching credentials:', credError)
@@ -66,7 +66,9 @@ serve(async (req) => {
       )
     }
 
-    if (!credentials || !credentials.access_token) {
+    const cred = Array.isArray(credentials) ? credentials[0] : credentials
+
+    if (!cred || !cred.access_token) {
       console.error('No credentials found for connection')
       return new Response(
         JSON.stringify({ error: 'Connection credentials not found. Please re-authorize.' }),
@@ -77,7 +79,7 @@ serve(async (req) => {
       )
     }
 
-    const accessToken = credentials.access_token
+    const accessToken = cred.access_token
 
 
     if (!accessToken) {

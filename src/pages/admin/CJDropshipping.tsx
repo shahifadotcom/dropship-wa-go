@@ -8,6 +8,16 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { 
   Plus, 
@@ -39,6 +49,8 @@ export default function CJDropshipping() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
   const [showAddConnection, setShowAddConnection] = useState(false);
+  const [manageOpen, setManageOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [newConnection, setNewConnection] = useState({
     email: '',
     apiKey: ''
@@ -104,6 +116,24 @@ export default function CJDropshipping() {
       }
     } catch (error) {
       toast.error('Token refresh failed');
+    }
+  };
+
+  const handleDeleteConnection = async () => {
+    if (!selectedConnection) return;
+    try {
+      const ok = await cjDropshippingService.deleteConnection(selectedConnection.id);
+      if (ok) {
+        toast.success('Connection deleted');
+        const updated = connections.filter((c) => c.id !== selectedConnection.id);
+        setConnections(updated);
+        setSelectedConnection(updated[0] || null);
+        setManageOpen(false);
+      } else {
+        toast.error('Failed to delete connection');
+      }
+    } catch (error) {
+      toast.error('Delete failed');
     }
   };
 
@@ -258,6 +288,68 @@ export default function CJDropshipping() {
         </Dialog>
       </div>
 
+      <Dialog open={manageOpen} onOpenChange={setManageOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Manage Connection</DialogTitle>
+            <DialogDescription>View details and actions for your CJ connection</DialogDescription>
+          </DialogHeader>
+
+          {selectedConnection ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-muted-foreground">Email</p>
+                  <p>{selectedConnection.domain}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Status</p>
+                  <p>{selectedConnection.is_active ? 'Connected' : 'Disconnected'}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Created</p>
+                  <p>{new Date(selectedConnection.created_at).toLocaleString()}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Token Expires</p>
+                  <p>{selectedConnection.token_expires_at ? new Date(selectedConnection.token_expires_at).toLocaleString() : 'N/A'}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Button
+                  variant="outline"
+                  onClick={() => selectedConnection && handleRefreshToken(selectedConnection.id)}
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Refresh Token
+                </Button>
+                <Button variant="destructive" onClick={() => setDeleteConfirmOpen(true)}>
+                  <Trash2 className="h-4 w-4 mr-2" /> Delete Connection
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">No connection selected.</p>
+          )}
+
+          <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete this connection?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently remove the connection.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDeleteConnection}>Delete</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </DialogContent>
+      </Dialog>
+
       <Tabs defaultValue="connections" className="space-y-6">
         <TabsList>
           <TabsTrigger value="connections">Connections</TabsTrigger>
@@ -318,7 +410,7 @@ export default function CJDropshipping() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => setSelectedConnection(connection)}
+                          onClick={() => { setSelectedConnection(connection); setManageOpen(true); }}
                         >
                           <Settings className="h-4 w-4 mr-2" />
                           Manage

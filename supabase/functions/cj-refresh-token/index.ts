@@ -47,7 +47,9 @@ serve(async (req) => {
       )
     }
 
-    if (!credentials || !credentials.refresh_token) {
+    const cred = Array.isArray(credentials) ? credentials[0] : credentials
+
+    if (!cred || !cred.refresh_token) {
       console.error('No refresh token found for connection')
       return new Response(
         JSON.stringify({ error: 'Refresh token not found. Please re-authorize the connection.' }),
@@ -58,7 +60,7 @@ serve(async (req) => {
       )
     }
 
-    const refreshToken = credentials.refresh_token
+    const refreshToken = cred.refresh_token
 
     console.log(`Refreshing CJ access token for connection: ${connectionId}`)
 
