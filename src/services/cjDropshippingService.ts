@@ -62,40 +62,58 @@ export interface CJImportJob {
 class CJDropshippingService {
   // Connection Management
   async createConnection(connectionData: {
-    domain: string;
-    client_id: string;
-    client_secret: string;
+    email: string;
+    apiKey: string;
   }): Promise<CJDropshippingConnection | null> {
     try {
-      // First create the connection record without sensitive data
-      const { data, error } = await supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      // Get access token from CJ Dropshipping
+      const { data: authData, error: authError } = await supabase.functions.invoke('cj-get-access-token', {
+        body: {
+          email: connectionData.email,
+          apiKey: connectionData.apiKey,
+        }
+      });
+
+      if (authError || !authData?.accessToken) {
+        console.error('Failed to get CJ access token:', authError);
+        return null;
+      }
+
+      // Insert connection with tokens
+      const { data: connection, error: connectionError } = await supabase
         .from('cj_dropshipping_connections')
         .insert({
-          domain: connectionData.domain,
-          client_id: connectionData.client_id,
-          user_id: (await supabase.auth.getUser()).data.user?.id,
+          user_id: user.id,
+          domain: connectionData.email, // Store email in domain field
+          client_id: connectionData.apiKey, // Store API key in client_id field
+          is_active: true,
+          token_expires_at: authData.accessTokenExpiryDate,
         })
         .select()
         .single();
 
-      if (error) throw error;
-
-      // Store credentials securely via edge function
-      const { error: credentialsError } = await supabase.functions.invoke('store-cj-credentials', {
-        body: {
-          connection_id: data.id,
-          client_secret: connectionData.client_secret
-        }
-      });
-
-      if (credentialsError) {
-        console.error('Error storing credentials:', credentialsError);
-        // Clean up the connection if credential storage failed
-        await supabase.from('cj_dropshipping_connections').delete().eq('id', data.id);
+      if (connectionError) {
+        console.error('Connection creation error:', connectionError);
         return null;
       }
 
-      return { ...data, has_credentials: true };
+      // Store API key securely
+      await supabase.rpc('store_cj_credentials', {
+        connection_id: connection.id,
+        client_secret: connectionData.apiKey,
+      });
+
+      // Update with tokens
+      await supabase.rpc('update_cj_credentials', {
+        connection_id: connection.id,
+        new_access_token: authData.accessToken,
+        new_refresh_token: authData.refreshToken,
+      });
+
+      return connection;
     } catch (error) {
       console.error('Error creating CJ connection:', error);
       return null;
@@ -149,34 +167,17 @@ class CJDropshippingService {
     }
   }
 
-  // OAuth Authorization
-  async initiateOAuth(connectionId: string): Promise<{ authorizationUrl: string; state: string; redirectUri: string } | null> {
+  // Token refresh (CJ uses email + API Key, not OAuth)
+  async refreshAccessToken(connectionId: string): Promise<boolean> {
     try {
-      // Call edge function to initiate OAuth flow
-      const { data, error } = await supabase.functions.invoke('cj-oauth-initiate', {
+      const { data, error } = await supabase.functions.invoke('cj-refresh-token', {
         body: { connectionId }
       });
 
       if (error) throw error;
-      return data || null;
+      return data?.success || false;
     } catch (error) {
-      console.error('Error initiating OAuth:', error);
-      return null;
-    }
-  }
-
-  async handleOAuthCallback(
-    connectionId: string, 
-    authCode: string
-  ): Promise<boolean> {
-    try {
-      const { error } = await supabase.functions.invoke('cj-oauth-callback', {
-        body: { connectionId, authCode }
-      });
-
-      return !error;
-    } catch (error) {
-      console.error('Error handling OAuth callback:', error);
+      console.error('Error refreshing token:', error);
       return false;
     }
   }

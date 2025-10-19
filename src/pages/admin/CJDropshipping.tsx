@@ -15,8 +15,7 @@ import {
   Download, 
   RefreshCw, 
   Eye, 
-  Trash2, 
-  ExternalLink,
+  Trash2,
   CheckCircle,
   XCircle,
   Clock,
@@ -41,9 +40,8 @@ export default function CJDropshipping() {
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
   const [showAddConnection, setShowAddConnection] = useState(false);
   const [newConnection, setNewConnection] = useState({
-    domain: window.location.hostname,
-    client_id: '',
-    client_secret: ''
+    email: '',
+    apiKey: ''
   });
 
   useEffect(() => {
@@ -75,37 +73,37 @@ export default function CJDropshipping() {
   };
 
   const handleCreateConnection = async () => {
-    if (!newConnection.domain || !newConnection.client_id || !newConnection.client_secret) {
-      toast.error('Please fill all fields');
+    if (!newConnection.email || !newConnection.apiKey) {
+      toast.error('Please enter your CJ Dropshipping email and API Key');
       return;
     }
 
     try {
       const connection = await cjDropshippingService.createConnection(newConnection);
       if (connection) {
-        toast.success('Connection created successfully');
+        toast.success('Connected to CJ Dropshipping successfully!');
         setConnections([connection, ...connections]);
         setShowAddConnection(false);
-        setNewConnection({ domain: '', client_id: '', client_secret: '' });
+        setNewConnection({ email: '', apiKey: '' });
       } else {
-        toast.error('Failed to create connection');
+        toast.error('Failed to connect. Please check your credentials.');
       }
     } catch (error) {
-      toast.error('Failed to create connection');
+      toast.error('Failed to connect to CJ Dropshipping');
     }
   };
 
-  const handleAuthorize = async (connection: CJDropshippingConnection) => {
+  const handleRefreshToken = async (connectionId: string) => {
     try {
-      const result = await cjDropshippingService.initiateOAuth(connection.id);
-      if (result?.authorizationUrl) {
-        // Open authorization URL in current window
-        window.location.href = result.authorizationUrl;
+      const success = await cjDropshippingService.refreshAccessToken(connectionId);
+      if (success) {
+        toast.success('Access token refreshed successfully');
+        loadConnections();
       } else {
-        toast.error('Failed to initiate authorization');
+        toast.error('Failed to refresh token');
       }
     } catch (error) {
-      toast.error('Authorization failed');
+      toast.error('Token refresh failed');
     }
   };
 
@@ -212,57 +210,48 @@ export default function CJDropshipping() {
             <DialogHeader>
               <DialogTitle>Connect to CJ Dropshipping</DialogTitle>
               <DialogDescription>
-                Authorize your store with CJ Dropshipping using your domain
+                Enter your CJ Dropshipping account credentials
               </DialogDescription>
             </DialogHeader>
             
             <div className="space-y-4">
+              <Alert>
+                <Info className="h-4 w-4" />
+                <AlertDescription>
+                  Get your API Key from: <a href="https://www.cjdropshipping.com/myCJ.html#/apikey" target="_blank" rel="noopener noreferrer" className="text-primary underline font-medium">CJ Dropshipping API Settings</a>
+                </AlertDescription>
+              </Alert>
+
               <div>
-                <Label htmlFor="domain">Your Store Domain</Label>
+                <Label htmlFor="email">Email Address</Label>
                 <Input
-                  id="domain"
-                  placeholder="yourdomain.com"
-                  value={newConnection.domain}
-                  onChange={(e) => setNewConnection({ ...newConnection, domain: e.target.value })}
+                  id="email"
+                  type="email"
+                  placeholder="your-email@example.com"
+                  value={newConnection.email}
+                  onChange={(e) => setNewConnection({ ...newConnection, email: e.target.value })}
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  The domain where your store is hosted (auto-detected: {window.location.hostname})
+                  The email you use to login to CJ Dropshipping
                 </p>
               </div>
 
               <div>
-                <Label htmlFor="client_id">CJ Client ID</Label>
+                <Label htmlFor="apiKey">API Key</Label>
                 <Input
-                  id="client_id"
-                  placeholder="Enter your CJ Client ID"
-                  value={newConnection.client_id}
-                  onChange={(e) => setNewConnection({ ...newConnection, client_id: e.target.value })}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="client_secret">CJ Client Secret</Label>
-                <Input
-                  id="client_secret"
+                  id="apiKey"
                   type="password"
-                  placeholder="Enter your CJ Client Secret"
-                  value={newConnection.client_secret}
-                  onChange={(e) => setNewConnection({ ...newConnection, client_secret: e.target.value })}
+                  placeholder="Enter your CJ Dropshipping API Key"
+                  value={newConnection.apiKey}
+                  onChange={(e) => setNewConnection({ ...newConnection, apiKey: e.target.value })}
                 />
-              </div>
-              
-              <div className="p-4 bg-muted rounded-lg">
-                <h4 className="font-semibold mb-2 flex items-center gap-2">
-                  <Info className="h-4 w-4 text-blue-500" />
-                  How it works
-                </h4>
-                <p className="text-sm text-muted-foreground">
-                  Create a developer app in CJ Dropshipping and paste your Client ID and Secret here.
-                  Set the Redirect URI to: https://{window.location.hostname}/cj-oauth-callback
+                <p className="text-xs text-muted-foreground mt-1">
+                  Click "Generate" in your CJ account if you don't have one yet
                 </p>
               </div>
+
               <Button onClick={handleCreateConnection} className="w-full">
-                Create Connection
+                Connect to CJ Dropshipping
               </Button>
             </div>
           </DialogContent>
@@ -316,37 +305,36 @@ export default function CJDropshipping() {
                         </CardDescription>
                       </div>
                       <div className="flex gap-2">
-                        {!connection.access_token ? (
+                        {connection.is_active && (
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleAuthorize(connection)}
+                            onClick={() => handleRefreshToken(connection.id)}
                           >
-                            <ExternalLink className="h-4 w-4 mr-2" />
-                            Authorize
-                          </Button>
-                        ) : (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setSelectedConnection(connection)}
-                          >
-                            <Settings className="h-4 w-4 mr-2" />
-                            Manage
+                            <RefreshCw className="h-4 w-4 mr-2" />
+                            Refresh Token
                           </Button>
                         )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSelectedConnection(connection)}
+                        >
+                          <Settings className="h-4 w-4 mr-2" />
+                          Manage
+                        </Button>
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                       <div>
-                        <p className="text-muted-foreground">Client ID</p>
-                        <p className="font-mono">{connection.client_id.slice(0, 8)}...</p>
+                        <p className="text-muted-foreground">Email</p>
+                        <p>{connection.domain}</p>
                       </div>
                       <div>
                         <p className="text-muted-foreground">Status</p>
-                        <p>{connection.access_token ? 'Authorized' : 'Not Authorized'}</p>
+                        <p>{connection.is_active ? 'Connected' : 'Disconnected'}</p>
                       </div>
                       <div>
                         <p className="text-muted-foreground">Token Expires</p>
@@ -365,11 +353,11 @@ export default function CJDropshipping() {
         </TabsContent>
 
         <TabsContent value="products" className="space-y-4">
-          {!selectedConnection?.access_token ? (
+          {!selectedConnection?.is_active ? (
             <Alert>
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
-                Please authorize a connection first to browse products.
+                Please connect to CJ Dropshipping first to browse products.
               </AlertDescription>
             </Alert>
           ) : (
