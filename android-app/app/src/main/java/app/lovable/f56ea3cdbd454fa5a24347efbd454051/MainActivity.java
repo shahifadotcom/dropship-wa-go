@@ -8,8 +8,6 @@ import android.Manifest;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 
 public class MainActivity extends BridgeActivity {
     private static final String TAG = "MainActivity";
@@ -19,30 +17,14 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
-        Log.d(TAG, "MainActivity created");
+        Log.d(TAG, "SMS Transaction Scanner started");
         
-        // Check authentication - redirect to login if not authenticated
-        if (!AuthTokenManager.isAuthenticated(this)) {
-            Log.d(TAG, "Not authenticated, redirecting to login");
-            Intent intent = new Intent(this, LoginActivity.class);
-            startActivity(intent);
-            finish();
-            return;
-        }
-        
-        // Add JavaScript interface for auth token management
-        getBridge().getWebView().addJavascriptInterface(
-            new AuthTokenManager(this), 
-            "Android"
-        );
-        
-        // Request SMS permissions on startup
+        // Request SMS permissions
         requestSMSPermissions();
         
         // Start SMS monitoring service
         startSMSMonitorService();
     }
-
 
     private void requestSMSPermissions() {
         String[] permissions = {
@@ -63,7 +45,7 @@ public class MainActivity extends BridgeActivity {
         if (!allGranted) {
             ActivityCompat.requestPermissions(this, permissions, SMS_PERMISSION_REQUEST_CODE);
         } else {
-            Log.d(TAG, "All SMS permissions already granted");
+            Log.d(TAG, "All SMS permissions granted");
         }
     }
 
@@ -101,11 +83,5 @@ public class MainActivity extends BridgeActivity {
         } catch (Exception e) {
             Log.e(TAG, "Failed to start SMS Monitor Service", e);
         }
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        Log.d(TAG, "MainActivity destroyed");
     }
 }

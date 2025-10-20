@@ -3,35 +3,20 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="app.lovable.f56ea3cdbd454fa5a24347efbd454051">
 
-    <!-- Internet permission for server communication -->
+    <!-- Internet permission for Supabase -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 
-    <!-- SMS permissions for transaction scanning -->
+    <!-- SMS permissions -->
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
     <uses-permission android:name="android.permission.READ_SMS" />
-    <uses-permission android:name="android.permission.SEND_SMS" />
 
-    <!-- Background processing permissions -->
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- Background processing -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     
-    <!-- Android 13+ notification permissions -->
+    <!-- Notification permission -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    
-    <!-- Background app refresh for Android 6+ -->
-    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-
-    <!-- Phone permissions for better SMS handling -->
-    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
-    <uses-permission android:name="android.permission.READ_PHONE_NUMBERS" />
-
-    <!-- Storage permissions for caching -->
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <application
         android:allowBackup="true"
@@ -41,14 +26,13 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true"
-        android:requestLegacyExternalStorage="true"
         tools:targetApi="31">
 
-        <!-- Login Activity as launcher - SMS Scanner requires admin login -->
+        <!-- Main Activity - SMS Transaction Scanner -->
         <activity
             android:exported="true"
             android:launchMode="singleTask"
-            android:name="app.lovable.f56ea3cdbd454fa5a24347efbd454051.LoginActivity"
+            android:name="app.lovable.f56ea3cdbd454fa5a24347efbd454051.MainActivity"
             android:theme="@style/AppTheme.NoActionBarLaunch">
             
             <intent-filter>
@@ -57,16 +41,7 @@
             </intent-filter>
         </activity>
 
-        <!-- Main Activity - SMS Scanner (requires authentication) -->
-        <activity
-            android:exported="false"
-            android:launchMode="singleTask"
-            android:name="app.lovable.f56ea3cdbd454fa5a24347efbd454051.MainActivity"
-            android:theme="@style/AppTheme.NoActionBarLaunch">
-        </activity>
-
-
-        <!-- SMS Receiver for automatic transaction detection -->
+        <!-- SMS Receiver -->
         <receiver android:name=".SMSReceiver"
             android:exported="true"
             android:permission="android.permission.BROADCAST_SMS">
@@ -75,7 +50,7 @@
             </intent-filter>
         </receiver>
 
-        <!-- Background service for SMS monitoring -->
+        <!-- SMS Monitor Service -->
         <service android:name=".SMSMonitorService"
             android:enabled="true"
             android:exported="false"
@@ -90,12 +65,8 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
-
-        <!-- Configure for Android 6 (API 23) to Android 15 (API 35) -->
-        <meta-data android:name="android.max_aspect" android:value="2.1" />
     </application>
 
-    <!-- Minimum SDK version: Android 6.0 (API 23) -->
     <uses-sdk
         android:minSdkVersion="23"
         android:targetSdkVersion="34" />
