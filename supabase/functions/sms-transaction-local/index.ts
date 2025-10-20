@@ -6,6 +6,75 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Regex patterns to extract data from SMS
+const PATTERNS = {
+  // Amount patterns: "Tk 500.00" or "BDT 500"
+  amount: /(?:Tk|BDT)\s*([\d,]+\.?\d*)/i,
+  // Balance patterns: "Balance Tk 510.00" or "Balance BDT 1,234.56"
+  balance: /Balance\s*(?:Tk|BDT)?\s*([\d,]+\.?\d*)/i,
+  // Fee patterns: "Fee Tk 0.00"
+  fee: /Fee\s*(?:Tk|BDT)?\s*([\d,]+\.?\d*)/i,
+  // Phone number patterns: "from 01954723595"
+  phone: /from\s*(\d{11})/i,
+  // Transaction date: "at 01/09/2025 11:32"
+  date: /at\s*(\d{2}\/\d{2}\/\d{4}\s+\d{1,2}:\d{2})/i,
+};
+
+function extractNumber(text: string, pattern: RegExp): number | null {
+  const match = text.match(pattern);
+  if (match && match[1]) {
+    // Remove commas and parse as float
+    return parseFloat(match[1].replace(/,/g, ''));
+  }
+  return null;
+}
+
+function extractPhone(text: string): string | null {
+  const match = text.match(PATTERNS.phone);
+  return match ? match[1] : null;
+}
+
+function extractDate(text: string): string | null {
+  const match = text.match(PATTERNS.date);
+  if (match && match[1]) {
+    try {
+      // Parse "01/09/2025 11:32" format
+      const [datePart, timePart] = match[1].split(' ');
+      const [day, month, year] = datePart.split('/');
+      const [hours, minutes] = timePart.split(':');
+      
+      // Create ISO date string
+      const date = new Date(
+        parseInt(year),
+        parseInt(month) - 1,
+        parseInt(day),
+        parseInt(hours),
+        parseInt(minutes)
+      );
+      
+      return date.toISOString();
+    } catch (e) {
+      console.error('Error parsing date:', e);
+      return null;
+    }
+  }
+  return null;
+}
+
+function determineWalletType(message: string): string {
+  const lowerMessage = message.toLowerCase();
+  
+  if (lowerMessage.includes('bkash') || lowerMessage.includes('b-kash')) {
+    return 'bkash';
+  } else if (lowerMessage.includes('nagad')) {
+    return 'nagad';
+  } else if (lowerMessage.includes('rocket')) {
+    return 'rocket';
+  }
+  
+  return 'unknown';
+}
+
 serve(async (req) => {
   // Handle CORS
   if (req.method === 'OPTIONS') {
@@ -16,6 +85,7 @@ serve(async (req) => {
     const { smsData } = await req.json();
 
     if (!smsData || !smsData.transaction_id) {
+      console.error('Missing transaction_id in request');
       return new Response(
         JSON.stringify({ error: 'Transaction ID is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -27,82 +97,43 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const messageContent = String(smsData.message_content || '');
-    const lowerMessage = messageContent.toLowerCase();
     
-    // Determine wallet type from message
-    let walletType = 'unknown';
-    if (lowerMessage.includes('bkash')) {
-      walletType = 'bkash';
-    } else if (lowerMessage.includes('nagad')) {
-      walletType = 'nagad';
-    } else if (lowerMessage.includes('rocket')) {
-      walletType = 'rocket';
-    }
-
-    // Extract additional data from SMS using regex patterns
-    // Example SMS: "You have received Tk 500.00 from 01954723595. Ref 95352. Fee Tk 0.00. Balance Tk 510.00. TrxID CI131K7A2D at 01/09/2025 11:32"
-    
-    // Extract amount (e.g., "Tk 500.00")
-    const amountMatch = messageContent.match(/(?:received|sent)\s+Tk\s+([\d,]+\.?\d*)/i);
-    const amount = amountMatch ? parseFloat(amountMatch[1].replace(/,/g, '')) : null;
-
-    // Extract balance (e.g., "Balance Tk 510.00")
-    const balanceMatch = messageContent.match(/Balance\s+Tk\s+([\d,]+\.?\d*)/i);
-    const newBalance = balanceMatch ? parseFloat(balanceMatch[1].replace(/,/g, '')) : null;
-
-    // Extract fee (e.g., "Fee Tk 0.00")
-    const feeMatch = messageContent.match(/Fee\s+Tk\s+([\d,]+\.?\d*)/i);
-    const fee = feeMatch ? parseFloat(feeMatch[1].replace(/,/g, '')) : null;
-
-    // Extract sender phone (e.g., "from 01954723595")
-    const phoneMatch = messageContent.match(/(?:from|to)\s+(01\d{9})/i);
-    const senderPhone = phoneMatch ? phoneMatch[1] : null;
-
-    // Extract date/time if present (e.g., "at 01/09/2025 11:32")
-    const dateMatch = messageContent.match(/at\s+(\d{2}\/\d{2}\/\d{4}\s+\d{1,2}:\d{2})/i);
-    let transactionDate = null;
-    if (dateMatch) {
-      try {
-        // Parse DD/MM/YYYY HH:MM format
-        const [datePart, timePart] = dateMatch[1].split(' ');
-        const [day, month, year] = datePart.split('/');
-        const [hour, minute] = timePart.split(':');
-        transactionDate = new Date(`${year}-${month}-${day}T${hour.padStart(2, '0')}:${minute}:00`).toISOString();
-      } catch (e) {
-        console.error('Error parsing transaction date:', e);
-      }
-    }
-
-    // If no date in message, use provided timestamp or current time
-    if (!transactionDate) {
-      transactionDate = smsData.timestamp ? new Date(smsData.timestamp).toISOString() : new Date().toISOString();
-    }
+    // Extract all data from SMS
+    const walletType = determineWalletType(messageContent);
+    const amount = extractNumber(messageContent, PATTERNS.amount);
+    const balance = extractNumber(messageContent, PATTERNS.balance);
+    const fee = extractNumber(messageContent, PATTERNS.fee);
+    const senderPhone = extractPhone(messageContent);
+    const transactionDate = extractDate(messageContent);
 
     console.log('Extracted SMS data:', {
       transaction_id: smsData.transaction_id,
       wallet_type: walletType,
       amount,
+      balance,
       fee,
-      new_balance: newBalance,
       sender_phone: senderPhone,
       transaction_date: transactionDate
     });
 
+    // Prepare data for insertion
+    const insertData = {
+      transaction_id: smsData.transaction_id,
+      sender_number: smsData.sender_number || 'unknown',
+      sender_phone: senderPhone,
+      message_content: messageContent,
+      wallet_type: walletType,
+      amount: amount,
+      new_balance: balance,
+      fee: fee,
+      transaction_date: transactionDate || (smsData.timestamp ? new Date(smsData.timestamp).toISOString() : new Date().toISOString()),
+      is_processed: false
+    };
+
     // Store SMS transaction in database
     const { data, error } = await supabase
       .from('sms_transactions')
-      .insert({
-        transaction_id: smsData.transaction_id,
-        sender_number: smsData.sender_number || 'unknown',
-        sender_phone: senderPhone,
-        message_content: messageContent,
-        wallet_type: walletType,
-        amount: amount,
-        fee: fee,
-        new_balance: newBalance,
-        transaction_date: transactionDate,
-        is_processed: false
-      })
+      .insert(insertData)
       .select()
       .single();
 
@@ -111,46 +142,77 @@ serve(async (req) => {
       if (error.code === '23505') {
         console.log('Transaction already exists:', smsData.transaction_id);
         return new Response(
-          JSON.stringify({ success: true, message: 'Transaction already recorded', duplicate: true }),
+          JSON.stringify({ 
+            success: true, 
+            message: 'Transaction already recorded', 
+            duplicate: true 
+          }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
+      console.error('Database insert error:', error);
       throw error;
     }
 
-    console.log('SMS transaction stored:', data);
+    console.log('SMS transaction stored successfully:', data.id);
 
     // Try to match with existing pending order
-    const { data: matchResult } = await supabase
-      .rpc('match_sms_transaction_with_order', {
-        p_transaction_id: smsData.transaction_id,
-        p_wallet_type: walletType
-      });
+    try {
+      const { data: matchResult, error: matchError } = await supabase
+        .rpc('match_sms_transaction_with_order', {
+          p_transaction_id: smsData.transaction_id,
+          p_wallet_type: walletType
+        });
 
-    if (matchResult) {
-      console.log('Matched with order:', matchResult);
+      if (matchError) {
+        console.error('Error matching transaction with order:', matchError);
+      } else if (matchResult) {
+        console.log('✓ Matched with order:', matchResult);
+      } else {
+        console.log('No matching order found for transaction:', smsData.transaction_id);
+      }
+
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          transaction_id: smsData.transaction_id,
+          matched: !!matchResult,
+          extracted_data: {
+            amount,
+            balance,
+            fee,
+            sender_phone: senderPhone,
+            wallet_type: walletType
+          }
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (matchError) {
+      console.error('Error in order matching:', matchError);
+      // Return success even if matching fails
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          transaction_id: smsData.transaction_id,
+          matched: false,
+          extracted_data: {
+            amount,
+            balance,
+            fee,
+            sender_phone: senderPhone,
+            wallet_type: walletType
+          }
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
-
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        transaction_id: smsData.transaction_id,
-        extracted_data: {
-          amount,
-          fee,
-          balance: newBalance,
-          sender_phone: senderPhone,
-          wallet_type: walletType
-        },
-        matched: !!matchResult
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
 
   } catch (error) {
     console.error('Error handling SMS transaction:', error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Internal server error' }),
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : 'Internal server error' 
+      }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
