@@ -26,21 +26,67 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Extract wallet type from message or default to generic
-    const messageContent = String(smsData.message_content || '').toLowerCase();
-    let walletType = 'unknown';
+    const messageContent = String(smsData.message_content || '');
+    const lowerMessage = messageContent.toLowerCase();
     
-    if (messageContent.includes('bkash')) {
+    // Determine wallet type from message
+    let walletType = 'unknown';
+    if (lowerMessage.includes('bkash')) {
       walletType = 'bkash';
-    } else if (messageContent.includes('nagad')) {
+    } else if (lowerMessage.includes('nagad')) {
       walletType = 'nagad';
-    } else if (messageContent.includes('rocket')) {
+    } else if (lowerMessage.includes('rocket')) {
       walletType = 'rocket';
     }
 
-    // Extract amount if provided
-    const amount = smsData.amount || null;
-    const newBalance = smsData.new_balance || null;
+    // Extract additional data from SMS using regex patterns
+    // Example SMS: "You have received Tk 500.00 from 01954723595. Ref 95352. Fee Tk 0.00. Balance Tk 510.00. TrxID CI131K7A2D at 01/09/2025 11:32"
+    
+    // Extract amount (e.g., "Tk 500.00")
+    const amountMatch = messageContent.match(/(?:received|sent)\s+Tk\s+([\d,]+\.?\d*)/i);
+    const amount = amountMatch ? parseFloat(amountMatch[1].replace(/,/g, '')) : null;
+
+    // Extract balance (e.g., "Balance Tk 510.00")
+    const balanceMatch = messageContent.match(/Balance\s+Tk\s+([\d,]+\.?\d*)/i);
+    const newBalance = balanceMatch ? parseFloat(balanceMatch[1].replace(/,/g, '')) : null;
+
+    // Extract fee (e.g., "Fee Tk 0.00")
+    const feeMatch = messageContent.match(/Fee\s+Tk\s+([\d,]+\.?\d*)/i);
+    const fee = feeMatch ? parseFloat(feeMatch[1].replace(/,/g, '')) : null;
+
+    // Extract sender phone (e.g., "from 01954723595")
+    const phoneMatch = messageContent.match(/(?:from|to)\s+(01\d{9})/i);
+    const senderPhone = phoneMatch ? phoneMatch[1] : null;
+
+    // Extract date/time if present (e.g., "at 01/09/2025 11:32")
+    const dateMatch = messageContent.match(/at\s+(\d{2}\/\d{2}\/\d{4}\s+\d{1,2}:\d{2})/i);
+    let transactionDate = null;
+    if (dateMatch) {
+      try {
+        // Parse DD/MM/YYYY HH:MM format
+        const [datePart, timePart] = dateMatch[1].split(' ');
+        const [day, month, year] = datePart.split('/');
+        const [hour, minute] = timePart.split(':');
+        transactionDate = new Date(`${year}-${month}-${day}T${hour.padStart(2, '0')}:${minute}:00`).toISOString();
+      } catch (e) {
+        console.error('Error parsing transaction date:', e);
+      }
+    }
+
+    // If no date in message, use provided timestamp or current time
+    if (!transactionDate) {
+      transactionDate = smsData.timestamp ? new Date(smsData.timestamp).toISOString() : new Date().toISOString();
+    }
+
+    console.log('Extracted SMS data:', {
+      transaction_id: smsData.transaction_id,
+      wallet_type: walletType,
+      amount,
+      fee,
+      new_balance: newBalance,
+      sender_phone: senderPhone,
+      transaction_date: transactionDate
+    });
 
     // Store SMS transaction in database
     const { data, error } = await supabase
@@ -48,11 +94,13 @@ serve(async (req) => {
       .insert({
         transaction_id: smsData.transaction_id,
         sender_number: smsData.sender_number || 'unknown',
-        message_content: smsData.message_content || '',
+        sender_phone: senderPhone,
+        message_content: messageContent,
         wallet_type: walletType,
         amount: amount,
+        fee: fee,
         new_balance: newBalance,
-        timestamp: smsData.timestamp ? new Date(smsData.timestamp).toISOString() : new Date().toISOString(),
+        transaction_date: transactionDate,
         is_processed: false
       })
       .select()
@@ -87,6 +135,13 @@ serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         transaction_id: smsData.transaction_id,
+        extracted_data: {
+          amount,
+          fee,
+          balance: newBalance,
+          sender_phone: senderPhone,
+          wallet_type: walletType
+        },
         matched: !!matchResult
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

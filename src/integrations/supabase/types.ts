@@ -1924,12 +1924,14 @@ export type Database = {
           amount: number | null
           created_at: string
           device_id: string | null
+          fee: number | null
           id: string
           is_processed: boolean
           matched_order_id: string | null
           message_content: string
           new_balance: number | null
           sender_number: string
+          sender_phone: string | null
           transaction_date: string | null
           transaction_id: string
           verified_source: boolean | null
@@ -1939,12 +1941,14 @@ export type Database = {
           amount?: number | null
           created_at?: string
           device_id?: string | null
+          fee?: number | null
           id?: string
           is_processed?: boolean
           matched_order_id?: string | null
           message_content: string
           new_balance?: number | null
           sender_number: string
+          sender_phone?: string | null
           transaction_date?: string | null
           transaction_id: string
           verified_source?: boolean | null
@@ -1954,12 +1958,14 @@ export type Database = {
           amount?: number | null
           created_at?: string
           device_id?: string | null
+          fee?: number | null
           id?: string
           is_processed?: boolean
           matched_order_id?: string | null
           message_content?: string
           new_balance?: number | null
           sender_number?: string
+          sender_phone?: string | null
           transaction_date?: string | null
           transaction_id?: string
           verified_source?: boolean | null
@@ -3083,6 +3089,51 @@ export type Database = {
           store_name?: string | null
           store_tagline?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      unprocessed_sms_transactions: {
+        Row: {
+          amount: number | null
+          created_at: string | null
+          fee: number | null
+          id: string | null
+          matched_order_id: string | null
+          message_content: string | null
+          new_balance: number | null
+          sender_number: string | null
+          sender_phone: string | null
+          transaction_date: string | null
+          transaction_id: string | null
+          wallet_type: string | null
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string | null
+          fee?: number | null
+          id?: string | null
+          matched_order_id?: string | null
+          message_content?: string | null
+          new_balance?: number | null
+          sender_number?: string | null
+          sender_phone?: string | null
+          transaction_date?: string | null
+          transaction_id?: string | null
+          wallet_type?: string | null
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string | null
+          fee?: number | null
+          id?: string | null
+          matched_order_id?: string | null
+          message_content?: string | null
+          new_balance?: number | null
+          sender_number?: string | null
+          sender_phone?: string | null
+          transaction_date?: string | null
+          transaction_id?: string | null
+          wallet_type?: string | null
         }
         Relationships: []
       }
