@@ -25,9 +25,11 @@ export const useStoreSettings = () => {
 
   const fetchSettings = async () => {
     try {
-      // Use public function for anon access (non-sensitive data)
+      // Query public settings table directly (accessible without auth)
       const { data, error } = await supabase
-        .rpc('get_public_store_settings')
+        .from('store_settings_public')
+        .select('*')
+        .limit(1)
         .maybeSingle();
 
       if (error && error.code !== 'PGRST116') {
