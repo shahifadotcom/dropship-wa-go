@@ -100,8 +100,9 @@ export default function CJDropshipping() {
       } else {
         toast.error('Failed to connect. Please check your credentials.');
       }
-    } catch (error) {
-      toast.error('Failed to connect to CJ Dropshipping');
+    } catch (error: any) {
+      console.error('Connection error:', error);
+      toast.error(error?.message || 'Failed to connect. Please verify your email and API key are correct.');
     }
   };
 

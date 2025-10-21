@@ -132,7 +132,7 @@ const Settings = () => {
 
       if (error) {
         console.error('Error updating settings:', error);
-        toast.error('Failed to save settings');
+        toast.error(`Failed to save settings: ${error.message}`);
       } else {
         setSettings({ ...settings, ...updatedFields });
         // Also publish public-facing fields for anonymous users

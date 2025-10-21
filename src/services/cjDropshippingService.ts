@@ -77,9 +77,14 @@ class CJDropshippingService {
         }
       });
 
-      if (authError || !authData?.accessToken) {
+      if (authError) {
         console.error('Failed to get CJ access token:', authError);
-        return null;
+        throw new Error(authError.message || 'Failed to authenticate with CJ Dropshipping');
+      }
+
+      if (!authData?.accessToken) {
+        console.error('No access token received from CJ API:', authData);
+        throw new Error(authData?.error || 'Invalid credentials or API key');
       }
 
       // Insert connection with tokens

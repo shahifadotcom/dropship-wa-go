@@ -187,11 +187,15 @@ const AdminDashboard = () => {
     .filter(o => o.status === 'delivered' || o.status === 'completed')
     .reduce((sum, o) => sum + o.total, 0);
 
+  // Calculate total revenue from all orders
+  const totalRevenue = orders.reduce((sum, o) => sum + o.total, 0);
+
   const stats = [
     { title: 'Total Products', value: products.length, icon: Package },
     { title: 'Total Orders', value: orders.length, icon: ShoppingCart },
     { title: 'Total Stock Quantity', value: totalStockQuantity, icon: Package },
-    { title: 'Total Profit', value: `$${totalProfit.toFixed(2)}`, icon: DollarSign }
+    { title: 'Total Profit', value: `$${totalProfit.toFixed(2)}`, icon: DollarSign },
+    { title: 'Total Revenue', value: `$${totalRevenue.toFixed(2)}`, icon: DollarSign }
   ];
 
   return (
@@ -215,7 +219,7 @@ const AdminDashboard = () => {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
           {stats.map((stat, index) => {
             const IconComponent = stat.icon;
             return (
