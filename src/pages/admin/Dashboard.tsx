@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Package, Users, ShoppingCart, Edit, Trash2, QrCode } from 'lucide-react';
+import { Plus, Package, ShoppingCart, DollarSign, AlertTriangle, QrCode } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { AdminProductForm } from '@/components/AdminProductForm';
 import AdminLayout from '@/layouts/AdminLayout';
@@ -26,6 +26,13 @@ interface Product {
   rating: number;
   review_count: number;
   created_at: string;
+}
+
+interface LowStockProduct {
+  id: string;
+  name: string;
+  stock_quantity: number;
+  images: string[];
 }
 
 interface Category {
@@ -49,11 +56,33 @@ const AdminDashboard = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [lowStockProducts, setLowStockProducts] = useState<LowStockProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddProduct, setShowAddProduct] = useState(false);
 
   useEffect(() => {
     fetchData();
+    checkLowStock();
+
+    // Subscribe to real-time product changes
+    const channel = supabase
+      .channel('product-stock-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'products'
+        },
+        () => {
+          checkLowStock();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchData = async () => {
@@ -83,27 +112,30 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleDeleteProduct = async (productId: string) => {
+  const checkLowStock = async () => {
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('products')
-        .delete()
-        .eq('id', productId);
+        .select('id, name, stock_quantity, images')
+        .lte('stock_quantity', 5)
+        .gt('stock_quantity', 0)
+        .order('stock_quantity', { ascending: true });
 
       if (error) throw error;
 
-      toast({
-        title: "Success",
-        description: "Product deleted successfully"
-      });
-      fetchData();
+      const lowStock = data || [];
+      setLowStockProducts(lowStock);
+
+      // Check if any product just reached threshold of 5
+      const productsAt5 = lowStock.filter(p => p.stock_quantity === 5);
+      if (productsAt5.length > 0) {
+        // Send WhatsApp notification
+        await supabase.functions.invoke('send-low-stock-alert', {
+          body: { products: productsAt5 }
+        });
+      }
     } catch (error: any) {
-      console.error('Error deleting product:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete product",
-        variant: "destructive"
-      });
+      console.error('Error checking low stock:', error);
     }
   };
 
@@ -147,11 +179,19 @@ const AdminDashboard = () => {
     );
   }
 
+  // Calculate total stock quantity
+  const totalStockQuantity = products.reduce((sum, p) => sum + (p.stock_quantity || 0), 0);
+  
+  // Calculate profit (total from paid orders)
+  const totalProfit = orders
+    .filter(o => o.status === 'delivered' || o.status === 'completed')
+    .reduce((sum, o) => sum + o.total, 0);
+
   const stats = [
     { title: 'Total Products', value: products.length, icon: Package },
     { title: 'Total Orders', value: orders.length, icon: ShoppingCart },
-    { title: 'In Stock Products', value: products.filter(p => p.in_stock).length, icon: Package },
-    { title: 'Pending Orders', value: orders.filter(o => o.status === 'pending').length, icon: Users }
+    { title: 'Total Stock Quantity', value: totalStockQuantity, icon: Package },
+    { title: 'Total Profit', value: `$${totalProfit.toFixed(2)}`, icon: DollarSign }
   ];
 
   return (
@@ -194,52 +234,39 @@ const AdminDashboard = () => {
           })}
         </div>
 
-        {/* Products Management */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Products Management</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {products.length === 0 ? (
-                <p className="text-center py-8 text-muted-foreground">No products found</p>
-              ) : (
-                products.map((product) => (
-                  <div key={product.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center gap-4">
+        {/* Inventory Alert / Short List */}
+        {lowStockProducts.length > 0 && (
+          <Card className="mb-8 border-destructive">
+            <CardHeader className="bg-destructive/10">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-destructive" />
+                <CardTitle className="text-destructive">Low Stock Alert - Short List</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <div className="space-y-3">
+                {lowStockProducts.map((product) => (
+                  <div key={product.id} className="flex items-center justify-between p-3 border border-destructive/20 rounded-lg bg-destructive/5">
+                    <div className="flex items-center gap-3">
                       <img
                         src={product.images[0] || '/placeholder.svg'}
                         alt={product.name}
-                        className="w-16 h-16 rounded object-cover"
+                        className="w-12 h-12 rounded object-cover"
                       />
                       <div>
-                        <h3 className="font-semibold">{product.name}</h3>
-                        <p className="text-sm text-muted-foreground">${product.price}</p>
-                        <div className="flex gap-2 mt-1">
-                          <Badge variant={product.in_stock ? 'default' : 'secondary'}>
-                            {product.in_stock ? `In Stock (${product.stock_quantity})` : 'Out of Stock'}
-                          </Badge>
-                        </div>
+                        <h4 className="font-medium">{product.name}</h4>
+                        <p className="text-sm text-muted-foreground">Only {product.stock_quantity} left in stock</p>
                       </div>
                     </div>
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="outline">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleDeleteProduct(product.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    <Badge variant="destructive">
+                      {product.stock_quantity} pcs
+                    </Badge>
                   </div>
-                ))
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Orders Management */}
         <Card>

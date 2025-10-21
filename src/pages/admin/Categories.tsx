@@ -6,6 +6,8 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Plus, Search, Edit, Trash2, Tag } from 'lucide-react';
 import AdminLayout from '@/layouts/AdminLayout';
+import { CategoryDialog } from '@/components/admin/CategoryDialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 interface Category {
   id: string;
@@ -20,10 +22,34 @@ const Categories = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showDialog, setShowDialog] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchCategories();
+    
+    // Subscribe to real-time changes
+    const channel = supabase
+      .channel('categories-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'categories'
+        },
+        () => {
+          fetchCategories();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchCategories = async () => {
@@ -44,6 +70,49 @@ const Categories = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleEdit = (category: Category) => {
+    setSelectedCategory(category);
+    setShowDialog(true);
+  };
+
+  const handleAdd = () => {
+    setSelectedCategory(null);
+    setShowDialog(true);
+  };
+
+  const handleDeleteClick = (category: Category) => {
+    setCategoryToDelete(category);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!categoryToDelete) return;
+
+    try {
+      const { error } = await supabase
+        .from('categories')
+        .delete()
+        .eq('id', categoryToDelete.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Category deleted successfully"
+      });
+      
+      setDeleteDialogOpen(false);
+      setCategoryToDelete(null);
+    } catch (error: any) {
+      console.error('Error deleting category:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete category",
+        variant: "destructive"
+      });
     }
   };
 
@@ -72,7 +141,7 @@ const Categories = () => {
             <h1 className="text-3xl font-bold">Categories</h1>
             <p className="text-muted-foreground">Manage product categories</p>
           </div>
-          <Button>
+          <Button onClick={handleAdd}>
             <Plus className="h-4 w-4 mr-2" />
             Add Category
           </Button>
@@ -109,10 +178,10 @@ const Categories = () => {
                         <p className="text-sm text-muted-foreground">/{category.slug}</p>
                       </div>
                       <div className="flex gap-1">
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" onClick={() => handleEdit(category)}>
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" onClick={() => handleDeleteClick(category)}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -133,6 +202,31 @@ const Categories = () => {
           )}
         </div>
       </div>
+
+      <CategoryDialog
+        isOpen={showDialog}
+        onClose={() => {
+          setShowDialog(false);
+          setSelectedCategory(null);
+        }}
+        category={selectedCategory}
+        onSuccess={fetchCategories}
+      />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the category "{categoryToDelete?.name}". This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setCategoryToDelete(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminLayout>
   );
 };

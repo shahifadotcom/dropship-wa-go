@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
 import { Category } from '@/lib/types';
+import { supabase } from '@/integrations/supabase/client';
 
 interface CategoryNavProps {
   categories: Category[];
@@ -14,6 +15,28 @@ interface CategoryNavProps {
 
 const CategoryNav = ({ categories, selectedCategory, onCategorySelect }: CategoryNavProps) => {
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    // Subscribe to real-time category changes
+    const channel = supabase
+      .channel('category-nav-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'categories'
+        },
+        () => {
+          // Categories will be refetched by parent component
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const toggleCategory = (categoryId: string) => {
     const newExpanded = new Set(expandedCategories);
