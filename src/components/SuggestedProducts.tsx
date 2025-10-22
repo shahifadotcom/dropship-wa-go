@@ -8,6 +8,7 @@ import { ChevronLeft, ChevronRight, ShoppingCart } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { Product } from '@/lib/types';
+import { useCountryDetection } from '@/hooks/useCountryDetection';
 
 interface DBProduct {
   id: string;
@@ -32,19 +33,25 @@ export function SuggestedProducts({ currentProductIds = [], categoryId, limit = 
   const [scrollPosition, setScrollPosition] = useState(0);
   const { addToCart } = useCart();
   const navigate = useNavigate();
+  const { countryId } = useCountryDetection();
 
   useEffect(() => {
     loadSuggestedProducts();
-  }, [currentProductIds, categoryId]);
+  }, [currentProductIds, categoryId, countryId]);
 
   const loadSuggestedProducts = async () => {
     try {
       setLoading(true);
       let query = supabase
         .from('products')
-        .select('id, name, price, images, in_stock, slug, product_type, description')
+        .select('id, name, price, images, in_stock, slug, product_type, description, country_id')
         .eq('in_stock', true)
         .limit(limit);
+
+      // Filter by country if available
+      if (countryId) {
+        query = query.eq('country_id', countryId);
+      }
 
       // Exclude current products in cart
       if (currentProductIds.length > 0) {
