@@ -233,7 +233,13 @@ const Notifications = () => {
               </p>
             </div>
             
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <Dialog open={isDialogOpen} onOpenChange={(open) => {
+              setIsDialogOpen(open);
+              if (!open) {
+                setEditingTemplate(null);
+                setFormData({ name: '', template: '' });
+              }
+            }}>
               <DialogTrigger asChild>
                 <Button onClick={() => {
                   setEditingTemplate(null);

@@ -83,6 +83,12 @@ const Products = () => {
     }
 
     try {
+      // First delete related records
+      await supabase.from('order_items').delete().eq('product_id', productId);
+      await supabase.from('product_reviews').delete().eq('product_id', productId);
+      await supabase.from('product_variants').delete().eq('product_id', productId);
+      
+      // Then delete the product
       const { error } = await supabase
         .from('products')
         .delete()
@@ -100,7 +106,7 @@ const Products = () => {
       console.error('Error deleting product:', error);
       toast({
         title: "Error",
-        description: "Failed to delete product.",
+        description: `Failed to delete product: ${error.message}`,
         variant: "destructive"
       });
     }
