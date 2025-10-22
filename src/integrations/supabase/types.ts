@@ -3154,6 +3154,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      delete_product_cascade: {
+        Args: { p_product_id: string }
+        Returns: undefined
+      }
       generate_oauth_client: {
         Args: {
           p_description?: string
