@@ -83,10 +83,13 @@ const Products = () => {
     }
 
     try {
-      // First delete related records
+      // First delete related records (respect FK constraints)
+      await supabase.from('price_sync_logs').delete().eq('product_id', productId);
       await supabase.from('order_items').delete().eq('product_id', productId);
       await supabase.from('product_reviews').delete().eq('product_id', productId);
       await supabase.from('product_variants').delete().eq('product_id', productId);
+      // Break linkage from CJ imports if any (avoid FK constraint)
+      await supabase.from('cj_product_imports').update({ local_product_id: null }).eq('local_product_id', productId);
       
       // Then delete the product
       const { error } = await supabase
