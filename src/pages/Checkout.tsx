@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -44,6 +44,17 @@ const Checkout = () => {
   const [showOTPModal, setShowOTPModal] = useState(false);
   const [showPaymentSection, setShowPaymentSection] = useState(false);
   const [selectedPaymentIsCOD, setSelectedPaymentIsCOD] = useState(false);
+
+  // Auto-update country and phone when selectedCountry changes
+  useEffect(() => {
+    if (selectedCountry) {
+      setFormData(prev => ({
+        ...prev,
+        country: selectedCountry.name,
+        whatsappNumber: '' // Reset phone number when country changes
+      }));
+    }
+  }, [selectedCountry]);
 
   const subtotal = cart.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const total = subtotal; // Shipping is always free for COD
@@ -104,12 +115,20 @@ const Checkout = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const countries = [
-    { code: 'BD', name: 'Bangladesh', dialCode: '+880' },
-    { code: 'US', name: 'United States', dialCode: '+1' },
-    { code: 'AU', name: 'Australia', dialCode: '+61' },
-    { code: 'CA', name: 'Canada', dialCode: '+1' }
-  ];
+  // Country flag mapping
+  const countryFlags: { [key: string]: string } = {
+    BD: '🇧🇩',
+    US: '🇺🇸',
+    GB: '🇬🇧',
+    IN: '🇮🇳',
+    PK: '🇵🇰',
+    AU: '🇦🇺',
+    CA: '🇨🇦',
+    AE: '🇦🇪',
+    SA: '🇸🇦',
+    MY: '🇲🇾',
+    SG: '🇸🇬',
+  };
 
   const checkoutSchema = z.object({
     country: z.string().min(1, "Country is required"),
@@ -258,14 +277,11 @@ const Checkout = () => {
                         <SelectValue placeholder="Select country" />
                       </SelectTrigger>
                       <SelectContent className="bg-background border border-border">
-                        {countries.map((country) => (
+                        {allCountries.map((country) => (
                           <SelectItem key={country.code} value={country.name}>
                             <div className="flex items-center gap-2">
                               <span className="text-lg">
-                                {country.code === 'BD' && '🇧🇩'}
-                                {country.code === 'US' && '🇺🇸'}
-                                {country.code === 'AU' && '🇦🇺'}
-                                {country.code === 'CA' && '🇨🇦'}
+                                {countryFlags[country.code] || '🌍'}
                               </span>
                               {country.name}
                             </div>
@@ -303,12 +319,7 @@ const Checkout = () => {
                       <PhoneInput
                         international
                         countryCallingCodeEditable={false}
-                        defaultCountry={
-                          formData.country === 'Bangladesh' ? 'BD' :
-                          formData.country === 'United States' ? 'US' :
-                          formData.country === 'Australia' ? 'AU' :
-                          formData.country === 'Canada' ? 'CA' : 'BD'
-                        }
+                        defaultCountry={(selectedCountry?.code || 'BD') as any}
                         value={formData.whatsappNumber}
                         onChange={(value) => handleInputChange('whatsappNumber', value || '')}
                         className="[&_.PhoneInputInput]:flex [&_.PhoneInputInput]:h-10 [&_.PhoneInputInput]:w-full [&_.PhoneInputInput]:rounded-md [&_.PhoneInputInput]:border [&_.PhoneInputInput]:border-input [&_.PhoneInputInput]:bg-background [&_.PhoneInputInput]:px-3 [&_.PhoneInputInput]:py-2 [&_.PhoneInputInput]:text-sm"
