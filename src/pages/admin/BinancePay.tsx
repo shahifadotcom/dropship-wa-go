@@ -67,13 +67,13 @@ export default function BinancePay() {
   const loadTransactions = async () => {
     try {
       const { data, error } = await supabase
-        .from("transaction_verifications")
+        .from("advance_payments")
         .select(`
           id,
           order_id,
           transaction_id,
           amount,
-          status,
+          payment_status,
           created_at,
           verified_at,
           orders (
@@ -81,11 +81,18 @@ export default function BinancePay() {
             customer_email
           )
         `)
-        .eq("payment_gateway", "binance_pay")
+        .eq("payment_method", "binance_pay")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setTransactions(data || []);
+      
+      // Map payment_status to status for consistency
+      const mappedData = data?.map(item => ({
+        ...item,
+        status: item.payment_status
+      })) || [];
+      
+      setTransactions(mappedData as any);
     } catch (error) {
       console.error("Error loading transactions:", error);
       toast.error("Failed to load transaction history");
@@ -134,11 +141,16 @@ export default function BinancePay() {
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'verified': return 'default';
-      case 'pending': return 'secondary';
-      case 'failed': return 'destructive';
-      default: return 'secondary';
+    switch (status?.toLowerCase()) {
+      case 'paid':
+      case 'verified': 
+        return 'default';
+      case 'pending': 
+        return 'secondary';
+      case 'failed': 
+        return 'destructive';
+      default: 
+        return 'secondary';
     }
   };
 
