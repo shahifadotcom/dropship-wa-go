@@ -6,11 +6,28 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, ExternalLink } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+
+interface BinanceTransaction {
+  id: string;
+  order_id: string;
+  transaction_id: string;
+  amount: number;
+  status: string;
+  created_at: string;
+  verified_at: string | null;
+  orders: {
+    order_number: string;
+    customer_email: string;
+  } | null;
+}
 
 export default function BinancePay() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [transactions, setTransactions] = useState<BinanceTransaction[]>([]);
   const [config, setConfig] = useState({
     id: "",
     api_key: "",
@@ -24,6 +41,7 @@ export default function BinancePay() {
 
   useEffect(() => {
     loadConfig();
+    loadTransactions();
   }, []);
 
   const loadConfig = async () => {
@@ -43,6 +61,34 @@ export default function BinancePay() {
       toast.error("Failed to load Binance configuration");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadTransactions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("transaction_verifications")
+        .select(`
+          id,
+          order_id,
+          transaction_id,
+          amount,
+          status,
+          created_at,
+          verified_at,
+          orders (
+            order_number,
+            customer_email
+          )
+        `)
+        .eq("payment_gateway", "binance_pay")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setTransactions(data || []);
+    } catch (error) {
+      console.error("Error loading transactions:", error);
+      toast.error("Failed to load transaction history");
     }
   };
 
@@ -78,11 +124,21 @@ export default function BinancePay() {
       }
 
       toast.success("Binance Pay configuration saved successfully");
+      loadTransactions(); // Reload transactions after config save
     } catch (error) {
       console.error("Error saving Binance config:", error);
       toast.error("Failed to save Binance configuration");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'verified': return 'default';
+      case 'pending': return 'secondary';
+      case 'failed': return 'destructive';
+      default: return 'secondary';
     }
   };
 
@@ -206,6 +262,64 @@ export default function BinancePay() {
               "Save Configuration"
             )}
           </Button>
+        </CardContent>
+      </Card>
+
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>Transaction History</CardTitle>
+          <CardDescription>
+            All Binance Pay transactions submitted by customers
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {transactions.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">No transactions found</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Order</TableHead>
+                    <TableHead>Transaction ID</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Customer</TableHead>
+                    <TableHead>Date</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {transactions.map((transaction) => (
+                    <TableRow key={transaction.id}>
+                      <TableCell>
+                        <a 
+                          href={`/admin/orders`}
+                          className="text-primary hover:underline flex items-center gap-1"
+                          target="_blank"
+                        >
+                          #{transaction.orders?.order_number || 'N/A'}
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </TableCell>
+                      <TableCell className="font-mono text-sm">
+                        {transaction.transaction_id}
+                      </TableCell>
+                      <TableCell>${transaction.amount.toFixed(2)}</TableCell>
+                      <TableCell>
+                        <Badge variant={getStatusColor(transaction.status)}>
+                          {transaction.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{transaction.orders?.customer_email || 'N/A'}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {new Date(transaction.created_at).toLocaleString()}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
