@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, ExternalLink } from "lucide-react";
+import { Loader2, ExternalLink, Search } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 
 interface BinanceTransaction {
   id: string;
@@ -28,6 +29,10 @@ export default function BinancePay() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [transactions, setTransactions] = useState<BinanceTransaction[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const itemsPerPage = 10;
   const [config, setConfig] = useState({
     id: "",
     api_key: "",
@@ -41,8 +46,11 @@ export default function BinancePay() {
 
   useEffect(() => {
     loadConfig();
-    loadTransactions();
   }, []);
+
+  useEffect(() => {
+    loadTransactions();
+  }, [currentPage, searchQuery]);
 
   const loadConfig = async () => {
     try {
@@ -66,7 +74,8 @@ export default function BinancePay() {
 
   const loadTransactions = async () => {
     try {
-      const { data, error } = await supabase
+      // Build query
+      let query = supabase
         .from("advance_payments")
         .select(`
           id,
@@ -80,9 +89,32 @@ export default function BinancePay() {
             order_number,
             customer_email
           )
-        `)
+        `, { count: 'exact' })
+        .eq("payment_method", "binance_pay");
+
+      // Add search filter if query exists
+      if (searchQuery.trim()) {
+        query = query.ilike("transaction_id", `%${searchQuery.trim()}%`);
+      }
+
+      // Get total count for pagination
+      const { count } = await supabase
+        .from("advance_payments")
+        .select("*", { count: 'exact', head: true })
         .eq("payment_method", "binance_pay")
-        .order("created_at", { ascending: false });
+        .ilike("transaction_id", searchQuery.trim() ? `%${searchQuery.trim()}%` : "%");
+
+      if (count) {
+        setTotalPages(Math.ceil(count / itemsPerPage));
+      }
+
+      // Apply pagination
+      const from = (currentPage - 1) * itemsPerPage;
+      const to = from + itemsPerPage - 1;
+      
+      const { data, error } = await query
+        .order("created_at", { ascending: false })
+        .range(from, to);
 
       if (error) throw error;
       
@@ -284,53 +316,102 @@ export default function BinancePay() {
             All Binance Pay transactions submitted by customers
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by transaction ID..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1); // Reset to first page on search
+                }}
+                className="pl-9"
+              />
+            </div>
+          </div>
+          
           {transactions.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">No transactions found</p>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Order</TableHead>
-                    <TableHead>Transaction ID</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Customer</TableHead>
-                    <TableHead>Date</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {transactions.map((transaction) => (
-                    <TableRow key={transaction.id}>
-                      <TableCell>
-                        <a 
-                          href={`/admin/orders`}
-                          className="text-primary hover:underline flex items-center gap-1"
-                          target="_blank"
-                        >
-                          #{transaction.orders?.order_number || 'N/A'}
-                          <ExternalLink className="h-3 w-3" />
-                        </a>
-                      </TableCell>
-                      <TableCell className="font-mono text-sm">
-                        {transaction.transaction_id}
-                      </TableCell>
-                      <TableCell>${transaction.amount.toFixed(2)}</TableCell>
-                      <TableCell>
-                        <Badge variant={getStatusColor(transaction.status)}>
-                          {transaction.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{transaction.orders?.customer_email || 'N/A'}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {new Date(transaction.created_at).toLocaleString()}
-                      </TableCell>
+            <>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Order</TableHead>
+                      <TableHead>Transaction ID</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Customer</TableHead>
+                      <TableHead>Date</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {transactions.map((transaction) => (
+                      <TableRow key={transaction.id}>
+                        <TableCell>
+                          <a 
+                            href={`/admin/orders`}
+                            className="text-primary hover:underline flex items-center gap-1"
+                            target="_blank"
+                          >
+                            #{transaction.orders?.order_number || 'N/A'}
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
+                        </TableCell>
+                        <TableCell className="font-mono text-sm">
+                          {transaction.transaction_id}
+                        </TableCell>
+                        <TableCell>${transaction.amount.toFixed(2)}</TableCell>
+                        <TableCell>
+                          <Badge variant={getStatusColor(transaction.status)}>
+                            {transaction.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{transaction.orders?.customer_email || 'N/A'}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {new Date(transaction.created_at).toLocaleString()}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {totalPages > 1 && (
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious 
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                    
+                    {[...Array(totalPages)].map((_, i) => (
+                      <PaginationItem key={i + 1}>
+                        <PaginationLink
+                          onClick={() => setCurrentPage(i + 1)}
+                          isActive={currentPage === i + 1}
+                          className="cursor-pointer"
+                        >
+                          {i + 1}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ))}
+                    
+                    <PaginationItem>
+                      <PaginationNext 
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
