@@ -272,6 +272,33 @@ serve(async (req) => {
         throw itemsError;
       }
 
+      // Reduce stock quantities for ordered products
+      for (const item of items) {
+        if (item.productId && item.quantity) {
+          // Get current stock
+          const { data: product } = await supabase
+            .from('products')
+            .select('stock_quantity')
+            .eq('id', item.productId)
+            .maybeSingle();
+
+          if (product) {
+            const newStock = Math.max(0, (product.stock_quantity || 0) - item.quantity);
+            
+            // Update stock and set in_stock based on availability
+            await supabase
+              .from('products')
+              .update({ 
+                stock_quantity: newStock,
+                in_stock: newStock > 0
+              })
+              .eq('id', item.productId);
+            
+            console.log(`Reduced stock for product ${item.productId}: ${product.stock_quantity} -> ${newStock}`);
+          }
+        }
+      }
+
       // Check if order contains digital products
       const productIds = items.map((item: any) => item.productId);
       const { data: products } = await supabase
