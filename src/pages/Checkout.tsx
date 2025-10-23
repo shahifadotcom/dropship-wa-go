@@ -63,34 +63,44 @@ const Checkout = () => {
     setShowOTPModal(false);
     setIsProcessing(true);
     
-    // Just verify OTP - order will be created after payment
+    // Verify OTP directly from database without sending another one
     try {
-      const { data, error } = await supabase.functions.invoke('send-otp', {
-        body: { 
-          phoneNumber,
-          verifyOnly: true,
-          otpCode
-        }
-      });
+      const { data: otpRecords, error: otpError } = await supabase
+        .from('otp_verifications')
+        .select('*')
+        .eq('phone_number', phoneNumber)
+        .eq('otp_code', otpCode)
+        .eq('is_verified', false)
+        .gt('expires_at', new Date().toISOString())
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-      if (error) throw error;
+      if (otpError) throw otpError;
 
-      if (data.success) {
+      if (otpRecords) {
+        // Mark OTP as verified
+        await supabase
+          .from('otp_verifications')
+          .update({ is_verified: true })
+          .eq('id', otpRecords.id);
+
         setShowPaymentSection(true);
         toast({
           title: "Phone Verified!",
           description: "Please complete payment to place your order.",
         });
       } else {
-        throw new Error(data.message || 'OTP verification failed');
+        throw new Error('Invalid or expired OTP');
       }
     } catch (error: any) {
       console.error('OTP verification error:', error);
       toast({
         title: "Verification Failed",
-        description: error.message || "Failed to verify OTP. Please try again.",
+        description: error.message || "Invalid or expired OTP. Please try again.",
         variant: "destructive"
       });
+      setShowOTPModal(true); // Reopen modal for retry
     } finally {
       setIsProcessing(false);
     }
