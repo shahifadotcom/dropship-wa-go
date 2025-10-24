@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -28,13 +28,21 @@ interface StorefrontSlider {
   button_text?: string;
   display_order: number;
   is_active: boolean;
+  country_id?: string;
   created_at: string;
   updated_at: string;
+}
+
+interface Country {
+  id: string;
+  name: string;
+  code: string;
 }
 
 const StorefrontSlider = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [countries, setCountries] = useState<Country[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingSlider, setEditingSlider] = useState<StorefrontSlider | null>(null);
   const [formData, setFormData] = useState({
@@ -45,7 +53,32 @@ const StorefrontSlider = () => {
     button_text: "",
     display_order: 0,
     is_active: true,
+    country_id: "",
   });
+
+  useEffect(() => {
+    loadCountries();
+  }, []);
+
+  const loadCountries = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('countries')
+        .select('id, name, code')
+        .eq('is_active', true)
+        .order('name');
+
+      if (error) throw error;
+      setCountries(data || []);
+    } catch (error) {
+      console.error('Error loading countries:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load countries",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Fetch sliders
   const { data: sliders = [], isLoading } = useQuery({
@@ -53,7 +86,13 @@ const StorefrontSlider = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("storefront_sliders")
-        .select("*")
+        .select(`
+          *,
+          countries (
+            name,
+            code
+          )
+        `)
         .order("display_order");
       
       if (error) throw error;
@@ -64,16 +103,21 @@ const StorefrontSlider = () => {
   // Create/Update mutation
   const saveSliderMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
+      const sliderData = {
+        ...data,
+        country_id: data.country_id || null,
+      };
+
       if (editingSlider) {
         const { error } = await supabase
           .from("storefront_sliders")
-          .update(data)
+          .update(sliderData)
           .eq("id", editingSlider.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from("storefront_sliders")
-          .insert([data]);
+          .insert([sliderData]);
         if (error) throw error;
       }
     },
@@ -147,6 +191,7 @@ const StorefrontSlider = () => {
       button_text: "",
       display_order: sliders.length,
       is_active: true,
+      country_id: "",
     });
     setEditingSlider(null);
   };
@@ -161,6 +206,7 @@ const StorefrontSlider = () => {
       button_text: slider.button_text || "",
       display_order: slider.display_order,
       is_active: slider.is_active,
+      country_id: slider.country_id || "",
     });
     setIsDialogOpen(true);
   };
@@ -217,13 +263,33 @@ const StorefrontSlider = () => {
               Add Slide
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingSlider ? "Edit Slide" : "Create New Slide"}
               </DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="country">Country (Optional)</Label>
+                <select
+                  id="country"
+                  value={formData.country_id}
+                  onChange={(e) => setFormData({ ...formData, country_id: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-md bg-background"
+                >
+                  <option value="">All Countries</option>
+                  {countries.map((country) => (
+                    <option key={country.id} value={country.id}>
+                      {country.name}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-muted-foreground">
+                  Leave empty to show this slide to all countries
+                </p>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="title">Title *</Label>
@@ -338,7 +404,7 @@ const StorefrontSlider = () => {
                   alt={slider.title}
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute top-2 right-2 flex gap-2">
+                <div className="absolute top-2 right-2 flex gap-2 flex-wrap">
                   <Badge variant={slider.is_active ? "default" : "secondary"}>
                     {slider.is_active ? "Active" : "Inactive"}
                   </Badge>
@@ -359,43 +425,56 @@ const StorefrontSlider = () => {
                   </p>
                 )}
                 
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      checked={slider.is_active}
-                      onCheckedChange={(checked) =>
-                        toggleActiveMutation.mutate({ id: slider.id, is_active: checked })
-                      }
-                      disabled={toggleActiveMutation.isPending}
-                    />
-                    <Label className="text-sm">Active</Label>
-                  </div>
-                  
-                  <div className="flex gap-1">
-                    {slider.link_url && (
+                <div className="space-y-2">
+                  {slider.country_id && (
+                    <Badge variant="outline" className="mb-1">
+                      {(slider as any).countries?.name || 'Country'}
+                    </Badge>
+                  )}
+                  {!slider.country_id && (
+                    <Badge variant="secondary" className="mb-1">
+                      All Countries
+                    </Badge>
+                  )}
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        checked={slider.is_active}
+                        onCheckedChange={(checked) =>
+                          toggleActiveMutation.mutate({ id: slider.id, is_active: checked })
+                        }
+                        disabled={toggleActiveMutation.isPending}
+                      />
+                      <Label className="text-sm">Active</Label>
+                    </div>
+                    
+                    <div className="flex gap-1">
+                      {slider.link_url && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => window.open(slider.link_url, '_blank')}
+                        >
+                          <Eye className="h-3 w-3" />
+                        </Button>
+                      )}
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => window.open(slider.link_url, '_blank')}
+                        onClick={() => openEditDialog(slider)}
                       >
-                        <Eye className="h-3 w-3" />
+                        <Edit className="h-3 w-3" />
                       </Button>
-                    )}
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => openEditDialog(slider)}
-                    >
-                      <Edit className="h-3 w-3" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => deleteSliderMutation.mutate(slider.id)}
-                      disabled={deleteSliderMutation.isPending}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => deleteSliderMutation.mutate(slider.id)}
+                        disabled={deleteSliderMutation.isPending}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </CardContent>

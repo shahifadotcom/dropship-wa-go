@@ -1,33 +1,59 @@
 import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { useCountryDetection } from "@/hooks/useCountryDetection";
+
+interface Slide {
+  id: string;
+  image_url: string;
+  title: string;
+  subtitle: string | null;
+  link_url: string | null;
+  button_text: string | null;
+}
 
 const ImageSlider = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [slides, setSlides] = useState<Slide[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { countryId } = useCountryDetection();
 
-  const slides = [
-    {
-      id: 1,
-      image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80",
-      title: "Summer Sale",
-      subtitle: "Up to 50% Off",
-      cta: "Shop Now"
-    },
-    {
-      id: 2,
-      image: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2126&q=80",
-      title: "New Collection",
-      subtitle: "Latest Fashion Trends",
-      cta: "Discover"
-    },
-    {
-      id: 3,
-      image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80",
-      title: "Electronics Sale",
-      subtitle: "Tech Deals",
-      cta: "Browse"
+  useEffect(() => {
+    loadSlides();
+  }, [countryId]);
+
+  const loadSlides = async () => {
+    try {
+      setLoading(true);
+      let query = supabase
+        .from('storefront_sliders')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true });
+
+      // Filter by country if available
+      if (countryId) {
+        query = query.or(`country_id.eq.${countryId},country_id.is.null`);
+      } else {
+        query = query.is('country_id', null);
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+      
+      setSlides(data || []);
+    } catch (error) {
+      console.error('Error loading slides:', error);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  if (loading || slides.length === 0) {
+    return null;
+  }
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -57,15 +83,22 @@ const ImageSlider = () => {
         >
           <div
             className="w-full h-full bg-cover bg-center relative"
-            style={{ backgroundImage: `url(${slide.image})` }}
+            style={{ backgroundImage: `url(${slide.image_url})` }}
           >
             <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
               <div className="text-center text-white">
                 <h2 className="text-3xl md:text-5xl font-bold mb-4">{slide.title}</h2>
-                <p className="text-lg md:text-xl mb-6">{slide.subtitle}</p>
-                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                  {slide.cta}
-                </Button>
+                {slide.subtitle && (
+                  <p className="text-lg md:text-xl mb-6">{slide.subtitle}</p>
+                )}
+                {slide.button_text && slide.link_url && (
+                  <Button 
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                    onClick={() => window.location.href = slide.link_url!}
+                  >
+                    {slide.button_text}
+                  </Button>
+                )}
               </div>
             </div>
           </div>

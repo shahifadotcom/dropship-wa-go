@@ -85,6 +85,17 @@ const Checkout = () => {
           .update({ is_verified: true })
           .eq('id', otpRecords.id);
 
+        // Update profile with phone number for customer tracking
+        if (user) {
+          await supabase
+            .from('profiles')
+            .upsert({
+              id: user.id,
+              phone_number: phoneNumber,
+              email: user.email,
+            }, { onConflict: 'id' });
+        }
+
         setShowPaymentSection(true);
         toast({
           title: "Phone Verified!",

@@ -1729,6 +1729,7 @@ export type Database = {
           id: string
           last_name: string | null
           phone: string | null
+          phone_number: string | null
           updated_at: string | null
         }
         Insert: {
@@ -1738,6 +1739,7 @@ export type Database = {
           id: string
           last_name?: string | null
           phone?: string | null
+          phone_number?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -1747,6 +1749,7 @@ export type Database = {
           id?: string
           last_name?: string | null
           phone?: string | null
+          phone_number?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -2128,6 +2131,7 @@ export type Database = {
       storefront_sliders: {
         Row: {
           button_text: string | null
+          country_id: string | null
           created_at: string
           display_order: number
           id: string
@@ -2140,6 +2144,7 @@ export type Database = {
         }
         Insert: {
           button_text?: string | null
+          country_id?: string | null
           created_at?: string
           display_order?: number
           id?: string
@@ -2152,6 +2157,7 @@ export type Database = {
         }
         Update: {
           button_text?: string | null
+          country_id?: string | null
           created_at?: string
           display_order?: number
           id?: string
@@ -2162,7 +2168,15 @@ export type Database = {
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "storefront_sliders_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       stripe_config: {
         Row: {
@@ -3146,14 +3160,8 @@ export type Database = {
         }
         Returns: boolean
       }
-      can_view_sensitive_product_data: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      create_error_logs_table_if_not_exists: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      can_view_sensitive_product_data: { Args: never; Returns: boolean }
+      create_error_logs_table_if_not_exists: { Args: never; Returns: undefined }
       delete_product_cascade: {
         Args: { p_product_id: string }
         Returns: undefined
@@ -3171,10 +3179,7 @@ export type Database = {
           id: string
         }[]
       }
-      generate_secure_otp: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      generate_secure_otp: { Args: never; Returns: string }
       get_cj_credentials: {
         Args: { connection_id: string }
         Returns: {
@@ -3184,7 +3189,7 @@ export type Database = {
         }[]
       }
       get_public_products: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           allowed_payment_gateways: string[]
           auto_order_enabled: boolean
@@ -3218,7 +3223,7 @@ export type Database = {
         }[]
       }
       get_public_store_settings: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           created_at: string
           currency: string
@@ -3237,10 +3242,7 @@ export type Database = {
           role: Database["public"]["Enums"]["app_role"]
         }[]
       }
-      has_active_subscription: {
-        Args: { user_uuid: string }
-        Returns: boolean
-      }
+      has_active_subscription: { Args: { user_uuid: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -3276,10 +3278,7 @@ export type Database = {
         }
         Returns: boolean
       }
-      validate_admin_access: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      validate_admin_access: { Args: never; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"

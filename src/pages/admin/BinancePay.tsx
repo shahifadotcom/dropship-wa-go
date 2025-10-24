@@ -74,8 +74,26 @@ export default function BinancePay() {
 
   const loadTransactions = async () => {
     try {
-      // Build query
-      let query = supabase
+      // Build base query with count
+      let countQuery = supabase
+        .from("advance_payments")
+        .select("*", { count: 'exact', head: true })
+        .eq("payment_method", "binance_pay");
+
+      // Add search filter for count
+      if (searchQuery.trim()) {
+        countQuery = countQuery.ilike("transaction_id", `%${searchQuery.trim()}%`);
+      }
+
+      // Get total count for pagination
+      const { count } = await countQuery;
+
+      if (count) {
+        setTotalPages(Math.ceil(count / itemsPerPage));
+      }
+
+      // Build data query
+      let dataQuery = supabase
         .from("advance_payments")
         .select(`
           id,
@@ -89,30 +107,19 @@ export default function BinancePay() {
             order_number,
             customer_email
           )
-        `, { count: 'exact' })
+        `)
         .eq("payment_method", "binance_pay");
 
       // Add search filter if query exists
       if (searchQuery.trim()) {
-        query = query.ilike("transaction_id", `%${searchQuery.trim()}%`);
+        dataQuery = dataQuery.ilike("transaction_id", `%${searchQuery.trim()}%`);
       }
 
-      // Get total count for pagination
-      const { count } = await supabase
-        .from("advance_payments")
-        .select("*", { count: 'exact', head: true })
-        .eq("payment_method", "binance_pay")
-        .ilike("transaction_id", searchQuery.trim() ? `%${searchQuery.trim()}%` : "%");
-
-      if (count) {
-        setTotalPages(Math.ceil(count / itemsPerPage));
-      }
-
-      // Apply pagination
+      // Apply pagination and ordering
       const from = (currentPage - 1) * itemsPerPage;
       const to = from + itemsPerPage - 1;
       
-      const { data, error } = await query
+      const { data, error } = await dataQuery
         .order("created_at", { ascending: false })
         .range(from, to);
 
