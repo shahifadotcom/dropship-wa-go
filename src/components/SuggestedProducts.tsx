@@ -40,18 +40,20 @@ export function SuggestedProducts({ currentProductIds = [], categoryId, limit = 
   }, [currentProductIds, categoryId, countryId]);
 
   const loadSuggestedProducts = async () => {
+    // Don't load anything until country is selected
+    if (!countryId) {
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       let query = supabase
         .from('products')
         .select('id, name, price, images, in_stock, slug, product_type, description, country_id')
         .eq('in_stock', true)
+        .eq('country_id', countryId) // Force country filtering
         .limit(limit);
-
-      // Filter by country if available
-      if (countryId) {
-        query = query.eq('country_id', countryId);
-      }
 
       // Exclude current products in cart
       if (currentProductIds.length > 0) {

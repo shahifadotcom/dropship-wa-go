@@ -23,6 +23,17 @@ const ImageSlider = () => {
     loadSlides();
   }, [countryId]);
 
+  // Auto-slide effect - must be before any conditional returns
+  useEffect(() => {
+    if (slides.length === 0) return;
+    
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
+    }, 5000);
+
+    return () => clearInterval(timer);
+  }, [slides.length]);
+
   const loadSlides = async () => {
     try {
       setLoading(true);
@@ -54,14 +65,6 @@ const ImageSlider = () => {
   if (loading || slides.length === 0) {
     return null;
   }
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 5000);
-
-    return () => clearInterval(timer);
-  }, [slides.length]);
 
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % slides.length);
