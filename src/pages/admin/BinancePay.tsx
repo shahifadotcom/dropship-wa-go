@@ -86,11 +86,13 @@ export default function BinancePay() {
       }
 
       // Get total count for pagination
-      const { count } = await countQuery;
+      const { count, error: countError } = await countQuery;
 
-      if (count) {
-        setTotalPages(Math.ceil(count / itemsPerPage));
-      }
+      if (countError) throw countError;
+
+      const totalCount = count || 0;
+      const calculatedPages = Math.ceil(totalCount / itemsPerPage);
+      setTotalPages(calculatedPages);
 
       // Build data query
       let dataQuery = supabase
@@ -108,20 +110,19 @@ export default function BinancePay() {
             customer_email
           )
         `)
-        .eq("payment_method", "binance_pay");
+        .eq("payment_method", "binance_pay")
+        .order("created_at", { ascending: false });
 
       // Add search filter if query exists
       if (searchQuery.trim()) {
         dataQuery = dataQuery.ilike("transaction_id", `%${searchQuery.trim()}%`);
       }
 
-      // Apply pagination and ordering
+      // Apply pagination
       const from = (currentPage - 1) * itemsPerPage;
       const to = from + itemsPerPage - 1;
       
-      const { data, error } = await dataQuery
-        .order("created_at", { ascending: false })
-        .range(from, to);
+      const { data, error } = await dataQuery.range(from, to);
 
       if (error) throw error;
       
