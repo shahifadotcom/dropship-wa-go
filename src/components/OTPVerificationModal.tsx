@@ -56,8 +56,11 @@ export const OTPVerificationModal = ({
     setIsResending(true);
     
     try {
+      // Normalize phone number before resending
+      const normalizedPhone = phoneNumber.replace(/[\s\-\(\)]/g, '');
+      
       const { error } = await supabase.functions.invoke('send-otp', {
-        body: { phoneNumber }
+        body: { phoneNumber: normalizedPhone }
       });
 
       if (error) throw error;

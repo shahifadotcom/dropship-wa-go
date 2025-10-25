@@ -63,12 +63,15 @@ const Checkout = () => {
     setShowOTPModal(false);
     setIsProcessing(true);
     
+    // Normalize phone number for verification
+    const normalizedPhone = phoneNumber.replace(/[\s\-\(\)]/g, '');
+    
     // Verify OTP directly from database without sending another one
     try {
       const { data: otpRecords, error: otpError } = await supabase
         .from('otp_verifications')
         .select('*')
-        .eq('phone_number', phoneNumber)
+        .eq('phone_number', normalizedPhone)
         .eq('otp_code', otpCode)
         .eq('is_verified', false)
         .gt('expires_at', new Date().toISOString())
@@ -91,7 +94,7 @@ const Checkout = () => {
             .from('profiles')
             .upsert({
               id: user.id,
-              phone_number: phoneNumber,
+              phone_number: normalizedPhone,
               email: user.email,
             }, { onConflict: 'id' });
         }
@@ -196,8 +199,11 @@ const Checkout = () => {
     setShowOTPModal(true);
 
     try {
+      // Normalize phone number: remove all spaces, dashes, parentheses
+      const normalizedPhone = formData.whatsappNumber.replace(/[\s\-\(\)]/g, '');
+      
       const { error } = await supabase.functions.invoke('send-otp', {
-        body: { phoneNumber: formData.whatsappNumber }
+        body: { phoneNumber: normalizedPhone }
       });
 
       if (error) throw error;
@@ -441,7 +447,7 @@ const Checkout = () => {
         <OTPVerificationModal
           isOpen={showOTPModal}
           onClose={() => setShowOTPModal(false)}
-          phoneNumber={formData.whatsappNumber}
+          phoneNumber={formData.whatsappNumber.replace(/[\s\-\(\)]/g, '')}
           onVerificationSuccess={handleOTPVerified}
           orderData={{
             ...formData,
