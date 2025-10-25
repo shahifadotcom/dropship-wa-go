@@ -76,9 +76,9 @@ export default function BinancePay() {
     try {
       // Build base query with count
       let countQuery = supabase
-        .from("advance_payments")
+        .from("transaction_verifications")
         .select("*", { count: 'exact', head: true })
-        .eq("payment_method", "binance_pay");
+        .eq("payment_gateway", "binance_pay");
 
       // Add search filter for count
       if (searchQuery.trim()) {
@@ -96,13 +96,13 @@ export default function BinancePay() {
 
       // Build data query
       let dataQuery = supabase
-        .from("advance_payments")
+        .from("transaction_verifications")
         .select(`
           id,
           order_id,
           transaction_id,
           amount,
-          payment_status,
+          status,
           created_at,
           verified_at,
           orders (
@@ -110,7 +110,7 @@ export default function BinancePay() {
             customer_email
           )
         `)
-        .eq("payment_method", "binance_pay")
+        .eq("payment_gateway", "binance_pay")
         .order("created_at", { ascending: false });
 
       // Add search filter if query exists
@@ -126,13 +126,7 @@ export default function BinancePay() {
 
       if (error) throw error;
       
-      // Map payment_status to status for consistency
-      const mappedData = data?.map(item => ({
-        ...item,
-        status: item.payment_status
-      })) || [];
-      
-      setTransactions(mappedData as any);
+      setTransactions((data || []) as any);
     } catch (error) {
       console.error("Error loading transactions:", error);
       toast.error("Failed to load transaction history");
