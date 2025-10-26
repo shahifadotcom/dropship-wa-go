@@ -62,59 +62,37 @@ const Checkout = () => {
   const handleOTPVerified = async (phoneNumber: string, otpCode: string) => {
     setShowOTPModal(false);
     setIsProcessing(true);
-    
-    // Normalize phone number for verification
+
     const normalizedPhone = phoneNumber.replace(/[\s\-\(\)]/g, '');
-    
-    // Verify OTP directly from database without sending another one
+
     try {
-      const { data: otpRecords, error: otpError } = await supabase
-        .from('otp_verifications')
-        .select('*')
-        .eq('phone_number', normalizedPhone)
-        .eq('otp_code', otpCode)
-        .eq('is_verified', false)
-        .gt('expires_at', new Date().toISOString())
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      // Verify OTP via Edge Function to bypass RLS and ensure consistent behavior across domains
+      const { data, error } = await supabase.functions.invoke('verify-otp', {
+        body: { phoneNumber: normalizedPhone, otpCode }
+      });
 
-      if (otpError) throw otpError;
-
-      if (otpRecords) {
-        // Mark OTP as verified
-        await supabase
-          .from('otp_verifications')
-          .update({ is_verified: true })
-          .eq('id', otpRecords.id);
-
-        // Update profile with phone number for customer tracking
-        if (user) {
-          await supabase
-            .from('profiles')
-            .upsert({
-              id: user.id,
-              phone_number: normalizedPhone,
-              email: user.email,
-            }, { onConflict: 'id' });
-        }
-
-        setShowPaymentSection(true);
-        toast({
-          title: "Phone Verified!",
-          description: "Please complete payment to place your order.",
-        });
-      } else {
-        throw new Error('Invalid or expired OTP');
+      if (error) throw error;
+      if (!data?.success) {
+        throw new Error(data?.error || 'Invalid or expired OTP');
       }
+
+      // Update profile with phone number for customer tracking (if logged in)
+      if (user) {
+        await supabase
+          .from('profiles')
+          .upsert({ id: user.id, phone_number: normalizedPhone, email: user.email }, { onConflict: 'id' });
+      }
+
+      setShowPaymentSection(true);
+      toast({ title: 'Phone Verified!', description: 'Please complete payment to place your order.' });
     } catch (error: any) {
       console.error('OTP verification error:', error);
       toast({
-        title: "Verification Failed",
-        description: error.message || "Invalid or expired OTP. Please try again.",
-        variant: "destructive"
+        title: 'Verification Failed',
+        description: error.message || 'Invalid or expired OTP. Please try again.',
+        variant: 'destructive',
       });
-      setShowOTPModal(true); // Reopen modal for retry
+      setShowOTPModal(true);
     } finally {
       setIsProcessing(false);
     }
