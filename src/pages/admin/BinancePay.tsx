@@ -78,7 +78,7 @@ export default function BinancePay() {
       let countQuery = supabase
         .from("transaction_verifications")
         .select("*", { count: 'exact', head: true })
-        .eq("payment_gateway", "binance_pay");
+        .in("payment_gateway", ["binance_pay", "binance"]);
 
       // Add search filter for count
       if (searchQuery.trim()) {
@@ -110,7 +110,7 @@ export default function BinancePay() {
             customer_email
           )
         `)
-        .eq("payment_gateway", "binance_pay")
+        .in("payment_gateway", ["binance_pay", "binance"])
         .order("created_at", { ascending: false });
 
       // Add search filter if query exists

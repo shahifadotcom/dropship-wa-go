@@ -350,6 +350,11 @@ export const PaymentSelector = ({
 
       const newOrderId = orderData.orderId;
 
+      // Record pending verification for non-local gateways (e.g., Binance)
+      if (!PaymentService.isLocalWallet(selectedGateway.name)) {
+        await PaymentService.submitTransaction(newOrderId, selectedGateway.name, transactionId, orderAmount);
+      }
+
       if (PaymentService.isLocalWallet(selectedGateway.name)) {
         // Mark order verified server-side (no client DB writes)
         await PaymentService.verifyLocalWalletPayment(transactionId, newOrderId, selectedGateway.name);
