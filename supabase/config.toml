@@ -13,10 +13,10 @@ verify_jwt = false
 [functions.send-otp]
 verify_jwt = false
 
-[functions.verify-otp-and-create-order]
+[functions.send-whatsapp-message]
 verify_jwt = false
 
-[functions.send-whatsapp-message]
+[functions.verify-otp-and-create-order]
 verify_jwt = false
 
 [functions.send-order-notification]

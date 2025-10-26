@@ -67,15 +67,28 @@ serve(async (req) => {
       throw otpStoreError;
     }
 
-    // Send OTP via WhatsApp
-    const { error: whatsappError } = await supabase.functions.invoke('send-whatsapp-message', {
-      body: {
-        phoneNumber,
-        message: `Your verification code is: ${otpCode}\n\nThis code expires in 10 minutes. Do not share this code with anyone.`
-      }
-    });
+    // Send OTP via WhatsApp directly to bridge
+    const whatsappBridgeUrl = Deno.env.get('WHATSAPP_BRIDGE_URL') || 'http://161.97.169.64:3001';
+    
+    try {
+      const whatsappResponse = await fetch(`${whatsappBridgeUrl}/send-message`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phoneNumber,
+          message: `Your verification code is: ${otpCode}\n\nThis code expires in 10 minutes. Do not share this code with anyone.`
+        })
+      });
 
-    if (whatsappError) {
+      const whatsappData = await whatsappResponse.json().catch(() => ({}));
+      
+      if (!whatsappResponse.ok || !whatsappData.success) {
+        console.error('WhatsApp bridge error:', whatsappData);
+        // Don't throw error, OTP is stored and can be verified manually
+      } else {
+        console.log('WhatsApp OTP sent successfully');
+      }
+    } catch (whatsappError) {
       console.error('Error sending WhatsApp message:', whatsappError);
       // Don't throw error here, OTP is still stored and can be used
     }
