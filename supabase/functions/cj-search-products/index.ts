@@ -92,14 +92,14 @@ serve(async (req) => {
       )
     }
 
-    // Build search parameters
+    // Build search parameters using correct parameter names
     const searchParams = new URLSearchParams({
-      page: (filters?.page || 1).toString(),
+      pageNum: (filters?.page || 1).toString(),
       pageSize: (filters?.pageSize || 20).toString()
     })
 
     if (filters?.keyword) {
-      searchParams.append('keyword', filters.keyword)
+      searchParams.append('productNameEn', filters.keyword)
     }
     if (filters?.categoryId) {
       searchParams.append('categoryId', filters.categoryId)
@@ -111,12 +111,11 @@ serve(async (req) => {
       searchParams.append('maxPrice', filters.maxPrice.toString())
     }
 
-    // Call CJ Dropshipping API
-    const response = await fetch(`https://developers.cjdropshipping.cn/api2.0/v1/product/list?${searchParams}`, {
+    // Call CJ Dropshipping API using correct endpoint and authentication header
+    const response = await fetch(`https://developers.cjdropshipping.com/api2.0/v1/product/list?${searchParams}`, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
+        'CJ-Access-Token': accessToken,
       }
     })
 
@@ -146,21 +145,37 @@ serve(async (req) => {
 
     const responseData = await response.json()
 
-    // Transform CJ API response to our format
+    // Check CJ API response format
+    if (!responseData.result || !responseData.data) {
+      console.error('Invalid CJ API response:', responseData)
+      return new Response(
+        JSON.stringify({ error: responseData.message || 'Invalid response from CJ API' }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+
+    // Transform CJ API response to our format using correct field names
     const products = responseData.data?.list?.map((product: any) => ({
       id: product.pid,
-      productName: product.productName,
+      productName: product.productNameEn || product.productName,
       productSku: product.productSku,
       sellPrice: parseFloat(product.sellPrice || '0'),
-      originalPrice: parseFloat(product.originalPrice || product.sellPrice || '0'),
+      originalPrice: parseFloat(product.sellPrice || '0') * 1.2,
       productWeight: parseFloat(product.productWeight || '0'),
-      productUrl: product.productUrl,
+      productUrl: product.productUrl || '',
       productMainPicture: product.productImage,
-      productPictures: product.productImages || [product.productImage],
-      productDescription: product.description || '',
+      productPictures: [product.productImage],
+      productDescription: '',
+      categoryId: product.categoryId || '',
       categoryName: product.categoryName || '',
       brandName: product.brandName || '',
-      variants: product.variants || []
+      productUnit: product.productUnit || 'unit(s)',
+      listedNum: product.listedNum || 0,
+      isFreeShipping: product.isFreeShipping || false,
+      variants: []
     })) || []
 
     console.log(`Found ${products.length} products for connection ${connectionId}`)
@@ -169,8 +184,8 @@ serve(async (req) => {
       JSON.stringify({
         products,
         total: responseData.data?.total || products.length,
-        page: filters?.page || 1,
-        pageSize: filters?.pageSize || 20
+        page: responseData.data?.pageNum || filters?.page || 1,
+        pageSize: responseData.data?.pageSize || filters?.pageSize || 20
       }),
       { 
         status: 200, 

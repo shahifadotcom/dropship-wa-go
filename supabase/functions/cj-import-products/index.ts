@@ -138,13 +138,12 @@ async function importProductsInBackground(
 
     for (const productId of productIds) {
       try {
-        // Get product details from CJ API
+        // Get product details from CJ API with correct authentication header
         const productResponse = await fetch(
           `https://developers.cjdropshipping.com/api2.0/v1/product/query?pid=${productId}`,
           {
             headers: {
-              'Authorization': `Bearer ${connection.access_token}`,
-              'Content-Type': 'application/json'
+              'CJ-Access-Token': connection.access_token,
             }
           }
         )
@@ -161,7 +160,9 @@ async function importProductsInBackground(
         }
 
         // Generate slug from product name
-        const slug = product.productName
+        const productName = product.productNameEn || product.productName
+        const nameStr = typeof productName === 'string' ? productName : String(productName)
+        const slug = nameStr
           .toLowerCase()
           .replace(/[^a-z0-9\s-]/g, '')
           .replace(/\s+/g, '-')
@@ -176,19 +177,20 @@ async function importProductsInBackground(
         const { data: localProduct, error: productError } = await supabaseClient
           .from('products')
           .insert({
-            name: product.productName,
-            description: product.description || product.productName,
+            name: product.productNameEn || product.productName,
+            description: product.description || (product.productNameEn || product.productName),
             price: finalPrice,
-            original_price: parseFloat(product.originalPrice || product.sellPrice || '0'),
+            original_price: finalPrice * 1.2,
+            cost_price: basePrice,
             sku: product.productSku,
-            images: product.productImages || [product.productImage],
+            images: product.productImage ? [product.productImage] : [],
             brand: product.brandName || '',
             stock_quantity: 100, // Default stock
             in_stock: true,
             weight: parseFloat(product.productWeight || '0'),
             slug: slug,
-            meta_title: product.productName,
-            meta_description: product.description || product.productName
+            meta_title: product.productNameEn || product.productName,
+            meta_description: product.description || (product.productNameEn || product.productName)
           })
           .select()
           .single()
