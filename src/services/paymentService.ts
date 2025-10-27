@@ -287,18 +287,17 @@ export class PaymentService {
     amount: number
   ): Promise<boolean> {
     try {
-      const { error } = await supabase
-        .from('transaction_verifications')
-        .insert({
-          order_id: orderId,
-          payment_gateway: paymentGateway,
-          transaction_id: transactionId.trim(),
-          amount: amount,
-          status: 'pending'
-        });
+      const { data, error } = await supabase.functions.invoke('record-transaction', {
+        body: {
+          orderId,
+          paymentGateway,
+          transactionId: transactionId.trim(),
+          amount,
+        },
+      });
 
       if (error) throw error;
-      return true;
+      return !!data?.success;
     } catch (error) {
       console.error('Error submitting transaction:', error);
       return false;

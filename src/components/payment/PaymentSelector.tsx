@@ -83,11 +83,22 @@ export const PaymentSelector = ({
         setPaymentGateways(gateways);
         
         // Load Binance config to check verification mode
-        const { data: binanceConfig } = await supabase
+        let { data: binanceConfig } = await supabase
           .from('binance_config')
           .select('verification_mode, binance_pay_id')
           .eq('is_active', true)
           .maybeSingle();
+        
+        // Fallback: use latest config if no active one found
+        if (!binanceConfig) {
+          const { data: fallback } = await supabase
+            .from('binance_config')
+            .select('verification_mode, binance_pay_id')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          binanceConfig = fallback || null;
+        }
         
         if (binanceConfig) {
           setBinanceVerificationMode((binanceConfig.verification_mode as 'manual' | 'auto') || 'manual');
