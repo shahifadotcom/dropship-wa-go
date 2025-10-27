@@ -151,7 +151,7 @@ serve(async (req) => {
         id: order.id
       };
 
-      let message = `Hi ${customerName}, your order #${order.order_number} is confirmed. Total ${currencySymbol}${order.total.toFixed(2)}.`;
+      let message = `Hi ${customerName}, your order #${order.order_number} is confirmed. Total: ${order.total.toFixed(2)}.`;
       if (tpl?.template) {
         message = tpl.template;
         Object.entries(templateVars).forEach(([key, value]) => {
@@ -167,14 +167,14 @@ serve(async (req) => {
         productDetails = '\n\n📦 Products:\n';
         order.order_items.forEach((item: any, index: number) => {
           productDetails += `\n${index + 1}. ${item.product_name}\n`;
-          productDetails += `   Qty: ${item.quantity} × ${currencySymbol}${item.price}\n`;
+          productDetails += `   Qty: ${item.quantity} × ${item.price}\n`;
         });
       }
 
       let paymentMessage = '';
       if (isCOD) {
         const remainingAmount = order.total - 100;
-        paymentMessage = `\n\n💰 Payment: Cash on Delivery\n✅ Confirmation fee received: ${currencySymbol}100\n📦 Delivery: FREE\n⚠️ Remaining amount (${currencySymbol}${remainingAmount.toFixed(2)}) to be paid to delivery person\n\n⚠️ Note: The ${currencySymbol}100 is a confirmation fee only. If you do not receive the products, this fee is non-refundable.`;
+        paymentMessage = `\n\n💰 Payment: Cash on Delivery\n✅ Confirmation fee received: 100\n📦 Delivery: FREE\n⚠️ Remaining amount (${remainingAmount.toFixed(2)}) to be paid to delivery person\n\n⚠️ Note: The 100 is a confirmation fee only. If you do not receive the products, this fee is non-refundable.`;
       } else {
         paymentMessage = '\n\n✅ Payment: Completed';
       }
@@ -210,7 +210,7 @@ serve(async (req) => {
       if (order.order_items && order.order_items.length > 0) {
         for (const item of order.order_items) {
           if (item.product_image) {
-            const imageCaption = `🖼️ ${item.product_name}\nQty: ${item.quantity} × ${currencySymbol}${item.price}`;
+            const imageCaption = `🖼️ ${item.product_name}\nQty: ${item.quantity} × ${item.price}`;
             await supabase.functions.invoke('send-whatsapp-message', {
               body: {
                 phoneNumber,
@@ -238,17 +238,17 @@ serve(async (req) => {
         if (order.order_items && order.order_items.length > 0) {
           adminProductList = '\n📦 Items:\n';
           order.order_items.forEach((item: any, index: number) => {
-            adminProductList += `${index + 1}. ${item.product_name} (×${item.quantity}) - ${currencySymbol}${item.price}\n`;
+            adminProductList += `${index + 1}. ${item.product_name} (×${item.quantity}) - ${item.price}\n`;
           });
         }
 
         const paymentInfo = isCOD 
-          ? `💵 Payment: COD (Confirmation: ${currencySymbol}100 received, Remaining: ${currencySymbol}${(order.total - 100).toFixed(2)})`
+          ? `💵 Payment: COD (Confirmation: 100 received, Remaining: ${(order.total - 100).toFixed(2)})`
           : `✅ Payment: Completed`;
 
         const adminMessage = `🔔 NEW ORDER RECEIVED!\n\n` +
           `📋 Order #${order.order_number}\n` +
-          `💰 Total: ${currencySymbol}${order.total.toFixed(2)}\n` +
+          `💰 Total: ${order.total.toFixed(2)}\n` +
           `${paymentInfo}\n\n` +
           `👤 CUSTOMER:\n` +
           `Name: ${customerName}\n` +
