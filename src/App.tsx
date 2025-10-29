@@ -10,6 +10,7 @@ import { useEffect } from "react";
 import { initializeAndroidAuth } from "./utils/androidAuthBridge";
 import { FaviconUpdater } from "@/components/FaviconUpdater";
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
+import { FacebookPixel } from "@/components/FacebookPixel";
 import { CallButton } from "@/components/calling/CallButton";
 import Index from "./pages/Index";
 import Home from "./pages/Home";
@@ -83,6 +84,7 @@ const App = () => {
           <ErrorLogger />
           <FaviconUpdater />
           <GoogleAnalytics />
+          <FacebookPixel />
           <Toaster />
           <Sonner />
           <BrowserRouter>
