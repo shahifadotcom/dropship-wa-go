@@ -183,7 +183,7 @@ const Header = () => {
                 {categories.map((category) => (
                   <DropdownMenuItem 
                     key={category.id}
-                    onClick={() => navigate(`/category/${category.slug}`)}
+                    onClick={() => navigate(`/${countryCode}?category=${category.slug}`)}
                     className="cursor-pointer"
                   >
                     {category.name}

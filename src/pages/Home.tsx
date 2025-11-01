@@ -38,18 +38,33 @@ const Home = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('search') || '';
+  const categorySlug = searchParams.get('category') || '';
 
-  // Filter products based on search query
+  // Filter products based on search query and category
   const filteredProducts = useMemo(() => {
-    if (!searchQuery.trim()) return products;
+    let filtered = products;
     
-    const query = searchQuery.toLowerCase();
-    return products.filter(product => 
-      product.name.toLowerCase().includes(query) ||
-      product.description?.toLowerCase().includes(query) ||
-      product.tags?.some(tag => tag.toLowerCase().includes(query))
-    );
-  }, [products, searchQuery]);
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(product => 
+        product.name.toLowerCase().includes(query) ||
+        product.description?.toLowerCase().includes(query) ||
+        product.tags?.some(tag => tag.toLowerCase().includes(query))
+      );
+    }
+    
+    // Filter by category slug
+    if (categorySlug.trim()) {
+      filtered = filtered.filter(product => {
+        // Check if product's category or subcategory slug matches
+        return product.category === categorySlug || 
+               product.subcategory === categorySlug;
+      });
+    }
+    
+    return filtered;
+  }, [products, searchQuery, categorySlug]);
 
   // Load most ordered products for Top Deals
   useEffect(() => {
@@ -108,11 +123,14 @@ const Home = () => {
       <Header />
       
       <main className="pb-20 md:pb-0">
-        {/* Search Results Header */}
-        {searchQuery && (
+        {/* Search/Category Results Header */}
+        {(searchQuery || categorySlug) && (
           <div className="container mx-auto px-4 py-4">
             <h2 className="text-xl font-semibold text-foreground">
-              Search results for "{searchQuery}" ({filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'})
+              {searchQuery && `Search results for "${searchQuery}"`}
+              {searchQuery && categorySlug && ' in '}
+              {categorySlug && `Category: ${categorySlug.replace(/-/g, ' ')}`}
+              {' '}({filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'})
             </h2>
           </div>
         )}

@@ -36,6 +36,26 @@ const Products = () => {
   useEffect(() => {
     fetchProducts();
     fetchCategories();
+
+    // Subscribe to real-time category changes
+    const channel = supabase
+      .channel('products-page-category-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'categories'
+        },
+        () => {
+          fetchCategories();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchProducts = async () => {
