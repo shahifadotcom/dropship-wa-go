@@ -1,27 +1,64 @@
 import { Home, Grid3X3, Phone, User, Share2, Facebook, Instagram, Twitter, Youtube, Music, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useCategories } from "@/hooks/useCategories";
+import { useCountryDetection } from "@/hooks/useCountryDetection";
+import { supabase } from "@/integrations/supabase/client";
 
 const MobileBottomNav = () => {
   const navigate = useNavigate();
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [socialOpen, setSocialOpen] = useState(false);
+  const { categories } = useCategories();
+  const { countryCode } = useCountryDetection();
+  const [socialMedia, setSocialMedia] = useState<Array<{
+    name: string;
+    url: string;
+    icon: any;
+    color: string;
+  }>>([]);
 
-  const categories = [
-    "Electronics", "Fashion", "Home & Garden", "Sports & Outdoors", 
-    "Beauty & Health", "Toys & Games", "Books & Media", "Automotive"
-  ];
+  useEffect(() => {
+    const fetchSocialLinks = async () => {
+      const { data } = await supabase
+        .from('social_links')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order');
+      
+      if (data) {
+        const iconMap: Record<string, any> = {
+          facebook: Facebook,
+          instagram: Instagram,
+          twitter: Twitter,
+          youtube: Youtube,
+          tiktok: Music,
+          whatsapp: MessageCircle
+        };
 
-  const socialMedia = [
-    { name: "Facebook", url: "https://facebook.com/yourstore", icon: Facebook, color: "#1877F2" },
-    { name: "Instagram", url: "https://instagram.com/yourstore", icon: Instagram, color: "#E4405F" },
-    { name: "Twitter", url: "https://twitter.com/yourstore", icon: Twitter, color: "#1DA1F2" },
-    { name: "YouTube", url: "https://youtube.com/yourstore", icon: Youtube, color: "#FF0000" },
-    { name: "TikTok", url: "https://tiktok.com/@yourstore", icon: Music, color: "#000000" }
-  ];
+        const colorMap: Record<string, string> = {
+          facebook: '#1877F2',
+          instagram: '#E4405F',
+          twitter: '#1DA1F2',
+          youtube: '#FF0000',
+          tiktok: '#000000',
+          whatsapp: '#25D366'
+        };
+
+        setSocialMedia(data.map(link => ({
+          name: link.name,
+          url: link.url,
+          icon: iconMap[link.platform.toLowerCase()] || Share2,
+          color: colorMap[link.platform.toLowerCase()] || '#000000'
+        })));
+      }
+    };
+
+    fetchSocialLinks();
+  }, []);
 
   const handleHomeClick = () => {
     navigate('/');
@@ -53,15 +90,15 @@ const MobileBottomNav = () => {
               <h3 className="col-span-2 text-lg font-semibold text-center mb-2">Shop Categories</h3>
               {categories.map((category) => (
                 <Button
-                  key={category}
+                  key={category.id}
                   variant="outline"
                   className="h-12 border-navigation text-foreground hover:bg-navigation hover:text-navigation-foreground text-sm"
                   onClick={() => {
-                    console.log(`Navigate to ${category}`);
+                    navigate(`/${countryCode}?category=${category.slug}`);
                     setCategoryOpen(false);
                   }}
                 >
-                  {category}
+                  {category.name}
                 </Button>
               ))}
             </div>

@@ -108,7 +108,11 @@ export class CountryService {
       // Use secure products_catalog view to prevent exposure of cost_price data
       let query = supabase
         .from('products_catalog')
-        .select('*');
+        .select(`
+          *,
+          categories:category_id(name, slug),
+          subcategories:subcategory_id(name, slug)
+        `);
 
       if (countryId) {
         query = query.eq('country_id', countryId);
@@ -126,8 +130,8 @@ export class CountryService {
         price: Number(item.price),
         originalPrice: undefined, // Excluded from catalog view for security
         images: item.images || [],
-        category: '',
-        subcategory: '',
+        category: item.categories?.slug || '',
+        subcategory: item.subcategories?.slug || '',
         brand: item.brand || '',
         inStock: item.in_stock,
         stockQuantity: item.stock_quantity || 0,
