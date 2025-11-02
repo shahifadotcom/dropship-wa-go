@@ -3287,10 +3287,20 @@ export type Database = {
         Args: { p_transaction_id: string; p_wallet_type: string }
         Returns: string
       }
-      store_cj_credentials: {
-        Args: { client_secret: string; connection_id: string }
-        Returns: boolean
-      }
+      store_cj_credentials:
+        | {
+            Args: { client_secret: string; connection_id: string }
+            Returns: boolean
+          }
+        | {
+            Args: {
+              access_token?: string
+              client_secret: string
+              connection_id: string
+              refresh_token?: string
+            }
+            Returns: boolean
+          }
       store_woocommerce_api_key: {
         Args: {
           p_api_key: string
