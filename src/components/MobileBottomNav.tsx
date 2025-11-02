@@ -48,7 +48,7 @@ const MobileBottomNav = () => {
           whatsapp: '#25D366'
         };
 
-        setSocialMedia(data.map(link => ({
+        setSocialMedia(data.map((link: any) => ({
           name: link.name,
           url: link.url,
           icon: iconMap[link.platform.toLowerCase()] || Share2,

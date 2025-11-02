@@ -110,8 +110,8 @@ export class CountryService {
         .from('products_catalog')
         .select(`
           *,
-          categories:category_id(name, slug),
-          subcategories:subcategory_id(name, slug)
+          category_data:categories!category_id(name, slug),
+          subcategory_data:categories!subcategory_id(name, slug)
         `);
 
       if (countryId) {
@@ -123,15 +123,15 @@ export class CountryService {
       if (error) throw error;
       
       // Map database fields to Product interface
-      const mappedProducts = (data || []).map(item => ({
+      const mappedProducts = (data || []).map((item: any) => ({
         id: item.id,
         name: item.name,
         description: item.description,
         price: Number(item.price),
         originalPrice: undefined, // Excluded from catalog view for security
         images: item.images || [],
-        category: item.categories?.slug || '',
-        subcategory: item.subcategories?.slug || '',
+        category: item.category_data?.slug || '',
+        subcategory: item.subcategory_data?.slug || '',
         brand: item.brand || '',
         inStock: item.in_stock,
         stockQuantity: item.stock_quantity || 0,

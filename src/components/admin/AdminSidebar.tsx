@@ -26,7 +26,8 @@ import {
   Wallet,
   Target,
   ShoppingBag,
-  Star
+  Star,
+  Share2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -61,6 +62,7 @@ const AdminSidebar = () => {
     { icon: FileText, label: "Blog", href: "/admin/blog" },
     { icon: Image, label: "Storefront Slider", href: "/admin/storefront-slider" },
     { icon: Palette, label: "Theme", href: "/admin/theme" },
+    { icon: Share2, label: "Social Links", href: "/admin/social-links" },
     { icon: Sparkles, label: "Virtual Trial", href: "/admin/virtual-trial" },
     { icon: Bot, label: "AI Settings", href: "/admin/ai-settings" },
     { icon: Target, label: "Ad Platforms", href: "/admin/ad-platforms" },

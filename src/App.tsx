@@ -67,6 +67,7 @@ import Stripe from "./pages/admin/Stripe";
 import Reviews from "./pages/admin/Reviews";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
+import SocialLinks from "./pages/admin/SocialLinks";
 
 const queryClient = new QueryClient();
 
@@ -139,6 +140,7 @@ const App = () => {
           <Route path="/admin/ad-platforms" element={<AdPlatforms />} />
           <Route path="/admin/ai-ads" element={<AIAdsManager />} />
               <Route path="/admin/binance-pay" element={<BinancePay />} />
+              <Route path="/admin/social-links" element={<SocialLinks />} />
               <Route path="/admin/stripe" element={<Stripe />} />
               <Route path="/admin/sslcommerz" element={<SSLCommerz />} />
               <Route path="/admin/reviews" element={<Reviews />} />
