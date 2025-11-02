@@ -11,11 +11,11 @@ serve(async (req) => {
   }
 
   try {
-    const { email, password } = await req.json()
+    const { email, apiKey } = await req.json()
 
-    if (!email || !password) {
+    if (!email || !apiKey) {
       return new Response(
-        JSON.stringify({ error: 'Email and password (API Key) are required' }),
+        JSON.stringify({ error: 'Email and API Key are required' }),
         { 
           status: 400, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -33,7 +33,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         email: email,
-        password: password,
+        apiKey: apiKey,
       }),
     })
 
