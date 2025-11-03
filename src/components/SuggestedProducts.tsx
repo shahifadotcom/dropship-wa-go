@@ -39,49 +39,62 @@ export function SuggestedProducts({ currentProductIds = [], categoryId, limit = 
     loadSuggestedProducts();
   }, [currentProductIds, categoryId, countryId]);
 
-  // Auto-scroll functionality
+  // Auto-scroll functionality (disabled on mobile and when reduced motion is preferred)
   useEffect(() => {
     const container = document.getElementById('suggested-products-scroll');
     if (!container || products.length === 0) return;
 
-    let scrollInterval: NodeJS.Timeout;
+    const isMobile = typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches;
+    const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (isMobile || prefersReducedMotion) return;
+
+    let rafId = 0;
     let isScrolling = true;
     let direction: 'right' | 'left' = 'right';
 
-    const autoScroll = () => {
-      if (!isScrolling) return;
+    const step = () => {
+      if (!isScrolling) {
+        rafId = requestAnimationFrame(step);
+        return;
+      }
 
       const maxScroll = container.scrollWidth - container.clientWidth;
       const currentScroll = container.scrollLeft;
 
       if (direction === 'right') {
-        if (currentScroll >= maxScroll - 10) {
+        if (currentScroll >= maxScroll - 1) {
           direction = 'left';
         } else {
-          container.scrollTo({ left: currentScroll + 2, behavior: 'smooth' });
+          container.scrollLeft = Math.min(maxScroll, currentScroll + 0.6);
         }
       } else {
-        if (currentScroll <= 10) {
+        if (currentScroll <= 1) {
           direction = 'right';
         } else {
-          container.scrollTo({ left: currentScroll - 2, behavior: 'smooth' });
+          container.scrollLeft = Math.max(0, currentScroll - 0.6);
         }
       }
+
+      rafId = requestAnimationFrame(step);
     };
 
-    scrollInterval = setInterval(autoScroll, 30);
+    rafId = requestAnimationFrame(step);
 
-    // Pause on hover
+    // Pause on hover/touch
     const pauseScroll = () => { isScrolling = false; };
     const resumeScroll = () => { isScrolling = true; };
 
     container.addEventListener('mouseenter', pauseScroll);
     container.addEventListener('mouseleave', resumeScroll);
+    container.addEventListener('touchstart', pauseScroll, { passive: true } as any);
+    container.addEventListener('touchend', resumeScroll, { passive: true } as any);
 
     return () => {
-      clearInterval(scrollInterval);
+      cancelAnimationFrame(rafId);
       container.removeEventListener('mouseenter', pauseScroll);
       container.removeEventListener('mouseleave', resumeScroll);
+      container.removeEventListener('touchstart', pauseScroll as any);
+      container.removeEventListener('touchend', resumeScroll as any);
     };
   }, [products]);
 
