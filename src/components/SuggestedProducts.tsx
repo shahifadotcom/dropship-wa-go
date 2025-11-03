@@ -39,6 +39,52 @@ export function SuggestedProducts({ currentProductIds = [], categoryId, limit = 
     loadSuggestedProducts();
   }, [currentProductIds, categoryId, countryId]);
 
+  // Auto-scroll functionality
+  useEffect(() => {
+    const container = document.getElementById('suggested-products-scroll');
+    if (!container || products.length === 0) return;
+
+    let scrollInterval: NodeJS.Timeout;
+    let isScrolling = true;
+    let direction: 'right' | 'left' = 'right';
+
+    const autoScroll = () => {
+      if (!isScrolling) return;
+
+      const maxScroll = container.scrollWidth - container.clientWidth;
+      const currentScroll = container.scrollLeft;
+
+      if (direction === 'right') {
+        if (currentScroll >= maxScroll - 10) {
+          direction = 'left';
+        } else {
+          container.scrollTo({ left: currentScroll + 2, behavior: 'smooth' });
+        }
+      } else {
+        if (currentScroll <= 10) {
+          direction = 'right';
+        } else {
+          container.scrollTo({ left: currentScroll - 2, behavior: 'smooth' });
+        }
+      }
+    };
+
+    scrollInterval = setInterval(autoScroll, 30);
+
+    // Pause on hover
+    const pauseScroll = () => { isScrolling = false; };
+    const resumeScroll = () => { isScrolling = true; };
+
+    container.addEventListener('mouseenter', pauseScroll);
+    container.addEventListener('mouseleave', resumeScroll);
+
+    return () => {
+      clearInterval(scrollInterval);
+      container.removeEventListener('mouseenter', pauseScroll);
+      container.removeEventListener('mouseleave', resumeScroll);
+    };
+  }, [products]);
+
   const loadSuggestedProducts = async () => {
     // Don't load anything until country is selected
     if (!countryId) {

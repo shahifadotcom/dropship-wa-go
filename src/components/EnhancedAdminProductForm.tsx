@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { CountryService } from '@/services/countryService';
 import { ProductImageUpload } from '@/components/ProductImageUpload';
-import { Sparkles, Loader2 } from 'lucide-react';
+import { Sparkles, Loader2, Upload } from 'lucide-react';
 
 interface Category {
   id: string;
@@ -442,26 +442,74 @@ export const EnhancedAdminProductForm = ({ isOpen, onClose, categories, onSucces
                       This will be used in the product URL. Auto-generated from name.
                     </p>
                   </div>
-                  <div className="flex items-end gap-2">
-                    <div className="flex-1">
-                      <Label htmlFor="description">Description *</Label>
-                      <Textarea
-                        id="description"
-                        value={formData.description}
-                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                        placeholder="Enter detailed product description"
-                        rows={4}
-                        required
-                      />
+                  <div className="space-y-2">
+                    <div className="flex items-end gap-2">
+                      <div className="flex-1">
+                        <Label htmlFor="description">Description *</Label>
+                        <Textarea
+                          id="description"
+                          value={formData.description}
+                          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                          placeholder="Enter detailed product description"
+                          rows={4}
+                          required
+                        />
+                      </div>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={() => handleGenerateAI('description')}
+                        disabled={aiLoading}
+                      >
+                        {aiLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                      </Button>
                     </div>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      onClick={() => handleGenerateAI('description')}
-                      disabled={aiLoading}
-                    >
-                      {aiLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          
+                          try {
+                            const fileExt = file.name.split('.').pop();
+                            const fileName = `desc-${Date.now()}.${fileExt}`;
+                            
+                            const { error: uploadError } = await supabase.storage
+                              .from('product-images')
+                              .upload(fileName, file);
+
+                            if (uploadError) throw uploadError;
+
+                            const { data: { publicUrl } } = supabase.storage
+                              .from('product-images')
+                              .getPublicUrl(fileName);
+
+                            // Insert image markdown at cursor position
+                            const imageMarkdown = `\n![Image](${publicUrl})\n`;
+                            setFormData({ ...formData, description: formData.description + imageMarkdown });
+                            toast({ title: 'Image uploaded!', description: 'Image added to description' });
+                          } catch (error: any) {
+                            toast({ title: 'Upload failed', description: error.message, variant: 'destructive' });
+                          }
+                        }}
+                        className="hidden"
+                        id="description-image-upload"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => document.getElementById('description-image-upload')?.click()}
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        Add Image
+                      </Button>
+                      <p className="text-xs text-muted-foreground">
+                        Upload images to include in the description
+                      </p>
+                    </div>
                   </div>
 
                   <div className="flex gap-2">

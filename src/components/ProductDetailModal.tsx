@@ -177,7 +177,7 @@ const ProductDetailModal = ({ product, isOpen, onClose }: ProductDetailModalProp
             {/* Description */}
             <div>
               <h3 className="font-semibold mb-2">Description</h3>
-              <p className="text-muted-foreground">{product.description}</p>
+              <p className="text-muted-foreground break-words whitespace-pre-wrap overflow-wrap-anywhere">{product.description}</p>
             </div>
 
             {/* Quantity Selection */}

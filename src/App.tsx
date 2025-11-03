@@ -68,6 +68,7 @@ import Reviews from "./pages/admin/Reviews";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import SocialLinks from "./pages/admin/SocialLinks";
+import SearchResults from "./pages/SearchResults";
 
 const queryClient = new QueryClient();
 
@@ -106,6 +107,7 @@ const App = () => {
               
               <Route path="/auth" element={<Auth />} />
               <Route path="/checkout" element={<Checkout />} />
+              <Route path="/search" element={<SearchResults />} />
               
               {/* Admin Routes */}
               <Route path="/admin" element={<Dashboard />} />
