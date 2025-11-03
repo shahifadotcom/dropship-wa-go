@@ -93,20 +93,7 @@ const Settings = () => {
         const created = newRows?.[0] as StoreSettings | undefined;
         if (created) {
           setSettings(created);
-          // Sync public settings so they are visible without login
-          try {
-            await supabase.from('store_settings_public').upsert({
-              id: created.id,
-              store_name: created.store_name,
-              store_logo: created.store_logo,
-              favicon_url: created.favicon_url,
-              store_tagline: created.store_tagline,
-              store_description: created.store_description,
-              currency: created.currency,
-            });
-          } catch (e) {
-            console.error('Error initializing public settings:', e);
-          }
+          // Public sync handled via direct reads from store_settings for guests; no view upsert to avoid recursion
           toast.success('Settings initialized successfully');
         }
       } else {
@@ -135,21 +122,6 @@ const Settings = () => {
         toast.error(`Failed to save settings: ${error.message}`);
       } else {
         setSettings({ ...settings, ...updatedFields });
-        // Also publish public-facing fields for anonymous users
-        try {
-          const current = { ...settings, ...updatedFields } as StoreSettings;
-          await supabase.from('store_settings_public').upsert({
-            id: current.id,
-            store_name: current.store_name,
-            store_logo: current.store_logo,
-            favicon_url: current.favicon_url,
-            store_tagline: current.store_tagline,
-            store_description: current.store_description,
-            currency: current.currency,
-          });
-        } catch (e) {
-          console.error('Error syncing public settings:', e);
-        }
         toast.success('Settings saved successfully');
       }
     } catch (error) {

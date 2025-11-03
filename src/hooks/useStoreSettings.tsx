@@ -27,8 +27,9 @@ export const useStoreSettings = () => {
     try {
       // Query public settings table directly (accessible without auth)
       const { data, error } = await supabase
-        .from('store_settings_public')
+        .from('store_settings')
         .select('*')
+        .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
 
@@ -74,15 +75,15 @@ export const useStoreSettings = () => {
           store_description: data.store_description || '',
           store_logo: data.store_logo,
           favicon_url: data.favicon_url,
-          site_title: data.store_name || 'Online Store',
+          site_title: data.site_title || data.store_name || 'Online Store',
           currency: data.currency || 'BDT',
-          contact_email: '',
-          contact_phone: '',
-          contact_address: '',
-          email_notifications: false,
-          whatsapp_notifications: false,
-          inventory_alerts: false,
-          maintenance_mode: false,
+          contact_email: data.contact_email || '',
+          contact_phone: data.contact_phone || '',
+          contact_address: data.contact_address || '',
+          email_notifications: !!data.email_notifications,
+          whatsapp_notifications: !!data.whatsapp_notifications,
+          inventory_alerts: !!data.inventory_alerts,
+          maintenance_mode: !!data.maintenance_mode,
         });
       }
     } catch (error) {
