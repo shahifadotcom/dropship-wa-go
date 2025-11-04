@@ -191,6 +191,9 @@ const Header = () => {
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
+            <a href={`/${countryCode}/returns-refunds`} className="text-navigation-foreground hover:text-navigation-foreground/80 transition-colors font-medium">
+              Returns & Refunds
+            </a>
             <a href="https://wa.me/+8801775777308" target="_blank" rel="noopener noreferrer" className="text-navigation-foreground hover:text-navigation-foreground/80 transition-colors font-medium">
               Contact
             </a>

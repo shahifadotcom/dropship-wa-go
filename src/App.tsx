@@ -70,6 +70,7 @@ import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import SocialLinks from "./pages/admin/SocialLinks";
 import SearchResults from "./pages/SearchResults";
+import ReturnsRefunds from "./pages/ReturnsRefunds";
 
 const queryClient = new QueryClient();
 
@@ -109,6 +110,8 @@ const App = () => {
               <Route path="/auth" element={<Auth />} />
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/search" element={<SearchResults />} />
+              <Route path="/returns-refunds" element={<ReturnsRefunds />} />
+              <Route path="/:countryCode/returns-refunds" element={<ReturnsRefunds />} />
               
               {/* Admin Routes */}
               <Route path="/admin" element={<Dashboard />} />
