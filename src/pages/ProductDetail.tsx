@@ -333,7 +333,7 @@ const ProductDetail = () => {
               </div>
             </div>
 
-            <div className="text-muted-foreground leading-relaxed mt-6 break-words whitespace-pre-wrap overflow-wrap-anywhere max-w-full overflow-x-hidden prose prose-sm max-w-none">
+            <div className="text-muted-foreground leading-relaxed mt-6 whitespace-pre-wrap break-words break-all w-full overflow-x-hidden">
               {product.description}
             </div>
 
