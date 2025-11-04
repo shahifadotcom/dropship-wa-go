@@ -178,4 +178,19 @@
       linear-gradient(to right, rgba(255,255,255,0.02) 1px, transparent 1px),
       linear-gradient(to bottom, rgba(255,255,255,0.02) 1px, transparent 1px);
   }
+
+  /* Prose image constraints for mobile */
+  .prose img {
+    @apply max-w-full h-auto;
+  }
+  
+  .prose {
+    @apply max-w-full;
+  }
+  
+  .prose img,
+  .prose video,
+  .prose iframe {
+    @apply w-full h-auto max-w-full;
+  }
 }

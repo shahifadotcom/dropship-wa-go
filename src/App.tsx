@@ -56,6 +56,7 @@ import Calling from "./pages/Calling";
 import CallingSubscriptions from "./pages/admin/CallingSubscriptions";
 import SSLCommerz from "./pages/admin/SSLCommerz";
 import Sitemap from "./pages/Sitemap";
+import SitemapXML from "./pages/SitemapXML";
 import RobotsTxt from "./pages/RobotsTxt";
 import AdminBlog from "./pages/admin/Blog";
 import AISettings from "./pages/admin/AISettings";
@@ -154,7 +155,8 @@ const App = () => {
               <Route path="/calling" element={<Calling />} />
               
               {/* SEO Routes */}
-              <Route path="/sitemap.xml" element={<Sitemap />} />
+              <Route path="/sitemap" element={<Sitemap />} />
+              <Route path="/sitemap.xml" element={<SitemapXML />} />
               <Route path="/robots.txt" element={<RobotsTxt />} />
               
         <Route path="/wc-auth/v1/authorize" element={<WCAuth />} />

@@ -142,9 +142,10 @@ const ProductDetail = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col max-w-full overflow-x-hidden">
       <Helmet>
         <title>{productMeta.metaTitle}</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
         <meta name="description" content={productMeta.metaDescription} />
         
         {/* Open Graph / Facebook */}
@@ -185,7 +186,7 @@ const ProductDetail = () => {
       </Helmet>
       <Header />
       
-      <main className="flex-1 container mx-auto px-4 py-8">
+      <main className="flex-1 container mx-auto px-4 py-8 max-w-full overflow-x-hidden">
         <Button
           variant="ghost"
           className="mb-6"
@@ -195,7 +196,7 @@ const ProductDetail = () => {
           Back
         </Button>
 
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="grid md:grid-cols-2 gap-8 max-w-full">
           {/* Image Section */}
           <div className="space-y-4">
             <div className="aspect-square overflow-hidden rounded-lg bg-muted">
@@ -333,9 +334,9 @@ const ProductDetail = () => {
               </div>
             </div>
 
-            <p className="text-muted-foreground leading-relaxed mt-6 break-words whitespace-pre-wrap overflow-wrap-anywhere">
+            <div className="text-muted-foreground leading-relaxed mt-6 break-words whitespace-pre-wrap overflow-wrap-anywhere max-w-full overflow-x-hidden prose prose-sm max-w-none">
               {product.description}
-            </p>
+            </div>
 
             {/* Mobile: Review Section after description */}
             <div className="md:hidden mt-6 pb-24">
