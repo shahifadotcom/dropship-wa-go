@@ -47,21 +47,41 @@ export default function SitemapXML() {
   }, [loading, sitemapXML]);
 
   if (loading) {
-    return null;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Loading sitemap...</p>
+        </div>
+      </div>
+    );
   }
 
-  // Render raw XML without any HTML wrapper
+  // Render XML content as text
   return (
-    <pre 
-      style={{ 
-        margin: 0, 
-        padding: 0, 
-        whiteSpace: 'pre', 
-        fontFamily: 'monospace',
-        fontSize: '12px',
-        lineHeight: '1.5'
-      }}
-      dangerouslySetInnerHTML={{ __html: sitemapXML }}
-    />
+    <div className="min-h-screen bg-background p-4">
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-4 flex items-center justify-between">
+          <h1 className="text-2xl font-bold">Sitemap XML</h1>
+          <a 
+            href="https://mofwljpreecqqxkilywh.supabase.co/functions/v1/generate-sitemap"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline"
+          >
+            View Raw XML
+          </a>
+        </div>
+        <pre 
+          className="bg-muted p-4 rounded-lg overflow-x-auto text-xs"
+          style={{ 
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word'
+          }}
+        >
+          {sitemapXML}
+        </pre>
+      </div>
+    </div>
   );
 }
