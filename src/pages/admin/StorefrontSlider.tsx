@@ -397,11 +397,12 @@ const StorefrontSlider = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {sliders.map((slider) => (
             <Card key={slider.id} className="overflow-hidden">
-              <div className="relative h-48">
+              <div className="relative h-64 bg-muted/10">
                 <img
                   src={slider.image_url}
-                  alt={slider.title}
-                  className="w-full h-full object-cover"
+                  alt={slider.title || "Slider image"}
+                  className="w-full h-full object-contain"
+                  loading="lazy"
                 />
                 <div className="absolute top-2 right-2 flex gap-2 flex-wrap">
                   <Badge variant={slider.is_active ? "default" : "secondary"}>
