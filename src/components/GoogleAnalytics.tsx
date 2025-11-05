@@ -8,7 +8,7 @@ export const GoogleAnalytics = () => {
         const { data: seoSettings } = await supabase
           .from('seo_settings')
           .select('google_analytics_id')
-          .single();
+          .maybeSingle();
 
         if (seoSettings?.google_analytics_id) {
           const gaId = seoSettings.google_analytics_id;

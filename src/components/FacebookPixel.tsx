@@ -10,7 +10,7 @@ export const FacebookPixel = () => {
           .select('pixel_id, is_active')
           .eq('platform', 'facebook')
           .eq('is_active', true)
-          .single();
+          .maybeSingle();
 
         if (pixelConfig?.pixel_id) {
           const pixelId = pixelConfig.pixel_id;

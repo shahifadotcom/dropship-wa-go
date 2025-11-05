@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Plus, Edit, Trash2, Eye, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -397,13 +398,16 @@ const StorefrontSlider = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {sliders.map((slider) => (
             <Card key={slider.id} className="overflow-hidden">
-              <div className="relative h-64 bg-muted/10">
-                <img
-                  src={slider.image_url}
-                  alt={slider.title || "Slider image"}
-                  className="w-full h-full object-contain"
-                  loading="lazy"
-                />
+              <div className="relative">
+                <AspectRatio ratio={16 / 9}>
+                  <img
+                    src={slider.image_url}
+                    alt={slider.title || "Slider image"}
+                    className="w-full h-full object-contain bg-card"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </AspectRatio>
                 <div className="absolute top-2 right-2 flex gap-2 flex-wrap">
                   <Badge variant={slider.is_active ? "default" : "secondary"}>
                     {slider.is_active ? "Active" : "Inactive"}
