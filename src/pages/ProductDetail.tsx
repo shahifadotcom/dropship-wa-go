@@ -198,11 +198,13 @@ const ProductDetail = () => {
         <div className="grid md:grid-cols-2 gap-8 max-w-full">
           {/* Image Section */}
           <div className="space-y-4">
-            <div className="aspect-square overflow-hidden rounded-lg bg-muted">
+            <div className="h-[60vh] md:aspect-square overflow-hidden rounded-lg bg-background">
               <img
                 src={product.images[selectedImage] || product.images[0]}
                 alt={product.name}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain md:object-cover object-center"
+                loading="eager"
+                decoding="async"
               />
             </div>
             
@@ -221,7 +223,7 @@ const ProductDetail = () => {
                     <img
                       src={image}
                       alt={`${product.name} - ${index + 1}`}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain"
                     />
                   </button>
                 ))}
@@ -333,7 +335,7 @@ const ProductDetail = () => {
               </div>
             </div>
 
-            <div className="text-muted-foreground leading-relaxed mt-6 whitespace-pre-wrap break-words break-all w-full overflow-x-hidden">
+            <div className="text-muted-foreground leading-relaxed mt-6 whitespace-pre-wrap break-words w-full overflow-x-hidden">
               {product.description}
             </div>
 
