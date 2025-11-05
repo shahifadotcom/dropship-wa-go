@@ -218,10 +218,10 @@ const StorefrontSlider = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.title || !formData.image_url) {
+    if (!formData.image_url) {
       toast({
         title: "Error",
-        description: "Title and image are required",
+        description: "Image is required",
         variant: "destructive",
       });
       return;
@@ -292,13 +292,12 @@ const StorefrontSlider = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="title">Title *</Label>
+                  <Label htmlFor="title">Title</Label>
                   <Input
                     id="title"
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     placeholder="Slide title"
-                    required
                   />
                 </div>
                 <div className="space-y-2">
