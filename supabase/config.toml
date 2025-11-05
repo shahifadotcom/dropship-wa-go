@@ -94,6 +94,9 @@ verify_jwt = false
 [functions.get-order-public]
 verify_jwt = false
 
+[functions.generate-sitemap]
+verify_jwt = false
+
 [functions.record-transaction]
 verify_jwt = false
 

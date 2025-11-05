@@ -17,24 +17,41 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
+    console.log('Generating sitemap...')
+
     // Get SEO settings
-    const { data: seoSettings } = await supabase
+    const { data: seoSettings, error: seoError } = await supabase
       .from('seo_settings')
       .select('*')
       .single()
 
+    if (seoError) {
+      console.error('SEO settings error:', seoError)
+    }
+
     const baseUrl = seoSettings?.canonical_url || 'https://yourstore.com'
+    console.log('Base URL:', baseUrl)
 
     // Get all products
-    const { data: products } = await supabase
+    const { data: products, error: productsError } = await supabase
       .from('products')
       .select('slug, updated_at')
       .eq('in_stock', true)
 
+    if (productsError) {
+      console.error('Products error:', productsError)
+    }
+    console.log('Products found:', products?.length || 0)
+
     // Get all categories
-    const { data: categories } = await supabase
+    const { data: categories, error: categoriesError } = await supabase
       .from('categories')
       .select('slug, updated_at')
+
+    if (categoriesError) {
+      console.error('Categories error:', categoriesError)
+    }
+    console.log('Categories found:', categories?.length || 0)
 
     // Generate sitemap XML
     const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
