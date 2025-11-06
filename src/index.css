@@ -146,6 +146,16 @@
 
   body {
     @apply bg-background text-foreground;
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  /* Ensure app root never exceeds viewport width */
+  #root {
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
   }
 
   /* Mobile viewport fixes */
@@ -192,5 +202,14 @@
   .prose video,
   .prose iframe {
     @apply w-full h-auto max-w-full;
+  }
+
+  /* Hide scrollbars utility for horizontal scrollers */
+  .scrollbar-hide {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
   }
 }

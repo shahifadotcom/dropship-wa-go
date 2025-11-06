@@ -185,7 +185,7 @@ const ProductDetail = () => {
       </Helmet>
       <Header />
       
-      <main className="flex-1 container mx-auto px-4 py-8 max-w-full overflow-x-hidden">
+      <main className="flex-1 container mx-auto px-4 py-8 w-full max-w-full min-w-0 overflow-x-hidden">
         <Button
           variant="ghost"
           className="mb-6"
@@ -195,7 +195,7 @@ const ProductDetail = () => {
           Back
         </Button>
 
-        <div className="grid md:grid-cols-2 gap-8 max-w-full">
+        <div className="grid md:grid-cols-2 gap-8 w-full max-w-full min-w-0">
           {/* Image Section */}
           <div className="space-y-4">
             <div className="relative w-full overflow-hidden rounded-lg bg-card border border-border aspect-[4/5] md:aspect-square">

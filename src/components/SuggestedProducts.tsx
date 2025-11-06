@@ -210,7 +210,7 @@ export function SuggestedProducts({ currentProductIds = [], categoryId, limit = 
       <CardContent>
         <div
           id="suggested-products-scroll"
-          className="flex gap-4 w-full max-w-full overflow-x-auto overflow-y-hidden scrollbar-hide scroll-smooth overscroll-x-contain touch-pan-x"
+          className="flex gap-4 w-full max-w-full min-w-0 overflow-x-auto overflow-y-hidden scrollbar-hide scroll-smooth overscroll-x-contain touch-pan-x"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', contain: 'content' }}
         >
           {products.map((product) => (
