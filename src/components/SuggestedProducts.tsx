@@ -184,7 +184,7 @@ export function SuggestedProducts({ currentProductIds = [], categoryId, limit = 
   }
 
   return (
-    <Card>
+    <Card className="w-full max-w-full overflow-hidden">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>You May Also Like</CardTitle>
@@ -210,8 +210,8 @@ export function SuggestedProducts({ currentProductIds = [], categoryId, limit = 
       <CardContent>
         <div
           id="suggested-products-scroll"
-          className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          className="flex gap-4 w-full max-w-full overflow-x-auto overflow-y-hidden scrollbar-hide scroll-smooth overscroll-x-contain touch-pan-x"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', contain: 'content' }}
         >
           {products.map((product) => (
             <div
@@ -225,7 +225,7 @@ export function SuggestedProducts({ currentProductIds = [], categoryId, limit = 
                 <img
                   src={product.images[0]}
                   alt={product.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300 p-2"
                 />
                 {product.product_type && product.product_type !== 'physical' && (
                   <Badge

@@ -198,13 +198,14 @@ const ProductDetail = () => {
         <div className="grid md:grid-cols-2 gap-8 max-w-full">
           {/* Image Section */}
           <div className="space-y-4">
-            <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-white border border-border">
+            <div className="relative w-full overflow-hidden rounded-lg bg-card border border-border aspect-[4/5] md:aspect-square">
               <img
                 src={product.images[selectedImage] || product.images[0]}
                 alt={product.name}
-                className="absolute inset-0 w-full h-full object-contain p-4"
+                className="absolute inset-0 w-full h-full object-contain p-2 md:p-4"
                 loading="eager"
                 decoding="async"
+                sizes="(max-width: 768px) 100vw, 50vw"
               />
             </div>
             
