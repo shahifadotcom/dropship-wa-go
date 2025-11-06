@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -31,18 +31,45 @@ export function SuggestedProducts({ currentProductIds = [], categoryId, limit = 
   const [products, setProducts] = useState<DBProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [scrollPosition, setScrollPosition] = useState(0);
+  const [isVisible, setIsVisible] = useState(false);
   const { addToCart } = useCart();
   const navigate = useNavigate();
   const { countryId } = useCountryDetection();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Intersection Observer to detect when component is visible
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+        }
+      },
+      { rootMargin: '200px' } // Load 200px before coming into view
+    );
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    return () => {
+      if (containerRef.current) {
+        observer.unobserve(containerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
-    loadSuggestedProducts();
-  }, [currentProductIds, categoryId, countryId]);
+    if (isVisible) {
+      loadSuggestedProducts();
+    }
+  }, [currentProductIds, categoryId, countryId, isVisible]);
 
   // Auto-scroll functionality (disabled on mobile and when reduced motion is preferred)
   useEffect(() => {
-    const container = document.getElementById('suggested-products-scroll');
-    if (!container || products.length === 0) return;
+    const container = scrollRef.current;
+    if (!container || products.length === 0 || !isVisible) return;
 
     const isMobile = typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches;
     const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -96,7 +123,7 @@ export function SuggestedProducts({ currentProductIds = [], categoryId, limit = 
       container.removeEventListener('touchstart', pauseScroll as any);
       container.removeEventListener('touchend', resumeScroll as any);
     };
-  }, [products]);
+  }, [products, isVisible]);
 
   const loadSuggestedProducts = async () => {
     // Don't load anything until country is selected
@@ -167,7 +194,7 @@ export function SuggestedProducts({ currentProductIds = [], categoryId, limit = 
   };
 
   const scroll = (direction: 'left' | 'right') => {
-    const container = document.getElementById('suggested-products-scroll');
+    const container = scrollRef.current;
     if (!container) return;
 
     const scrollAmount = 300;
@@ -179,12 +206,12 @@ export function SuggestedProducts({ currentProductIds = [], categoryId, limit = 
     setScrollPosition(newPosition);
   };
 
-  if (loading || products.length === 0) {
-    return null;
-  }
-
   return (
-    <Card className="w-full max-w-full overflow-hidden">
+    <div ref={containerRef}>
+      {!isVisible ? (
+        <div className="h-96 w-full" /> // Placeholder to maintain layout
+      ) : loading || products.length === 0 ? null : (
+        <Card className="w-full max-w-full overflow-hidden">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>You May Also Like</CardTitle>
@@ -209,7 +236,7 @@ export function SuggestedProducts({ currentProductIds = [], categoryId, limit = 
       </CardHeader>
       <CardContent>
         <div
-          id="suggested-products-scroll"
+          ref={scrollRef}
           className="flex gap-4 w-full max-w-full min-w-0 overflow-x-auto overflow-y-hidden scrollbar-hide scroll-smooth overscroll-x-contain touch-pan-x"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', contain: 'content' }}
         >
@@ -225,6 +252,7 @@ export function SuggestedProducts({ currentProductIds = [], categoryId, limit = 
                 <img
                   src={product.images[0]}
                   alt={product.name}
+                  loading="lazy"
                   className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300 p-2"
                 />
                 {product.product_type && product.product_type !== 'physical' && (
@@ -255,5 +283,7 @@ export function SuggestedProducts({ currentProductIds = [], categoryId, limit = 
         </div>
       </CardContent>
     </Card>
+      )}
+    </div>
   );
 }
