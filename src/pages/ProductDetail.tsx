@@ -198,32 +198,32 @@ const ProductDetail = () => {
         <div className="grid md:grid-cols-2 gap-8 max-w-full">
           {/* Image Section */}
           <div className="space-y-4">
-            <div className="h-[60vh] md:aspect-square overflow-hidden rounded-lg bg-background">
+            <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-white border border-border">
               <img
                 src={product.images[selectedImage] || product.images[0]}
                 alt={product.name}
-                className="w-full h-full object-contain md:object-cover object-center"
+                className="absolute inset-0 w-full h-full object-contain p-4"
                 loading="eager"
                 decoding="async"
               />
             </div>
             
             {product.images.length > 1 && (
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-4 gap-2 md:gap-3">
                 {product.images.map((image, index) => (
                   <button
                     key={index}
                     onClick={() => setSelectedImage(index)}
-                    className={`aspect-square overflow-hidden rounded-lg border-2 transition-colors ${
+                    className={`relative aspect-square overflow-hidden rounded-md border-2 transition-all hover:border-primary/50 ${
                       selectedImage === index
-                        ? 'border-primary'
-                        : 'border-transparent'
+                        ? 'border-primary ring-2 ring-primary/20'
+                        : 'border-border'
                     }`}
                   >
                     <img
                       src={image}
                       alt={`${product.name} - ${index + 1}`}
-                      className="w-full h-full object-contain"
+                      className="absolute inset-0 w-full h-full object-contain p-1"
                     />
                   </button>
                 ))}
