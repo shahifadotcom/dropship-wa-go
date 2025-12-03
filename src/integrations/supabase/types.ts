@@ -1922,6 +1922,30 @@ export type Database = {
         }
         Relationships: []
       }
+      sitemap_cache: {
+        Row: {
+          categories_count: number | null
+          generated_at: string
+          id: string
+          products_count: number | null
+          xml_content: string
+        }
+        Insert: {
+          categories_count?: number | null
+          generated_at?: string
+          id?: string
+          products_count?: number | null
+          xml_content: string
+        }
+        Update: {
+          categories_count?: number | null
+          generated_at?: string
+          id?: string
+          products_count?: number | null
+          xml_content?: string
+        }
+        Relationships: []
+      }
       sms_transactions: {
         Row: {
           amount: number | null
@@ -3287,6 +3311,7 @@ export type Database = {
         Args: { p_transaction_id: string; p_wallet_type: string }
         Returns: string
       }
+      regenerate_sitemap: { Args: never; Returns: undefined }
       store_cj_credentials:
         | {
             Args: { client_secret: string; connection_id: string }

@@ -9,17 +9,42 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import AdminLayout from '@/layouts/AdminLayout';
-import { Search, Globe, FileText, Zap, Check, X, RefreshCw } from 'lucide-react';
+import { Search, Globe, FileText, Zap, Check, X, RefreshCw, Copy, Download } from 'lucide-react';
+
+interface SitemapCache {
+  id: string;
+  xml_content: string;
+  generated_at: string;
+  products_count: number;
+  categories_count: number;
+}
 
 export default function SEO() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [seoSettings, setSeoSettings] = useState<any>(null);
   const [sitemapLoading, setSitemapLoading] = useState(false);
+  const [sitemapCache, setSitemapCache] = useState<SitemapCache | null>(null);
 
   useEffect(() => {
     loadSEOSettings();
+    loadSitemapCache();
   }, []);
+
+  const loadSitemapCache = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('sitemap_cache')
+        .select('*')
+        .limit(1)
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error;
+      if (data) setSitemapCache(data as SitemapCache);
+    } catch (error) {
+      console.error('Error loading sitemap cache:', error);
+    }
+  };
 
   const loadSEOSettings = async () => {
     try {
@@ -87,15 +112,17 @@ export default function SEO() {
   const generateSitemap = async () => {
     setSitemapLoading(true);
     try {
-      // Update timestamp immediately
-      await updateSEOSettings({ sitemap_last_generated: new Date().toISOString() });
+      // Call the database function to regenerate sitemap
+      const { error } = await supabase.rpc('regenerate_sitemap');
+      if (error) throw error;
+      
+      await loadSitemapCache();
+      await loadSEOSettings();
       
       toast({
         title: "Success",
-        description: "Sitemap generated successfully! You can now view it at /sitemap.xml"
+        description: "Sitemap regenerated successfully!"
       });
-      
-      loadSEOSettings(); // Refresh to show last generated time
     } catch (error) {
       console.error('Error generating sitemap:', error);
       toast({
@@ -106,6 +133,33 @@ export default function SEO() {
     } finally {
       setSitemapLoading(false);
     }
+  };
+
+  const copySitemapToClipboard = async () => {
+    if (!sitemapCache?.xml_content) {
+      toast({ title: "No sitemap available", variant: "destructive" });
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(sitemapCache.xml_content);
+      toast({
+        title: "Copied!",
+        description: "Sitemap XML copied to clipboard. Paste it into public/sitemap.xml"
+      });
+    } catch (error) {
+      toast({ title: "Failed to copy", variant: "destructive" });
+    }
+  };
+
+  const downloadSitemap = () => {
+    if (!sitemapCache?.xml_content) return;
+    const blob = new Blob([sitemapCache.xml_content], { type: 'application/xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'sitemap.xml';
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const submitToSearchEngine = async (engine: string) => {
@@ -288,51 +342,76 @@ export default function SEO() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="h-5 w-5" />
-                  XML Sitemap
+                  XML Sitemap (Auto-Generated)
                 </CardTitle>
                 <CardDescription>
-                  Generate and manage your site's XML sitemap
+                  Sitemap automatically updates when products or categories change
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-3">
+                  <div className="p-4 border rounded-lg text-center">
+                    <p className="text-2xl font-bold">{sitemapCache?.products_count || 0}</p>
+                    <p className="text-sm text-muted-foreground">Products</p>
+                  </div>
+                  <div className="p-4 border rounded-lg text-center">
+                    <p className="text-2xl font-bold">{sitemapCache?.categories_count || 0}</p>
+                    <p className="text-sm text-muted-foreground">Categories</p>
+                  </div>
+                  <div className="p-4 border rounded-lg text-center">
+                    <Badge variant="default" className="mb-1">Auto-Sync</Badge>
+                    <p className="text-xs text-muted-foreground">Updates on changes</p>
+                  </div>
+                </div>
+
                 <div className="flex items-center justify-between p-4 border rounded-lg">
                   <div>
-                    <h3 className="font-medium">Sitemap Status</h3>
+                    <h3 className="font-medium">Last Generated</h3>
                     <p className="text-sm text-muted-foreground">
-                      {seoSettings.sitemap_last_generated 
-                        ? `Last generated: ${new Date(seoSettings.sitemap_last_generated).toLocaleString()}`
+                      {sitemapCache?.generated_at 
+                        ? new Date(sitemapCache.generated_at).toLocaleString()
                         : 'Never generated'
                       }
                     </p>
                   </div>
-                  <Badge variant={seoSettings.sitemap_enabled ? "default" : "secondary"}>
-                    {seoSettings.sitemap_enabled ? "Enabled" : "Disabled"}
-                  </Badge>
+                  <Badge variant="default">Active</Badge>
                 </div>
 
-                <div className="space-y-2">
+                <div className="grid gap-2 md:grid-cols-2">
                   <Button 
                     onClick={generateSitemap}
                     disabled={sitemapLoading}
-                    className="w-full"
                   >
                     <RefreshCw className={`h-4 w-4 mr-2 ${sitemapLoading ? 'animate-spin' : ''}`} />
-                    {sitemapLoading ? 'Generating...' : 'Generate Sitemap'}
+                    {sitemapLoading ? 'Regenerating...' : 'Force Regenerate'}
                   </Button>
                   
                   <Button 
                     variant="outline" 
                     onClick={() => window.open(`${window.location.origin}/sitemap.xml`, '_blank')}
-                    className="w-full"
                   >
                     View Live Sitemap
                   </Button>
+                </div>
+
+                <div className="grid gap-2 md:grid-cols-2">
+                  <Button variant="secondary" onClick={copySitemapToClipboard}>
+                    <Copy className="h-4 w-4 mr-2" />
+                    Copy XML to Clipboard
+                  </Button>
+                  <Button variant="secondary" onClick={downloadSitemap}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Download sitemap.xml
+                  </Button>
+                </div>
                   
-                  <div className="p-3 bg-muted rounded-lg">
-                    <p className="text-xs text-muted-foreground break-all">
-                      Sitemap URL: <code className="bg-background px-2 py-1 rounded">{window.location.origin}/sitemap.xml</code>
-                    </p>
-                  </div>
+                <div className="p-3 bg-muted rounded-lg space-y-2">
+                  <p className="text-xs text-muted-foreground break-all">
+                    Sitemap URL: <code className="bg-background px-2 py-1 rounded">{seoSettings?.canonical_url || window.location.origin}/sitemap.xml</code>
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    To update your deployed sitemap, download the file above and replace <code className="bg-background px-1 rounded">public/sitemap.xml</code>
+                  </p>
                 </div>
               </CardContent>
             </Card>
