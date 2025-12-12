@@ -206,9 +206,9 @@ export function SuggestedProducts({ currentProductIds = [], categoryId, limit = 
   };
 
   return (
-    <div ref={containerRef} className="w-full max-w-full overflow-hidden box-border">
+    <div ref={containerRef} className="w-full max-w-[100vw] overflow-hidden box-border">
       {!isVisible ? null : loading || products.length === 0 ? null : (
-        <Card className="w-full max-w-full overflow-hidden border-0 shadow-none md:border md:shadow-sm">
+        <Card className="w-full max-w-[100vw] overflow-hidden border-0 shadow-none md:border md:shadow-sm box-border">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>You May Also Like</CardTitle>
@@ -234,7 +234,7 @@ export function SuggestedProducts({ currentProductIds = [], categoryId, limit = 
       <CardContent>
         <div
           ref={scrollRef}
-          className="flex gap-3 md:gap-4 w-full max-w-full overflow-x-auto overflow-y-hidden scrollbar-hide scroll-smooth overscroll-x-contain touch-pan-x pb-2"
+          className="flex gap-3 md:gap-4 w-full max-w-[100vw] overflow-x-auto overflow-y-hidden scrollbar-hide scroll-smooth overscroll-x-contain touch-pan-x pb-2 box-border"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {products.map((product) => (

@@ -185,7 +185,7 @@ const ProductDetail = () => {
       </Helmet>
       <Header />
       
-      <main className="flex-1 container mx-auto px-4 py-8 w-full max-w-full min-w-0 overflow-x-hidden">
+      <main className="flex-1 container mx-auto px-4 py-8 w-full max-w-[100vw] min-w-0 overflow-x-hidden box-border">
         <Button
           variant="ghost"
           className="mb-6"
@@ -327,7 +327,7 @@ const ProductDetail = () => {
               </div>
 
               {/* Suggested Products Section after Buy Now button */}
-              <div className="mt-8">
+              <div className="mt-8 -mx-4 px-4 w-screen max-w-[100vw] overflow-hidden">
                 <SuggestedProducts 
                   currentProductIds={[product.id]}
                   categoryId={product.category}
