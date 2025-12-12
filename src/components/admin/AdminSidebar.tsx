@@ -30,6 +30,7 @@ import {
   Share2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -77,14 +78,16 @@ const AdminSidebar = () => {
   ];
 
   return (
-    <div className="fixed left-0 top-0 h-full w-64 bg-card border-r border-navigation/20 z-40">
-      <div className="p-6">
-        <div className="flex items-center gap-2 mb-8">
+    <div className="fixed left-0 top-0 h-full w-64 bg-card border-r border-navigation/20 z-40 flex flex-col">
+      <div className="p-6 pb-2">
+        <div className="flex items-center gap-2 mb-4">
           <Package className="h-8 w-8 text-navigation" />
           <span className="text-xl font-bold text-card-foreground">Admin Panel</span>
         </div>
+      </div>
 
-        <nav className="space-y-2">
+      <ScrollArea className="flex-1 px-6">
+        <nav className="space-y-2 pb-4">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.href;
@@ -104,9 +107,9 @@ const AdminSidebar = () => {
             );
           })}
         </nav>
-      </div>
+      </ScrollArea>
 
-      <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-navigation/20">
+      <div className="p-6 border-t border-navigation/20">
         <div className="text-sm text-muted-foreground">
           <p>Store Analytics</p>
           <p className="text-xs">Last updated: {new Date().toLocaleDateString()}</p>
