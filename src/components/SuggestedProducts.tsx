@@ -34,7 +34,7 @@ export function SuggestedProducts({ currentProductIds = [], categoryId, limit = 
   const [isVisible, setIsVisible] = useState(false);
   const { addToCart } = useCart();
   const navigate = useNavigate();
-  const { countryId } = useCountryDetection();
+  const { countryId, currency } = useCountryDetection();
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -207,9 +207,9 @@ export function SuggestedProducts({ currentProductIds = [], categoryId, limit = 
   };
 
   return (
-    <div ref={containerRef}>
+    <div ref={containerRef} className="w-full max-w-full overflow-hidden">
       {!isVisible ? (
-        <div className="h-96 w-full" /> // Placeholder to maintain layout
+        <div className="h-0 w-full" /> // No height placeholder to prevent layout shift
       ) : loading || products.length === 0 ? null : (
         <Card className="w-full max-w-full overflow-hidden">
       <CardHeader>
@@ -265,7 +265,7 @@ export function SuggestedProducts({ currentProductIds = [], categoryId, limit = 
                 )}
               </div>
               <h3 className="font-medium text-sm line-clamp-2 mb-1">{product.name}</h3>
-              <p className="text-sm font-semibold mb-2">${product.price.toFixed(2)}</p>
+              <p className="text-sm font-semibold mb-2">{currency} {product.price.toFixed(2)}</p>
               <Button
                 size="sm"
                 variant="outline"
