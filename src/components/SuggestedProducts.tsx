@@ -66,14 +66,13 @@ export function SuggestedProducts({ currentProductIds = [], categoryId, limit = 
     }
   }, [currentProductIds, categoryId, countryId, isVisible]);
 
-  // Auto-scroll functionality (disabled on mobile and when reduced motion is preferred)
+  // Auto-scroll functionality (enabled on all devices, respects reduced motion)
   useEffect(() => {
     const container = scrollRef.current;
     if (!container || products.length === 0 || !isVisible) return;
 
-    const isMobile = typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches;
     const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (isMobile || prefersReducedMotion) return;
+    if (prefersReducedMotion) return;
 
     let rafId = 0;
     let isScrolling = true;
@@ -207,11 +206,9 @@ export function SuggestedProducts({ currentProductIds = [], categoryId, limit = 
   };
 
   return (
-    <div ref={containerRef} className="w-full max-w-full overflow-hidden">
-      {!isVisible ? (
-        <div className="h-0 w-full" /> // No height placeholder to prevent layout shift
-      ) : loading || products.length === 0 ? null : (
-        <Card className="w-full max-w-full overflow-hidden">
+    <div ref={containerRef} className="w-full overflow-hidden box-border">
+      {!isVisible ? null : loading || products.length === 0 ? null : (
+        <Card className="w-full overflow-hidden border-0 shadow-none md:border md:shadow-sm">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>You May Also Like</CardTitle>
@@ -237,13 +234,13 @@ export function SuggestedProducts({ currentProductIds = [], categoryId, limit = 
       <CardContent>
         <div
           ref={scrollRef}
-          className="flex gap-4 w-full max-w-full min-w-0 overflow-x-auto overflow-y-hidden scrollbar-hide scroll-smooth overscroll-x-contain touch-pan-x"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', contain: 'content' }}
+          className="flex gap-3 md:gap-4 w-full overflow-x-auto overflow-y-hidden scrollbar-hide scroll-smooth overscroll-x-contain touch-pan-x pb-2"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {products.map((product) => (
             <div
               key={product.id}
-              className="flex-none w-48 group cursor-pointer"
+              className="flex-none w-36 md:w-48 group cursor-pointer flex-shrink-0"
             >
               <div
                 onClick={() => navigate(`/products/${product.slug}`)}
