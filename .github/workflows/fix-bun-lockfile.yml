@@ -1,0 +1,24 @@
+name: Fix Bun Lockfile
+
+on:
+  workflow_dispatch:
+
+jobs:
+  fix-lock:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: 1.2.15
+
+      - run: bun install
+
+      - run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add bun.lockb
+          git commit -m "Regenerate bun.lockb for Cloudflare" || echo "No changes"
+          git push
