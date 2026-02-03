@@ -5,6 +5,10 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Rate limit: max 3 OTP sends per phone per hour
+const MAX_SENDS_PER_HOUR = 3;
+const RATE_LIMIT_WINDOW_MINUTES = 60;
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -24,12 +28,75 @@ serve(async (req) => {
       );
     }
 
+    // Validate phone number format (basic validation)
+    const cleanPhone = String(phoneNumber).replace(/\s+/g, '');
+    if (!/^\+?[1-9]\d{6,14}$/.test(cleanPhone)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid phone number format' }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     
     const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Check rate limit
+    const windowStart = new Date();
+    windowStart.setMinutes(windowStart.getMinutes() - RATE_LIMIT_WINDOW_MINUTES);
+    
+    const { data: rateLimitData, error: rateLimitError } = await supabase
+      .from('otp_rate_limits')
+      .select('request_count, window_start')
+      .eq('phone_number', cleanPhone)
+      .gte('window_start', windowStart.toISOString())
+      .maybeSingle();
+
+    if (rateLimitError) {
+      console.error('Rate limit check error:', rateLimitError);
+    }
+
+    if (rateLimitData && rateLimitData.request_count >= MAX_SENDS_PER_HOUR) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Too many OTP requests. Please try again later.',
+          retryAfter: RATE_LIMIT_WINDOW_MINUTES
+        }),
+        { 
+          status: 429, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    // Update or insert rate limit record
+    if (rateLimitData) {
+      await supabase
+        .from('otp_rate_limits')
+        .update({ request_count: rateLimitData.request_count + 1 })
+        .eq('phone_number', cleanPhone)
+        .gte('window_start', windowStart.toISOString());
+    } else {
+      // Delete old records for this phone and insert new one
+      await supabase
+        .from('otp_rate_limits')
+        .delete()
+        .eq('phone_number', cleanPhone);
+      
+      await supabase
+        .from('otp_rate_limits')
+        .insert({
+          phone_number: cleanPhone,
+          request_count: 1,
+          window_start: new Date().toISOString()
+        });
+    }
 
     // Generate secure OTP using database function
     const { data: otpData, error: otpError } = await supabase
@@ -38,10 +105,7 @@ serve(async (req) => {
     if (otpError) {
       console.error('OTP generation error:', otpError);
       return new Response(
-        JSON.stringify({ 
-          error: 'Failed to generate OTP',
-          details: otpError.message 
-        }),
+        JSON.stringify({ error: 'Failed to generate OTP' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -56,7 +120,7 @@ serve(async (req) => {
     const { error: otpStoreError } = await supabase
       .from('otp_verifications')
       .insert({
-        phone_number: phoneNumber,
+        phone_number: cleanPhone,
         otp_code: otpCode,
         expires_at: expiresAt.toISOString(),
         is_verified: false
@@ -64,7 +128,10 @@ serve(async (req) => {
 
     if (otpStoreError) {
       console.error('Error storing OTP:', otpStoreError);
-      throw otpStoreError;
+      return new Response(
+        JSON.stringify({ error: 'Failed to process OTP request' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Send OTP via WhatsApp directly to bridge
@@ -75,7 +142,7 @@ serve(async (req) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          phoneNumber,
+          phoneNumber: cleanPhone,
           message: `Your verification code is: ${otpCode}\n\nThis code expires in 10 minutes. Do not share this code with anyone.`
         })
       });
@@ -84,16 +151,12 @@ serve(async (req) => {
       
       if (!whatsappResponse.ok || !whatsappData.success) {
         console.error('WhatsApp bridge error:', whatsappData);
-        // Don't throw error, OTP is stored and can be verified manually
       } else {
         console.log('WhatsApp OTP sent successfully');
       }
     } catch (whatsappError) {
       console.error('Error sending WhatsApp message:', whatsappError);
-      // Don't throw error here, OTP is still stored and can be used
     }
-
-    // Removed OTP logging for security reasons
 
     return new Response(
       JSON.stringify({ 
@@ -107,12 +170,8 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error in send-otp function:', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
-      JSON.stringify({ 
-        error: 'Internal server error',
-        details: message 
-      }),
+      JSON.stringify({ error: 'Unable to process request' }),
       { 
         status: 500, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
