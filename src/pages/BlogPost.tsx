@@ -8,6 +8,7 @@ import { ArrowLeft } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
+import DOMPurify from 'dompurify';
 
 interface BlogPost {
   id: string;
@@ -182,7 +183,13 @@ export default function BlogPost() {
 
               <div 
                 className="prose prose-lg max-w-none dark:prose-invert"
-                dangerouslySetInnerHTML={{ __html: post.content.replace(/\n/g, '<br />') }}
+                dangerouslySetInnerHTML={{ 
+                  __html: DOMPurify.sanitize(post.content.replace(/\n/g, '<br />'), {
+                    ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'a', 'blockquote', 'pre', 'code', 'img'],
+                    ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'target', 'rel'],
+                    ALLOW_DATA_ATTR: false
+                  })
+                }}
               />
             </article>
           </div>
